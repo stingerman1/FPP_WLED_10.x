@@ -98,10 +98,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.websocket()
             if path == '/skin.css':
                 return self.reply(200, b'/* Linux alpha uses upstream default skin. */', 'text/css')
-            if path.startswith('/json') or path.startswith('/api') or path == '/presets.json':
-                if path == '/json/palx':
-                    return self.reply(200, {'m': 0, 'p': {}})
-                return self.reply(200, self.server.controller.get(path))
+            if path.startswith('/json') or path.startswith('/api') or path == '/presets.json' or (path.startswith('/palette') and path.endswith('.json')):
+                return self.reply(200, self.server.controller.get(self.path if path == '/json/palx' else path))
             asset = 'index.htm' if path == '/' else path.lstrip('/')
             if asset in ASSETS:
                 data = (self.server.assets / asset).read_bytes()
@@ -116,6 +114,8 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(404, {'error': 'unsupported endpoint', 'compatibility': '/api/status'})
         except (KeyError, FileNotFoundError):
             self.reply(404, {'error': 'resource not available'})
+        except (ValueError, TypeError):
+            self.reply(422, {'error': 'invalid resource parameters'})
 
     def websocket(self):
         key = self.headers.get('Sec-WebSocket-Key', '')

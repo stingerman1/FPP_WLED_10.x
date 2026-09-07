@@ -14,6 +14,17 @@
 <section><h2>Native WLED devices</h2><p>Enable discovery in configuration to list mDNS candidates. Enroll an IPv4 address in the devices list and choose effect, sync, or fpp-stream mode. Configure streamed channels in FPP.</p><button id="discover">Refresh discovered devices</button><pre id="discovered">Discovery results appear here.</pre>
 <label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:70px" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
 <p>Effect-mode devices retain ambient lighting checkpoints and retry recovery after realtime input ends. Saved native playlists restart from the beginning. Unsaved playlists and active nightlights cannot yet be restored. Recovery details appear in device status above.</p>
+<section id="custom-palettes"><h2>Custom palettes</h2>
+<p>Import a native palette file or edit its JSON. Slot 0 is palette ID 200; subsequent slots count downward. Use 2–18 ordered stops from 0 to 255. Palette colors are RGB; a white component in hex input is ignored as in WLED.</p>
+<label>Palette slot <input id="paletteSlot" type="number" min="0" max="128" value="0"></label>
+<label>Palette file <input id="paletteFile" type="file" accept=".json,application/json"></label>
+<label>Palette JSON<textarea id="paletteJson" spellcheck="false" style="min-height:110px">{"palette":[0,"FF0000",128,"00FF00",255,"0000FF"]}</textarea></label>
+<button id="loadPalette">Load slot</button> <button id="savePalette">Save palette</button> <button id="deletePalette">Delete palette</button>
+<p><a id="downloadPalette" href="/palette0.json" download="palette0.json">Download saved slot</a></p>
+<div id="palettePreview" role="img" aria-label="Saved palette preview" style="height:32px;border:1px solid #536075;border-radius:5px"></div>
+<pre id="paletteStatus" role="status">Loading palette slots…</pre>
+<p>Reload the WLED page after saving to refresh its palette list. Deletion is blocked while a palette is referenced. Editing the active palette is blocked during show ownership or suspended ambient.</p>
+</section>
 <section><h2>Import WLED presets</h2>
 <p>Merge a WLED presets.json file into this runtime. Matching IDs will be overwritten; other presets remain. Preview checks the current pixel layout and reports translations. Unsupported entries block the whole import. Lighting and show locks remain active.</p>
 <p><a href="/presets.json" download="presets.json">Download existing presets before importing</a></p>
@@ -25,6 +36,16 @@
 <section><h2>Compatibility</h2><pre id="compat"></pre></section><p id="result" role="status"></p>
 <script>
 const el=id=>document.getElementById(id);
+let paletteCatalog=null;
+function paletteSlot(){const slot=Number(el('paletteSlot').value);if(!Number.isInteger(slot)||slot<0||slot>Number(el('paletteSlot').max))throw Error('Choose a valid palette slot.');return slot;}
+function displayPalette(){const slot=paletteSlot();const stops=paletteCatalog?.previews[String(200-slot)];el('palettePreview').style.background=stops?'linear-gradient(to right,'+stops.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${s[0]/255*100}%`).join(',')+')':'none';el('downloadPalette').href='/palette'+slot+'.json';el('downloadPalette').download='palette'+slot+'.json';}
+async function refreshPalettes(){const r=await fetch('/api/palettes');if(!r.ok)throw Error('Palette catalog unavailable');paletteCatalog=await r.json();el('paletteSlot').max=paletteCatalog.max_slot;el('paletteStatus').textContent='Saved slots: '+(Object.keys(paletteCatalog.palettes).join(', ')||'none');displayPalette();}
+el('paletteSlot').oninput=()=>{try{displayPalette();}catch(e){el('paletteStatus').textContent=e.message;}};
+el('paletteFile').onchange=async()=>{try{const file=el('paletteFile').files[0];if(!file)return;if(file.size>8192)throw Error('Palette file exceeds 8 KiB.');el('paletteJson').value=await file.text();}catch(e){el('paletteStatus').textContent=e.message;}};
+el('loadPalette').onclick=async()=>{try{await refreshPalettes();const saved=paletteCatalog.palettes[String(paletteSlot())];if(!saved)throw Error('Slot is empty.');el('paletteJson').value=JSON.stringify(saved,null,2);}catch(e){el('paletteStatus').textContent=e.message;}};
+async function savePalette(remove){try{const slot=paletteSlot();let body={slot,delete:true};if(!remove){const doc=JSON.parse(el('paletteJson').value);if(!doc||Array.isArray(doc)||Object.keys(doc).length!==1||!Array.isArray(doc.palette))throw Error('JSON must contain only a palette array.');body={slot,palette:doc.palette};}await post('/api/palettes',body);await refreshPalettes();el('paletteStatus').textContent+='\n'+(remove?'Deleted':'Saved')+' slot '+slot+' (palette ID '+(200-slot)+'). Reload WLED to refresh palettes.';}catch(e){el('paletteStatus').textContent=e.message;}}
+el('savePalette').onclick=()=>savePalette(false);el('deletePalette').onclick=()=>savePalette(true);
+refreshPalettes().catch(e=>el('paletteStatus').textContent=e.message);
 let importPreview=null, importGeneration=0;
 function invalidateImport(){importGeneration++;importPreview=null;el('commitImport').disabled=true;}
 function importSummary(report){

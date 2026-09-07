@@ -15,6 +15,7 @@ from .engine import Engine
 from .ipc import Link
 from .ownership import Ownership
 from .preset_import import import_presets
+from .palettes import Palettes
 from .state import State
 from .storage import read_json, save_json
 from .timers import Timers
@@ -26,6 +27,7 @@ class Controller:
     def __init__(self, config, directory, engine, ownership):
         self.config, self.directory, self.engine, self.ownership = config, directory, engine, ownership
         self.lock = threading.RLock()
+        self.palettes = Palettes(directory, engine)
         self.state = State(directory, engine)
         self.devices = Devices(config, ownership, self.lock, directory)
         self.dirty = True
@@ -49,7 +51,8 @@ class Controller:
                          **({'matrix': {'w': self.engine.width, 'h': self.engine.height}} if self.engine.height > 1 else {})},
                 'str': False, 'sync': {'recv': False, 'send': False}, 'wifi': {'ap': False, 'signal': 100},
                 'fs': {'u': 0, 't': 0, 'pmt': 1}, 'ndc': 0, 'ws': 0,
-                'fxcount': len(self.engine.effects), 'palcount': len(self.engine.palettes),
+                'fxcount': len(self.engine.effects), 'palcount': len(self.engine.palettes) + self.palettes.count,
+                'cpalcount': self.palettes.count, 'umpalcount': 0, 'palrev': self.palettes.revision,
                 'uptime': int(time.monotonic() - self.started), 'opt': 0, 'maps': [],
                 'fpp': self.status()}
 
@@ -58,12 +61,28 @@ class Controller:
                 'unsupported_effect_ids': sorted(self.engine.unsupported),
                 'unsupported': ['ESP firmware and provisioning', 'ESP-NOW', 'GPIO', 'audio input',
                                 'usermods', 'Philips Hue', 'file-based fonts',
-                                'custom palettes', 'custom transition styles', 'boot preset overrides'],
+                                'custom transition styles', 'boot preset overrides'],
                 'integrations': {name: True for name in self.integrations},
                 'devices': self.devices.public()}
 
     def get(self, path):
         with self.lock:
+            if path.startswith('/json/palx'):
+                from urllib.parse import urlsplit, parse_qs
+                url = urlsplit(path)
+                if url.path != '/json/palx':
+                    raise KeyError(path)
+                query = parse_qs(url.query, keep_blank_values=True)
+                if set(query) - {'page'} or len(query.get('page', ['0'])) != 1:
+                    raise ValueError('palx accepts one page parameter')
+                return self.palettes.page(int(query.get('page', ['0'])[0]))
+            if path == '/api/palettes':
+                return self.palettes.public()
+            if path.startswith('/palette') and path.endswith('.json'):
+                slot = path[len('/palette'):-len('.json')]
+                if not slot.isdigit() or str(int(slot)) != slot:
+                    raise KeyError(path)
+                return deepcopy(self.palettes.saved[slot])
             if path in ('/json', '/json/si'):
                 return {'state': self.state.public(), 'info': self.info(),
                         'effects': self.effect_names(), 'palettes': self.engine.palettes}
@@ -113,6 +132,10 @@ class Controller:
                 drain = operation in ('show-start', 'ambient-disable')
                 if drain and self.link:
                     revoked = self.link.send(self.latest_frame, self.config, False)
+            elif path == '/api/palettes':
+                result = self.palettes.update(payload, self.state, self.ownership.status()['allowed'])
+                self.dirty = True
+                return result
             elif path == '/api/presets/import':
                 return import_presets(self.state, payload)
             elif path == '/api/config':
@@ -122,6 +145,11 @@ class Controller:
             elif path == '/api/devices/command':
                 return self.devices.command(payload.get('target', ''), payload.get('state'))
             elif path in ('/json', '/json/state', '/json/si'):
+                if 'rmcpal' in payload:
+                    if set(payload) - {'rmcpal', 'v'}:
+                        raise ValueError('rmcpal must be a standalone palette deletion')
+                    return self.palettes.update({'slot': payload['rmcpal'], 'delete': True}, self.state,
+                                                self.ownership.status()['allowed'])
                 if 'psave' in payload:
                     patch = {k: v for k, v in payload.items() if k not in ('psave', 'ib', 'sb', 'sc', 'v', 'o')}
                     options = {k: payload[k] for k in ('ib', 'sb', 'sc', 'o') if k in payload}

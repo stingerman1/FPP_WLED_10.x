@@ -37,6 +37,9 @@ Other operations are `show-end`, `ambient-enable`, `ambient-disable`, `status`. 
 | GET `/json`, `/json/si`, `/json/state`, `/json/info` | WLED-compatible supported state/info |
 | POST `/json/state` | e.g. `{"bri":128,"seg":{"fx":9,"fxdef":true}}` |
 | GET `/json/effects`, `/json/fxdata`, `/json/palettes` | Stable IDs and metadata |
+| GET `/json/palx?page=N` | Eight palette previews per page; `m` is the last page and `p` maps stable palette IDs to stops or dynamic color tokens |
+| GET/POST `/api/palettes` | List custom palette source/IDs/previews, or save/delete one slot |
+| GET `/paletteN.json` | Export saved custom slot N as a native WLED palette document |
 | GET `/presets.json` | Saved preset document |
 | POST `/api/presets/import` | Preview and atomically merge a WLED preset catalog; authentication required, also available during shows |
 | POST `/json/state` with `psave` / `pdel` | Save/edit/delete a preset, including during a show without modifying live state |
@@ -69,3 +72,13 @@ Automatic takeover uses the last ambient checkpoint; it cannot obtain a guarante
 Saved native playlists restart **from the beginning**, followed by restoring captured global power/brightness. WLED does not expose the native cursor, remaining repeats, or shuffle position in its regular state API. Preset contents stay on the device and are not backed up by this feature. Unsaved native playlists and active nightlights report unsupported recovery and do not silently fall back to an unrelated lighting state. Effect animation phase and raw pixel buffers are not captured. Existing autonomous effects/playlists still require the show to take realtime ownership; the plugin does not forcibly stop them during a show.
 
 Inspect `/api/devices` or the setup page's device status for `snapshot_available`, `snapshot_time`, `restore_pending`, `recovery`, and `recovery_detail`. The timestamp records the persisted checkpoint, which is rewritten only when settings change. Network operations run on bounded device workers, outside FPP's output callback. These behaviors have simulator tests; physical WLED acceptance is still required.
+
+## Custom palettes
+
+Open **Linux Setup → Custom palettes**. Choose a slot, import a native `paletteN.json` or paste/edit its contents, and save. The preview shows the compiled gradient. Reload the WLED page to refresh its palette list. Selecting a palette-using effect makes the custom palette entries visible in the upstream UI. Slot 0 maps to palette ID 200; slot 128 maps to ID 72. Import required palettes before presets that reference those IDs.
+
+Authenticated save example: `POST /api/palettes` with `{"slot":0,"palette":[0,"FF0000",128,"00FF00",255,"0000FF"]}`. Numeric stops work too: `{"slot":0,"palette":[0,255,0,0,255,0,0,255]}`. Export uses `GET /palette0.json`. Delete with `{"slot":0,"delete":true}`, or the upstream-compatible standalone `POST /json/state` body `{"rmcpal":0}`. Slot numbers and palette IDs are different: `rmcpal` takes a slot; segment `pal` takes an ID.
+
+Deletion rejects palettes referenced by current state or any saved preset. Creating or editing inactive saved palettes is allowed during shows; changing the currently selected palette while ambient is suspended returns 409. Invalid gradients return 422. Preview requests do not advance the renderer or change lighting state. Definitions persist atomically in `custom-palettes.json`; a storage failure leaves the loaded table unchanged. A content revision invalidates upstream browser preview caches even when slot counts stay the same.
+
+This is a JSON/gradient editor, not native WLED's arbitrary filesystem editor. It accepts 2–18 stops from 0 through 255, with RGB colors. It does not transmit palette definitions to enrolled native devices. Before rolling back to code without custom-palette support, select built-in palettes or restore a compatible settings backup; older runtimes cannot load state that selects a custom palette.

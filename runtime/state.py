@@ -119,9 +119,11 @@ class State:
                 segment['stop'] = segment['start'] + integer(update['len'], 1, self.engine.width, 'segment length')
             for field, lo, hi in [('start', 0, self.engine.width - 1), ('stop', 1, self.engine.width),
                                   ('startY', 0, self.engine.height - 1), ('stopY', 1, self.engine.height),
-                                  ('fx', 0, len(self.engine.effects) - 1), ('pal', 0, len(self.engine.palettes) - 1),
+                                  ('fx', 0, len(self.engine.effects) - 1), ('pal', 0, 200),
                                   ('sx', 0, 255), ('ix', 0, 255), ('bri', 0, 255)]:
                 integer(segment[field], lo, hi, field)
+            if segment['pal'] not in self.engine.palette_ids:
+                raise ValueError('palette is unavailable; import its custom palette file first')
             if segment['start'] >= segment['stop'] or segment['startY'] >= segment['stopY']:
                 raise ValueError('segment has an empty or inverted range')
             if segment['fx'] in self.engine.unsupported:

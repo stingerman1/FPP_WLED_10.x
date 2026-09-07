@@ -37,17 +37,54 @@ int wled_init(unsigned count,unsigned width,unsigned height,int rgbw,uint32_t se
   errorFlag=0;
   linux_pixels=count; linux_width=width; linux_height=height; linux_rgbw=rgbw;
   linux_seed=seed?seed:1; linux_now=0; linux_frame.assign(count,0);
+  customPalettes.clear(); customPalettes.reserve(WLED_MAX_CUSTOM_PALETTES);
   strip.finalizeInit(); strip.setTransition(0); strip.setTargetFps(40);
   return errorFlag ? -int(errorFlag) : 0;
 }
 unsigned wled_modes() {return strip.getModeCount();}
 const char* wled_mode(unsigned id) {return id<strip.getModeCount()?strip.getModeData(id):nullptr;}
 const char* wled_palettes() {return JSON_palette_names;}
+// Convert bounded gradient stops with upstream FastLED interpolation, without
+// changing rendering state. Input is index,R,G,B repeated; output is 16 RGBs.
+int wled_compile_palette(const uint8_t* stops,unsigned count,uint8_t* out) {
+  if (!stops || !out || count<2 || count>18 || stops[0]!=0 || stops[(count-1)*4]!=255) return -1;
+  for (unsigned i=1;i<count;++i) if (stops[i*4]<stops[(i-1)*4] || stops[(i-1)*4]==255) return -1;
+  CRGBPalette16 palette; palette.loadDynamicGradientPalette(stops);
+  for (int i=0;i<16;++i) {out[i*3]=palette[i].r;out[i*3+1]=palette[i].g;out[i*3+2]=palette[i].b;}
+  return 0;
+}
+// Publish precompiled palettes. Initialization reserves all slots, so validated
+// updates need no allocation after the coordinator persists the source document.
+int wled_custom_palettes(const uint8_t* colors,unsigned count) {
+  if (count>WLED_MAX_CUSTOM_PALETTES || (count && !colors)) return -1;
+  customPalettes.resize(count);
+  for (unsigned p=0;p<count;++p) for (int i=0;i<16;++i) {
+    const uint8_t* c=colors+p*48+i*3; customPalettes[p][i]=CRGB(c[0],c[1],c[2]);
+  }
+  return 0;
+}
+// Export fixed previews in the upstream /json/palx stop format. Dynamic color
+// tokens (IDs 1-5) are supplied by Python; no segment state or RNG is touched.
+int wled_palette_preview(unsigned id,uint8_t* out) {
+  if (!out || id>=FIXED_PALETTE_COUNT || (id>0 && id<6)) return -1;
+  if (id>=DYNAMIC_PALETTE_COUNT+FASTLED_PALETTE_COUNT) {
+    const uint8_t* stops=(const uint8_t*)pgm_read_ptr(&gGradientPalettes[id-DYNAMIC_PALETTE_COUNT-FASTLED_PALETTE_COUNT]);
+    for (unsigned i=0;i<18;++i) {
+      for (unsigned c=0;c<4;++c) out[i*4+c]=pgm_read_byte(stops+i*4+c);
+      if (out[i*4]==255) return i+1;
+    }
+    return -1;
+  }
+  CRGBPalette16 palette=id==0 ? PartyColors_gc22 : *fastledPalettes[id-DYNAMIC_PALETTE_COUNT];
+  for (int i=0;i<16;++i) {out[i*4]=i*16;out[i*4+1]=palette[i].r;out[i*4+2]=palette[i].g;out[i*4+3]=palette[i].b;}
+  return 16;
+}
 // Apply validated segment geometry, mode, colors and base options without hardware I/O.
 int wled_segment(unsigned id,unsigned start,unsigned stop,unsigned startY,unsigned stopY,
                  unsigned fx,unsigned speed,unsigned intensity,unsigned palette,
                  uint32_t c0,uint32_t c1,uint32_t c2,unsigned opacity,unsigned options) {
-  if(id>=32 || start>=stop || stop>linux_width || startY>=stopY || stopY>linux_height || fx>=strip.getModeCount() || palette>=FIXED_PALETTE_COUNT) return -1;
+  if(id>=32 || start>=stop || stop>linux_width || startY>=stopY || stopY>linux_height || fx>=strip.getModeCount()) return -1;
+  if (palette>=FIXED_PALETTE_COUNT && (palette>WLED_CUSTOM_PALETTE_ID_BASE || WLED_CUSTOM_PALETTE_ID_BASE-palette>=customPalettes.size())) return -1;
   while(strip.getSegmentsNum()<=id) strip.appendSegment(0,linux_width,0,linux_height);
   Segment& seg=strip.getSegment(id);
   seg.setGeometry(start,stop,1,0,0xffff,startY,stopY);

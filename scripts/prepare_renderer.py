@@ -27,7 +27,7 @@ def replace_function(text, signature, body):
     return text[:brace] + '{\n' + body + '\n}' + text[end:]
 
 
-def main():
+def prepare_checkout():
     if not SRC.exists():
         port = bool(LOCK.get('port_commit'))
         subprocess.run(['git', 'clone', '--no-checkout', '--branch', LOCK['branch'] if port else LOCK['tag'], '--depth', '2',
@@ -37,7 +37,17 @@ def main():
         subprocess.run(['git', '-C', str(SRC), 'checkout', '--detach', revision], check=True)
     actual = subprocess.check_output(['git', '-C', str(SRC), 'rev-parse', 'HEAD'], text=True).strip()
     if not PORT_CHECKOUT and actual != LOCK.get('port_commit', LOCK['commit']):
-        raise SystemExit('WLED commit does not match upstream.lock.json')
+        dirty = subprocess.check_output(['git', '-c', 'core.autocrlf=true', '-c', 'core.filemode=false', '-C', str(SRC), 'status', '--porcelain'], text=True).strip()
+        branch = subprocess.check_output(['git', '-C', str(SRC), 'branch', '--show-current'], text=True).strip()
+        if dirty or branch:
+            raise SystemExit('WLED pin changed; refusing to replace a modified or branch-based checkout')
+        revision = LOCK.get('port_commit', LOCK['commit'])
+        subprocess.run(['git', '-C', str(SRC), 'fetch', '--depth', '2', 'origin', revision], check=True)
+        subprocess.run(['git', '-C', str(SRC), 'checkout', '--detach', revision], check=True)
+    # The original release can be farther back than a shallow port clone reaches.
+    if subprocess.run(['git', '-C', str(SRC), 'cat-file', '-e', LOCK['commit'] + ':wled00'],
+                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
+        subprocess.run(['git', '-C', str(SRC), 'fetch', '--depth', '1', 'origin', LOCK['commit']], check=True)
     for revision in ('HEAD', LOCK['commit']):
         tree = subprocess.check_output(['git', '-C', str(SRC), 'rev-parse', revision + ':wled00'], text=True).strip()
         if revision == 'HEAD':
@@ -51,6 +61,10 @@ def main():
             mirror = SRC / 'ports/fpp-linux/runtime/linux' / path.name
             if path.read_text() != mirror.read_text():
                 raise SystemExit('Local Linux wrappers differ from the pinned port branch: ' + path.name)
+
+
+def main():
+    prepare_checkout()
     OUT.mkdir(parents=True, exist_ok=True)
     source = SRC / 'wled00'
     names = ['FX.cpp', 'FX.h', 'FX_fcn.cpp', 'FX_2Dfcn.cpp', 'FXparticleSystem.h',
@@ -114,6 +128,10 @@ def main():
     js = (ui / 'index.js').read_text()
     js = js.replace('window.location.hostname+"/ws"', 'window.location.host+"/ws"')
     js = js.replace('checkVersionUpgrade(i);', '/* Linux releases are managed by the FPP plugin installer. */')
+    # Palette edits can retain the same slot count. Include the content revision
+    # in the upstream browser cache key so reloading shows the updated gradient.
+    js = js.replace('d.pcount == lastinfo.palcount', 'd.pcount == lastinfo.palcount && d.palrev == lastinfo.palrev')
+    js = js.replace('pcount: lastinfo.palcount', 'palrev: lastinfo.palrev, pcount: lastinfo.palcount')
     (ui / 'index.js').write_text(js)
     print('Prepared WLED', LOCK['commit'])
 

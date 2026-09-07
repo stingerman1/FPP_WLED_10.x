@@ -44,6 +44,10 @@
     }
   }
   for (const button of document.querySelectorAll('button')) {
+    if (/\/cpal/.test(button.getAttribute('onclick') || '')) {
+      button.onclick = () => { location.href = '/settings#custom-palettes'; };
+      continue;
+    }
     if (['updBt', 'resetbtn'].includes(button.id) ||
         /\/(edit|pixelforge|palette|cpal)/.test(button.getAttribute('onclick') || '')) {
       button.disabled = true;

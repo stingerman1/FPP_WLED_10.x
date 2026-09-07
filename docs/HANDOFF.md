@@ -2,9 +2,11 @@
 
 ## Pickup point
 
+The latest increment implements custom palette compatibility. The renderer port pin is `6aaf34dd2fcbdc9e3211ec395d0d1f449bfe4b4e`. Linux Setup can import/edit/export native palette gradients; `/json/palx` supplies previews; slots 0–128 retain IDs 200 down to 72. State/preset import validates custom IDs, deletion protects references, and active palette edits reject during suspended ambient. Preparation now handles clean detached-cache upgrades and shallow clones missing the original release commit. Local suite: 74 tests; upstream Node suite: 16 tests; standalone renderer and ESP32 compile passed. See `runtime/palettes.py`, `tests/test_palettes.py`, and `tests/test_prepare_checkout.py`. Next recommended implementation: **legacy/preset-command compatibility**.
+
 The project is an implemented, publicly available **alpha**, not a hardware-validated release. Continue expanding software compatibility; verification is not the only remaining work. The user asked to save current status for later pickup. No implementation task is currently in progress.
 
-The latest implementation commit is **`ccfebd9`**, on public `main`: native WLED lighting checkpoint recovery after shows. It passed **all 63 Python tests locally and the complete x86-64/ARM64 CI workflow**, including renderer checks, sanitized IPC checks, FPP reference-header compilation, and benchmarks. [Successful CI run](https://github.com/stingerman1/FPP_WLED_10.x/actions/runs/34166720070).
+The preceding implementation commit was **`ccfebd9`**: native WLED lighting checkpoint recovery after shows. It passed all 63 then-existing Python tests locally and the complete x86-64/ARM64 CI workflow, including renderer checks, sanitized IPC checks, FPP reference-header compilation, and benchmarks. [Native recovery CI run](https://github.com/stingerman1/FPP_WLED_10.x/actions/runs/34166720070). Check the current `main` commit's workflow for the newer palette increment.
 
 The working tree was clean before this handoff documentation was added. The latest changes are pushed to `origin/main`. The existing `v0.1.0-alpha.1` source release predates recent compatibility and recovery work; installing that release does not include everything described here. No Pi binary release has been published.
 
@@ -23,7 +25,7 @@ The user repeatedly asked to keep building without repeated confirmation questio
 | Working branch | `main` |
 | WLED upstream release | `v16.0.1`, commit `29b389df1c1aaec6ff53aea742d17063b985906c` |
 | Public Linux port | `stingerman1/WLED`, branch `linux-fpp-16.0.1` |
-| Pinned Linux-port commit | `eb7dce9bc02814a6e3e268c8773e7ac00a8b7b1c` |
+| Pinned Linux-port commit | `6aaf34dd2fcbdc9e3211ec395d0d1f449bfe4b4e` |
 | FPP reference | `v10.0`, commit `370e62ed7e8c8318da6ee5b01312b8b75082d952`, plugin ABI 6 |
 | Existing source prerelease | `v0.1.0-alpha.1`, targeting `e4abc7b` |
 
@@ -31,7 +33,7 @@ The user repeatedly asked to keep building without repeated confirmation questio
 
 ## Implemented foundation
 
-- Actual upstream rendering code in a separate supervised Linux process: 129 supported strip effects and 171 matrix effects across 220 stable IDs. RGB/RGBW, segments, geometry/mapping, built-in palettes, ordinary transitions, and representative 2D effects are implemented.
+- Actual upstream rendering code in a separate supervised Linux process: 129 supported strip effects and 171 matrix effects across 220 stable IDs. RGB/RGBW, segments, geometry/mapping, built-in/custom palettes, ordinary transitions, and representative 2D effects are implemented.
 - FPP channel-data adapter contributes fresh ambient frames before overlays. FPP retains physical drivers, channel ordering, DDP/E1.31/Art-Net outputs. Network/rendering work stays outside FPP's output callback.
 - Versioned local IPC, 500 ms freshness limit, automatic playlist/sequence/live ownership, persistent source-scoped explicit locks, and a two-second quiet period. Live ambient changes reject during ownership; saved preset editing remains allowed.
 - Upstream main WLED UI and Linux setup page, configurable port 8787, JSON/HTTP APIs, WebSocket state updates, bearer/cookie authentication, and a protected local control socket.
@@ -71,16 +73,16 @@ Recovery limitations remain material:
 
 ## Next implementation priorities
 
-The last priority discussed was native recovery, then **custom palettes and preset-command compatibility**. Native recovery now has the implementation above; its documented limits remain.
+The last priority discussed was native recovery, then custom palettes and preset-command compatibility. Native recovery and custom palettes now have implementations; their documented limits remain.
 
-Suggested next bounded increment: implement custom palette storage/loading and the palette preview API against the pinned WLED source. Inspect both Python API handling and the Linux renderer's palette-loading substitutions before editing. This may require coordinated changes in the public WLED Linux-port branch and its pin.
+Suggested next bounded increment: translate a documented subset of legacy/preset commands against pinned WLED `set.cpp`, `json.cpp`, and `presets.cpp`. Preserve show ownership and reject unsupported side effects. Add differential examples and atomic validation before expanding command acceptance.
 
 Other outstanding software work:
 
 1. Legacy `/win` commands, preset references/cycling expressions, preset HTTP command strings, boot presets, and nested local playlists.
 2. Nightlight modes, sunrise/sunset timers, and custom transition styles.
 3. Review remaining unsupported effects individually; distinguish portable missing implementations from audio-dependent or dimension-incompatible IDs.
-4. Palette editing, pixel preview, more configuration UI/API coverage, and fragmented WebSocket requests.
+4. Pixel preview, more configuration UI/API coverage, and fragmented WebSocket requests. Palette JSON editing and previews are now implemented; arbitrary filesystem editing remains excluded.
 5. Resolve FPP models by name; currently users supply resolved channel ranges. Native custom HTTP ports and credentials are not implemented.
 6. Publish a newer alpha source release, produce reproducible Pi binary assets, and submit plugin-catalog metadata once validated. Catalog acceptance is upstream's decision.
 

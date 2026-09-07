@@ -5,7 +5,7 @@
     "commit": "29b389df1c1aaec6ff53aea742d17063b985906c",
     "fork": "https://github.com/stingerman1/WLED.git",
     "branch": "linux-fpp-16.0.1",
-    "port_commit": "eb7dce9bc02814a6e3e268c8773e7ac00a8b7b1c"
+    "port_commit": "6aaf34dd2fcbdc9e3211ec395d0d1f449bfe4b4e"
   },
   "fpp": {
     "repository": "https://github.com/FalconChristmas/fpp.git",

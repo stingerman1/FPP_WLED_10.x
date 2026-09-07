@@ -33,6 +33,8 @@ Experimental Linux port based on upstream v16.0.1, preserving upstream history
 and the original wled00 tree. The explicit preparation step applies virtual-bus,
 filesystem and 64-bit pointer adaptations into build/engine. The new platform
 wrappers expose a serialized C ABI for RGB/RGBW rendering and segment control.
+It includes upstream gradient conversion, custom palette tables and fixed-palette
+previews; the plugin coordinator owns palette persistence and validation.
 
 From this directory on Linux, run `bash scripts/build-renderer.sh`.
 Output: `build/libwled_linux.so` and `build/ui/`.

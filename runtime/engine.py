@@ -10,6 +10,9 @@ class Engine:
         self.lib.wled_mode.argtypes = [C.c_uint]
         self.lib.wled_mode.restype = C.c_char_p
         self.lib.wled_palettes.restype = C.c_char_p
+        self.lib.wled_compile_palette.argtypes = [C.POINTER(C.c_uint8), C.c_uint, C.POINTER(C.c_uint8)]
+        self.lib.wled_custom_palettes.argtypes = [C.POINTER(C.c_uint8), C.c_uint]
+        self.lib.wled_palette_preview.argtypes = [C.c_uint, C.POINTER(C.c_uint8)]
         self.lib.wled_segment.argtypes = [C.c_uint] * 14
         self.lib.wled_options.argtypes = [C.c_uint] * 9 + [C.c_char_p]
         self.lib.wled_render.argtypes = [C.c_uint32, C.POINTER(C.c_uint8), C.c_uint]
@@ -22,6 +25,7 @@ class Engine:
         self.metadata = [self.lib.wled_mode(i).decode() for i in range(self.lib.wled_modes())]
         self.effects = [m.split('@')[0] for m in self.metadata]
         self.palettes = json.loads(self.lib.wled_palettes())
+        self.palette_ids = set(range(len(self.palettes)))
         self.unsupported = {i for i, m in enumerate(self.metadata) if m.startswith('RSVD')}
         # Sound-reactive metadata encodes volume/frequency support with v/f suffixes.
         for i, m in enumerate(self.metadata):
@@ -30,6 +34,30 @@ class Engine:
                 self.unsupported.add(i)
             if self.height == 1 and len(fields) > 3 and '2' in fields[3] and '1' not in fields[3]:
                 self.unsupported.add(i)
+
+    def compile_palette(self, stops):
+        source = (C.c_uint8 * len(stops))(*stops)
+        output = (C.c_uint8 * 48)()
+        if self.lib.wled_compile_palette(source, len(stops) // 4, output):
+            raise ValueError('renderer rejected gradient stops')
+        return list(output)
+
+    def set_custom_palettes(self, colors, ids):
+        source = (C.c_uint8 * len(colors))(*colors)
+        if self.lib.wled_custom_palettes(source, len(colors) // 48):
+            raise ValueError('renderer rejected custom palette table')
+        self.palette_ids = set(range(len(self.palettes))) | set(ids)
+
+    def palette_preview(self, pid):
+        tokens = {1: ['r'] * 4, 2: ['c1'], 3: ['c1', 'c1', 'c2', 'c2'],
+                  4: ['c3', 'c2', 'c1'], 5: ['c1'] * 5 + ['c2'] * 5 + ['c3'] * 5 + ['c1']}
+        if pid in tokens:
+            return tokens[pid]
+        output = (C.c_uint8 * 72)()
+        count = self.lib.wled_palette_preview(pid, output)
+        if count < 0:
+            raise ValueError('palette preview unavailable')
+        return [list(output[i * 4:i * 4 + 4]) for i in range(count)]
 
     def apply(self, state):
         self.lib.wled_brightness(state['bri'] if state['on'] else 0, state.get('transition', 7) * 100)

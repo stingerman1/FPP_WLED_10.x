@@ -172,6 +172,15 @@ class RuntimeTests(unittest.TestCase):
             conn.close()
             return response.status, data
         self.assertEqual(request('GET', '/api/status')[0], 200)
+        self.assertEqual(request('GET', '/json/palx?page=bad')[0], 422)
+        page_code, page_body = request('GET', '/json/palx?page=1')
+        self.assertEqual(page_code, 200)
+        self.assertIn('8', json.loads(page_body)['p'])
+        palette = {'slot': 0, 'palette': [0, 'FF0000', 255, '0000FF']}
+        self.assertEqual(request('POST', '/api/palettes', palette)[0], 401)
+        self.assertEqual(request('POST', '/api/palettes', palette, True)[0], 200)
+        self.assertEqual(json.loads(request('GET', '/palette0.json')[1])['palette'], [0, 255, 0, 0, 255, 0, 0, 255])
+        self.assertEqual(request('GET', '/palette1.json')[0], 404)
         self.assertEqual(request('GET', '/update')[0], 404)
         self.assertEqual(request('POST', '/json/state', {'on': True})[0], 401)
         self.assertEqual(request('POST', '/json/state', {'on': True}, True)[0], 409)
