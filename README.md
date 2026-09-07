@@ -37,7 +37,7 @@ Native devices have exactly one enrolled mode: HTTP effects/presets, UDP synchro
 
 For the current pickup point, completed work, remaining implementation, and local tooling details, read the [development handoff](docs/HANDOFF.md).
 
-Linux requires Git, Python 3.10+, GCC/G++ with C++20 support and standard development tools. Optional network libraries are pinned in `requirements.txt`.
+Linux requires Git, Python 3.10+, GCC/G++ with C++20 support and standard development tools. Network libraries and the local solar-calculation dependency are pinned in `requirements.txt`. Solar schedules require system timezone data (`tzdata`).
 
 ```sh
 bash scripts/verify.sh

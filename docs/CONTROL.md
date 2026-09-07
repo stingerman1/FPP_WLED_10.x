@@ -1,5 +1,30 @@
 # Show hooks and APIs
 
+## Clock, sunrise and sunset schedules
+
+Open **Linux Setup ? Follow the daylight**. Enable location, enter latitude/longitude and an IANA timezone (for example `America/Chicago`), then add timers using existing preset IDs. Select weekdays and an offset from -720 to +720 minutes for solar events. Preview upcoming events, then save. This dedicated editor applies schedules immediately; editing the raw Configuration JSON still requires a runtime restart. No location lookup or solar API is contacted.
+
+`GET /api/schedules` returns active definitions, the configuration revision, today's solar times and upcoming occurrences. Authenticated `POST /api/schedules` accepts the following preview request; set `preview:false` and include the returned `revision` to save:
+
+```json
+{
+  "location": {"latitude": 41.88, "longitude": -87.63, "timezone": "America/Chicago"},
+  "timers": [
+    {"event": "sunset", "offset": -30, "days": [0,1,2,3,4,5,6], "preset": 1, "enabled": true},
+    {"hour": 23, "minute": 0, "days": [0,1,2,3,4,5,6], "preset": 2}
+  ],
+  "preview": true
+}
+```
+
+At most 64 timers are supported. Clock timers retain the original hour/minute format; `event:"clock"` is optional. Without a location, clock timers use the Pi's local time. A configured timezone applies to all timers and follows its DST rules. Named-zone clock times skipped by spring-forward do not fire; repeated fall-back times use their first occurrence. Solar offsets count elapsed minutes across DST, and weekday filtering uses the solar event's date even when an offset crosses midnight. Solar timestamps are rounded down to the containing minute for dispatch.
+
+The local renderer recalls presets only while ambient owns the outputs. Events during shows, quiet periods, disabled ambient, or unavailable ownership are consumed and skipped. Missed minutes are not caught up. `timers-fired.json` records events before dispatch, preventing duplicates across ordinary restarts and clock corrections; records older than eight days are pruned when a new event is recorded. Identical timer definitions are deduplicated. Changing a definition/location can create a new event in the current minute. A ledger write failure prevents dispatch. Preset-editing behavior remains unchanged: deleting a referenced preset makes its future timer log a skipped recall.
+
+Previewing/saving schedules leaves current lighting and show locks unchanged. Saves reject stale configuration revisions and preserve unrelated pending configuration changes. Preset IDs must exist when saving. Preview dates extend through the next eight calendar days; no occurrence means disabled, filtered weekdays, or no solar event in that window. Polar day/night never substitutes an arbitrary time.
+
+Solar calculations use pinned [Astral 3.2](https://sffjunkie.github.io/astral/package.html), with its standard horizon/refraction calculation and observer elevation zero. Terrain, weather, and custom horizon corrections are not modeled. The Pi needs an accurate clock and system timezone data (`tzdata`). Scheduling sunrise is separate from the still-unimplemented WLED nightlight sunrise animation mode.
+
 ## Lighting panel and nightlights
 
 Open **Linux Setup → Ambient lighting** (or WLED's nightlight button) for a live pixel preview, supported effect selection, primary/secondary RGB colors, RGBW white channels, brightness, ordinary transition duration, and nightlight controls. Authenticate through Runtime access first. Live changes require ambient ownership.
@@ -8,7 +33,7 @@ Open **Linux Setup → Ambient lighting** (or WLED's nightlight button) for a li
 
 Nightlight time advances only while ambient is allowed. Shows, uncertain ownership, disabled ambient, and the quiet period all pause the countdown; it resumes once ambient is allowed. A new lighting/preset selection cancels the timer. Changing nightlight settings restarts an active timer from the current level. Saving/editing presets does not change the active timer. Explicit nightlight presets can be saved/imported and recalled; active nightlights are not allowed as playlist entries. Process restarts restore the last saved lighting state with the nightlight stopped, rather than replaying a timed action. Completion is saved; intermediate fade frames are not written to disk.
 
-These modes run in the local renderer and flow through FPP mappings. Native-device nightlight control/recovery, sunrise mode 3, astronomical schedules, and custom transition styles remain unsupported.
+These modes run in the local renderer and flow through FPP mappings. Native-device nightlight control/recovery, sunrise mode 3, and custom transition styles remain unsupported. Solar scheduling is described below.
 
 `GET /api/preview` returns the latest rendered RGB/RGBW output as `[pixelIndex, R, G, B, optional W]` entries, geometry, and sample stride. At most 4,096 samples are returned. It returns no pixels while ambient is suspended. The setup page polls twice per second only while visible and preview is enabled, wraps strips into rows, and displays matrix geometry. White is approximated by adding it to RGB for the screen. This is the runtime frame after its pixel mapping, before FPP channel mappings/overlays; it does not verify physical outputs or display show data.
 

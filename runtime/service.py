@@ -19,6 +19,7 @@ from .palettes import Palettes
 from .state import State
 from .storage import read_json, save_json
 from .timers import Timers
+from . import schedules
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -35,7 +36,7 @@ class Controller:
         self.was_allowed = False
         self.started = time.monotonic()
         self.latest_frame = bytes(len(engine.buffer))
-        self.timers = Timers(config.get('timers', []))
+        self.timers = Timers(config.get('timers', []), config.get('location'), directory / 'timers-fired.json')
         self.integrations = {}
         self.link = None
 
@@ -62,12 +63,14 @@ class Controller:
                 'unsupported': ['ESP firmware and provisioning', 'ESP-NOW', 'GPIO', 'audio input',
                                 'usermods', 'Philips Hue', 'file-based fonts',
                                 'custom transition styles', 'boot preset overrides',
-                                'nightlight sunrise mode', 'sunrise/sunset schedules'],
+                                'nightlight sunrise mode'],
                 'integrations': {name: True for name in self.integrations},
                 'devices': self.devices.public()}
 
     def get(self, path):
         with self.lock:
+            if path == '/api/schedules':
+                return schedules.public(self)
             if path == '/api/preview':
                 allowed = self.ownership.status()['allowed']
                 count = self.config['pixels']['count']
@@ -148,6 +151,8 @@ class Controller:
                 return result
             elif path == '/api/presets/import':
                 return import_presets(self.state, payload)
+            elif path == '/api/schedules':
+                return schedules.update(self, payload)
             elif path == '/api/config':
                 validate(payload)
                 save_json(self.directory / 'config.json', payload)

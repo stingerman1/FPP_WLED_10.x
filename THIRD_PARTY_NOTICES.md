@@ -14,6 +14,7 @@ This integration is licensed under the EUPL 1.2 or later, matching WLED. See `LI
 | python-zeroconf 0.148.0 | Zeroconf contributors, LGPL 2.1 or later; installed separately with its distribution license metadata. |
 | ifaddr 0.2.0 | ifaddr contributors, MIT; installed dependency. |
 | async-timeout 5.0.1 | aio-libs contributors, Apache 2.0; installed dependency. |
+| Astral 3.2 | Simon Kennedy, Apache 2.0; [source and documentation](https://github.com/sffjunkie/astral). Installed dependency with retained license metadata; computes solar events locally. |
 
 Embedded font source headers and their attribution comments are copied intact from the pinned WLED tree. No third-party trademark endorsement is implied. Include this file, `LICENSE`, `licenses/`, the complete corresponding upstream source and all dependency license metadata when distributing binary release bundles. Dependency redistribution review and final binary release packaging remain alpha release gates.
 

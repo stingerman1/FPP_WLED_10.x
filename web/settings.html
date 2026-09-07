@@ -35,6 +35,23 @@
 <p id="nightStatus" role="status">No nightlight running.</p><progress id="nightProgress" max="1" value="0" aria-label="Nightlight progress"></progress>
 <p class="lighting-note">Color fade moves each selected segment toward its secondary color. Show ownership pauses the countdown. Applying new lighting cancels it. Runtime restarts leave it stopped.</p>
 </fieldset></div><p id="lightingStatus" role="status"></p></section>
+<section id="schedules" class="lighting-panel" aria-labelledby="scheduleTitle"><h2 id="scheduleTitle">Follow the daylight</h2>
+<p class="lighting-note">Recall a saved preset at a clock time, sunrise, or sunset. Schedules apply immediately when saved. Events during shows or suspended ambient are skipped, never replayed.</p>
+<label><input id="scheduleLocation" type="checkbox"> Use a location and timezone (required for solar timers)</label>
+<div id="scheduleCoordinates" class="lighting-grid" hidden><div><label>Latitude <input id="scheduleLatitude" type="number" min="-90" max="90" step="any" placeholder="41.88"></label><label>Longitude <input id="scheduleLongitude" type="number" min="-180" max="180" step="any" placeholder="-87.63"></label></div><label>Timezone <input id="scheduleZone" placeholder="America/Chicago" autocomplete="off"></label></div>
+<p class="lighting-note">North/east are positive; south/west are negative. The named timezone applies to all timers. Without a location, clock timers use the Pi's local time.</p>
+<div class="lighting-grid"><fieldset><legend id="scheduleEditorTitle">Add a timer</legend>
+<label>Event <select id="scheduleEvent"><option value="clock">Clock time</option><option value="sunrise">Sunrise</option><option value="sunset">Sunset</option></select></label>
+<label id="scheduleClockLabel">Time <input id="scheduleClock" type="time" value="19:00"></label>
+<label id="scheduleOffsetLabel" hidden>Offset minutes <input id="scheduleOffset" type="number" min="-720" max="720" value="0"><span class="lighting-note"> Negative means before; positive means after.</span></label>
+<label>Preset <select id="schedulePreset"><option value="">Save a preset in WLED first</option></select></label>
+<fieldset><legend>Days of the event</legend><div id="scheduleDays" style="display:flex;flex-wrap:wrap;gap:12px"></div></fieldset>
+<label><input id="scheduleEnabled" type="checkbox" checked> Enabled</label>
+<button id="addSchedule">Add timer</button> <button id="cancelScheduleEdit" hidden>Cancel edit</button>
+</fieldset><div><h3 style="margin-top:0">Your timers</h3><ol id="scheduleList" style="padding-left:24px"></ol><p id="scheduleEmpty" class="lighting-note">No timers yet. Add one to build your schedule.</p></div></div>
+<button id="previewSchedules">Preview upcoming events</button> <button id="saveSchedules" disabled>Save schedules</button> <button id="reloadSchedules">Reload saved schedules</button>
+<pre id="scheduleReport" role="status">Loading schedules…</pre><p class="lighting-note">Offsets use the sunrise/sunset date's weekdays, even if they cross midnight. Polar days with no sunrise or sunset are skipped. Keep the Pi clock synchronized.</p>
+</section>
 <section><h2>Configuration</h2><p>FPP channel numbers start at 1; virtual pixel indexes start at 0. Each native device must have one control mode. Saved changes take effect after restarting the runtime service.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate & save</button></section>
 <section><h2>Native WLED devices</h2><p>Enable discovery in configuration to list mDNS candidates. Enroll an IPv4 address in the devices list and choose effect, sync, or fpp-stream mode. Configure streamed channels in FPP.</p><button id="discover">Refresh discovered devices</button><pre id="discovered">Discovery results appear here.</pre>
 <label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:70px" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
@@ -117,4 +134,4 @@ el('sendDevice').onclick=()=>{try{post('/api/devices/command',{target:el('target
 fetch('/api/config').then(r=>r.json()).then(c=>el('config').value=JSON.stringify(c,null,2));
 async function refresh(){try{const s=await(await fetch('/api/status')).json();el('compat').textContent='Unavailable: '+s.unsupported.join(', ')+'\nUnavailable effect IDs: '+s.unsupported_effect_ids.join(', ');delete s.unsupported;delete s.unsupported_effect_ids;el('status').textContent=JSON.stringify(s,null,2);}catch{el('status').textContent='Runtime unavailable';}}
 refresh();setInterval(refresh,1000);
-</script></html>
+</script><script src="/schedules.js"></script></html>

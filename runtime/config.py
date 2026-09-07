@@ -1,5 +1,7 @@
 """Strict limits protect FPP channel buffers and upstream effect allocations."""
 import ipaddress
+import math
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 MAX_CHANNELS = 8192 * 1024
 
@@ -8,6 +10,47 @@ def integer(value, low, high, label):
     if type(value) is not int or not low <= value <= high:
         raise ValueError(f'{label} must be an integer in {low}..{high}')
     return value
+
+
+def validate_schedule(location, timers):
+    if location is not None:
+        if not isinstance(location, dict) or set(location) != {'latitude', 'longitude', 'timezone'}:
+            raise ValueError('location requires latitude, longitude and timezone only')
+        for key, limit in (('latitude', 90), ('longitude', 180)):
+            value = location[key]
+            if type(value) not in (float, int) or not -limit <= value <= limit or not math.isfinite(value):
+                raise ValueError(f'{key} must be a finite number in {-limit}..{limit}')
+        if not isinstance(location['timezone'], str) or not location['timezone']:
+            raise ValueError('location timezone must be an IANA name, such as America/Chicago')
+        try:
+            ZoneInfo(location['timezone'])
+        except (ZoneInfoNotFoundError, ValueError):
+            raise ValueError('unknown IANA timezone') from None
+    if not isinstance(timers, list) or len(timers) > 64:
+        raise ValueError('timers must contain at most 64 entries')
+    for timer in timers:
+        if not isinstance(timer, dict) or not {'preset', 'days'} <= timer.keys():
+            raise ValueError('each timer requires preset and days')
+        event = timer.get('event', 'clock')
+        if event not in ('clock', 'sunrise', 'sunset'):
+            raise ValueError('timer event must be clock, sunrise or sunset')
+        fields = {'hour', 'minute'} if event == 'clock' else {'offset'}
+        if set(timer) - ({'preset', 'days', 'enabled', 'event'} | fields):
+            raise ValueError('unsupported timer fields for ' + event)
+        if type(timer.get('enabled', True)) is not bool:
+            raise ValueError('timer enabled must be boolean')
+        if event == 'clock':
+            integer(timer.get('hour'), 0, 23, 'timer hour')
+            integer(timer.get('minute'), 0, 59, 'timer minute')
+        else:
+            if location is None:
+                raise ValueError('solar timers require a location and timezone')
+            integer(timer.get('offset', 0), -720, 720, 'solar offset minutes')
+        integer(timer['preset'], 1, 250, 'timer preset')
+        if not isinstance(timer['days'], list) or not timer['days']:
+            raise ValueError('timer days must list weekdays (Monday=0)')
+        for day in timer['days']:
+            integer(day, 0, 6, 'weekday')
 
 
 def validate(config):
@@ -67,19 +110,7 @@ def validate(config):
             raise ValueError('device id must contain 1..64 characters')
         if not isinstance(d.get('groups', []), list) or not all(isinstance(g, str) for g in d.get('groups', [])):
             raise ValueError('device groups must be strings')
-    timers = config.get('timers', [])
-    if not isinstance(timers, list) or len(timers) > 64:
-        raise ValueError('timers must contain at most 64 entries')
-    for timer in timers:
-        if not isinstance(timer, dict) or not {'hour', 'minute', 'preset', 'days'} <= timer.keys():
-            raise ValueError('each timer requires hour, minute, preset and days')
-        integer(timer['hour'], 0, 23, 'timer hour')
-        integer(timer['minute'], 0, 59, 'timer minute')
-        integer(timer['preset'], 1, 250, 'timer preset')
-        if not isinstance(timer['days'], list) or not timer['days']:
-            raise ValueError('timer days must list weekdays (Monday=0)')
-        for day in timer['days']:
-            integer(day, 0, 6, 'weekday')
+    validate_schedule(config.get('location'), config.get('timers', []))
     mqtt = config.get('mqtt', {})
     if not isinstance(mqtt, dict):
         raise ValueError('mqtt must be an object')

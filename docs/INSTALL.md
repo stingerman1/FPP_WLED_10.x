@@ -4,7 +4,7 @@
 
 Use a **64-bit stock FPP 10** image on Raspberry Pi 4 or 5. The installer rejects other architectures, models, FPP major versions and ABI fingerprints. It compiles against `/opt/fpp/src`; missing headers or incompatible libraries fail installation instead of downloading substitute FPP binaries. It does not patch FPP.
 
-An administrator must provide `git`, `g++`, `python3`, `python3-venv`, `sudo`, `systemd` and JSONcpp development headers (`libjsoncpp-dev` on Debian). The installed FPP headers/library must match the running FPP version. Internet access is required for the pinned WLED source and Python dependencies. No sudo dependency installation is hidden inside the installer.
+An administrator must provide `git`, `g++`, `python3`, `python3-venv`, timezone data (`tzdata`), `sudo`, `systemd` and JSONcpp development headers (`libjsoncpp-dev` on Debian). The installed FPP headers/library must match the running FPP version. Internet access is required for the pinned WLED source and Python dependencies. No sudo dependency installation is hidden inside the installer.
 
 Clone to exactly `/home/fpp/media/plugins/FPP_WLED_10.x`, then run `sudo bash scripts/install.sh`. FPP's plugin install callback delegates to the same script. A pinned Linux-port checkout is retained under `.upstream/WLED-linux`; an altered rendering tree, different commit or divergent platform wrapper stops the build.
 
@@ -38,7 +38,7 @@ Add devices to `devices`, for example `{"id":"porch","address":"192.0.2.10","mod
 - Set `"discovery":true` to browse `_wled._tcp.local.`; inspect `/api/discovery`, then manually enroll an IPv4 address.
 - Set `"udp":{"enabled":true,"port":21324,"groups":1,"peers":["192.0.2.11"]}` for allowlisted WLED v12 notifier packets. `groups` is a bitmask. Network group settings must agree with the peer. Native `sync` devices may override `sync_port` and `sync_groups`.
 - Set `"mqtt":{"enabled":true,"host":"broker.lan","port":1883,"id":"fpp_wled_house","topic":"wled/house","tls":false}`. Give each installation a unique ID/topic. Store optional credentials separately in `mqtt-secret.json`, with `username` and `password`, owned by fpp and mode 0600. Never put credentials in the public configuration API. Home Assistant MQTT light discovery is emitted automatically; this is not full parity with HA's native WLED integration.
-- Timers use Linux local time: `"timers":[{"hour":18,"minute":0,"days":[0,1,2,3,4,5,6],"preset":1}]`. Monday is 0. Timers encountered during a show are skipped, not replayed. Solar schedules and upstream timer settings pages are unavailable.
+- Timers use Linux local time: `"timers":[{"hour":18,"minute":0,"days":[0,1,2,3,4,5,6],"preset":1}]`. Monday is 0. Timers encountered during a show are skipped, not replayed. Use Linux Setup ? Follow the daylight for solar timers, location/timezone, offsets and preview; saves there apply immediately. See [schedule semantics](CONTROL.md#clock-sunrise-and-sunset-schedules). The upstream ESP timer settings page remains unavailable.
 
 ## Upgrade, rollback, removal
 

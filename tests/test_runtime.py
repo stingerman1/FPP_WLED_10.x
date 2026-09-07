@@ -194,6 +194,12 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(request('POST', '/json/state', {'win': 'A=42&PS=1'}, True)[0], 422)
         self.assertEqual(self.control.state.value['bri'], 74)
         self.assertEqual(request('GET', '/api/preview')[0], 200)
+        self.assertEqual(request('GET', '/api/schedules')[0], 200)
+        schedule = {'timers': [], 'preview': True}
+        self.assertEqual(request('POST', '/api/schedules', schedule)[0], 401)
+        code, body = request('POST', '/api/schedules', schedule, True)
+        self.assertEqual(code, 200)
+        self.assertFalse(json.loads(body)['saved'])
         self.assertEqual(request('POST', '/json/state', {'nl': {'on': True, 'dur': 1}})[0], 401)
         self.assertEqual(request('POST', '/json/state', {'nl': {'on': True, 'dur': 1}}, True)[0], 200)
         self.assertEqual(request('POST', '/json/state', {'nl': {'mode': 3}}, True)[0], 422)
