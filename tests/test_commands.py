@@ -41,6 +41,19 @@ class CommandTests(unittest.TestCase):
         self.state.set({'win': 'win?SS=1&SX=77'})
         self.assertEqual([s['sx'] for s in self.state.value['seg']], [42, 77])
 
+    def test_legacy_power_retains_brightness(self):
+        self.state.set({'win': 'A=42'})
+        self.state.set({'win': 'A=0'})
+        self.assertFalse(self.state.value['on'])
+        self.assertEqual(self.state.value['bri'], 42)
+        self.state.set({'win': 'T=1'})
+        self.assertTrue(self.state.value['on'])
+        self.assertEqual(self.state.value['bri'], 42)
+        self.state.set({'win': 'T=0'})
+        self.state.set({'win': 'A=~10'})
+        self.assertTrue(self.state.value['on'])
+        self.assertEqual(self.state.value['bri'], 10)
+
     def test_command_rejection_is_atomic(self):
         self.presets()
         self.state.start_playlist({'ps': [1, 2]})

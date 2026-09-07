@@ -56,6 +56,8 @@ def lighting(command, base, effect_max):
     if 'A' in args:
         patch['bri'] = number(args['A'], base['bri'] if base['on'] else 0, 0, 255, 'A')
         patch['on'] = patch['bri'] > 0
+        if not patch['on']:
+            patch['bri'] = base['bri']  # WLED remembers brightness when powered off.
     if 'T' in args:
         action = number(args['T'], 0, 0, 2, 'T')
         patch['on'] = not patch.get('on', base['on']) if action == 2 else bool(action)
