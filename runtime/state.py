@@ -3,6 +3,7 @@ from copy import deepcopy
 import random
 from .config import integer
 from .storage import save_json, read_json
+from .commands import lighting, number
 
 
 def default_segment(width, height):
@@ -58,6 +59,12 @@ class State:
         if not isinstance(patch, dict):
             raise ValueError('state must be a JSON object')
         patch = deepcopy(patch)
+        if 'win' in patch:
+            if set(patch) - {'win', 'n', 'ql', 'v', 'transition'}:
+                raise ValueError('win supports only n, ql, v and transition alongside the command')
+            translated = lighting(patch.pop('win'), self.value if base is None else base,
+                                  len(self.engine.effects) - 1)
+            patch = dict(translated, **patch)
         # Stock exports include defaults for hardware/advanced features. Neutral
         # values can be translated without pretending their non-default behavior exists.
         for key, default in (('bs', 0), ('ledmap', 0)):
@@ -73,7 +80,8 @@ class State:
                 result[key] = integer(patch[key], -1, 250, key)
         for key in ('bri', 'transition', 'mainseg'):
             if key in patch:
-                result[key] = integer(patch[key], 0, 655 if key == 'transition' else (31 if key == 'mainseg' else 255), key)
+                result[key] = (number(patch[key], result[key], 0, 255, key) if key == 'bri' else
+                               integer(patch[key], 0, 655 if key == 'transition' else 31, key))
         if 'on' in patch:
             if patch['on'] == 't':
                 result['on'] = not result['on']
@@ -105,6 +113,11 @@ class State:
             if sid == len(result['seg']):
                 result['seg'].append(default_segment(self.engine.width, self.engine.height))
             segment = result['seg'][sid]
+            for field in ('fx', 'sx', 'ix', 'bri', 'c1', 'c2', 'c3'):
+                if field in update:
+                    update[field] = number(update[field], segment.get(field, 16 if field == 'c3' else 128), 0,
+                                           len(self.engine.effects) - 1 if field == 'fx' else
+                                           (31 if field == 'c3' else 255), field)
             old_colors = deepcopy(segment['col'])
             if update.get('fxdef', False) and update.get('fx', segment['fx']) != segment['fx']:
                 mode = integer(update['fx'], 0, len(self.engine.effects) - 1, 'effect')
@@ -239,6 +252,7 @@ class State:
         self.presets = candidate
 
     def select(self, pid):
+        pid = number(pid, self.value['ps'], 1, 250, 'preset id')
         integer(pid, 1, 250, 'preset id')
         preset = self.presets.get(str(pid))
         if not isinstance(preset, dict):

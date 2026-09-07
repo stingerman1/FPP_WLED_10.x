@@ -184,8 +184,15 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(request('GET', '/update')[0], 404)
         self.assertEqual(request('POST', '/json/state', {'on': True})[0], 401)
         self.assertEqual(request('POST', '/json/state', {'on': True}, True)[0], 409)
+        self.assertEqual(request('POST', '/json/state', {'win': 'A=42'})[0], 401)
+        self.assertEqual(request('POST', '/json/state', {'win': 'A=42'}, True)[0], 409)
         self.enable()
         self.assertEqual(request('POST', '/json/state', {'bri': 64}, True)[0], 200)
+        code, body = request('POST', '/json/state', {'win': 'A=~10&SX=42'}, True)
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body)['state']['bri'], 74)
+        self.assertEqual(request('POST', '/json/state', {'win': 'A=42&PS=1'}, True)[0], 422)
+        self.assertEqual(self.control.state.value['bri'], 74)
         self.assertEqual(request('POST', '/json/state', {'bri': -1}, True)[0], 422)
 
 

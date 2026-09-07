@@ -53,7 +53,7 @@ class PresetImportTests(unittest.TestCase):
         self.assertEqual(read_json(self.directory / 'presets.json', {}), self.state.presets)
 
     def test_incompatible_batch_never_partially_saves(self):
-        for bad in ({'seg': {'cct': 200}}, {'seg': {'stop': 99}}, {'win': 'A=255'},
+        for bad in ({'seg': {'cct': 200}}, {'seg': {'stop': 99}}, {'win': 'A=255&PS=3'},
                     {'playlist': {'ps': [99]}}, {'n': '<script>'}, {'ps': 1}):
             with self.subTest(bad=bad):
                 presets = {'1': {'bri': 30}, '2': bad}

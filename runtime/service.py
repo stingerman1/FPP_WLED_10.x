@@ -175,6 +175,8 @@ class Controller:
                     self.state.value['ps'] = pid
                     save_json(self.directory / 'state.json', self.state.value)
                 elif 'ps' in payload:
+                    if set(payload) - {'ps', 'v', 'time'}:
+                        raise ValueError('preset recall supports ps, v and time only; send lighting changes separately')
                     self.state.select(payload['ps'])
                 elif 'playlist' in payload:
                     if payload['playlist'] == {}:

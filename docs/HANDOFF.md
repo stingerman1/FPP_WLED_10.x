@@ -2,7 +2,7 @@
 
 ## Pickup point
 
-The latest increment implements custom palette compatibility. The renderer port pin is `6aaf34dd2fcbdc9e3211ec395d0d1f449bfe4b4e`. Linux Setup can import/edit/export native palette gradients; `/json/palx` supplies previews; slots 0–128 retain IDs 200 down to 72. State/preset import validates custom IDs, deletion protects references, and active palette edits reject during suspended ambient. Preparation now handles clean detached-cache upgrades and shallow clones missing the original release commit. Local suite: 74 tests; upstream Node suite: 16 tests; standalone renderer and ESP32 compile passed. See `runtime/palettes.py`, `tests/test_palettes.py`, and `tests/test_prepare_checkout.py`. Next recommended implementation: **legacy/preset-command compatibility**.
+The latest increment implements lighting-only `win` command presets through authenticated JSON, relative numeric lighting controls, and bounded preset cycling. Commands survive partial saves/import and execute on recall or playlist-entry restart. Unknown/duplicate keys reject atomically; show ownership still blocks live commands. See `runtime/commands.py`, `tests/test_commands.py`, and `docs/CONTROL.md` for the exact subset. Local verification passes all 80 Python tests, renderer preparation/build, sanitized IPC and syntax checks. The renderer port pin remains `6aaf34dd2fcbdc9e3211ec395d0d1f449bfe4b4e`. Next recommended implementation: extend command compatibility with a legacy HTTP endpoint and safely validated preset-reference chains. Random expressions and legacy side-effect commands remain unsupported.
 
 The project is an implemented, publicly available **alpha**, not a hardware-validated release. Continue expanding software compatibility; verification is not the only remaining work. The user asked to save current status for later pickup. No implementation task is currently in progress.
 
@@ -75,11 +75,11 @@ Recovery limitations remain material:
 
 The last priority discussed was native recovery, then custom palettes and preset-command compatibility. Native recovery and custom palettes now have implementations; their documented limits remain.
 
-Suggested next bounded increment: translate a documented subset of legacy/preset commands against pinned WLED `set.cpp`, `json.cpp`, and `presets.cpp`. Preserve show ownership and reject unsupported side effects. Add differential examples and atomic validation before expanding command acceptance.
+The first lighting-only command subset is implemented. Next, extend legacy HTTP response compatibility and preset-reference resolution against pinned WLED sources. Preserve show ownership and atomic validation; detect cycles and validate complete import catalogs before accepting reference chains.
 
 Other outstanding software work:
 
-1. Legacy `/win` commands, preset references/cycling expressions, preset HTTP command strings, boot presets, and nested local playlists.
+1. Legacy `/win` HTTP endpoint, broader command keys, preset-reference chains and random expressions, boot presets, and nested local playlists. Lighting-only JSON `win` strings and deterministic numeric cycling now work.
 2. Nightlight modes, sunrise/sunset timers, and custom transition styles.
 3. Review remaining unsupported effects individually; distinguish portable missing implementations from audio-dependent or dimension-incompatible IDs.
 4. Pixel preview, more configuration UI/API coverage, and fragmented WebSocket requests. Palette JSON editing and previews are now implemented; arbitrary filesystem editing remains excluded.
