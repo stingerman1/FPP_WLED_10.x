@@ -1,0 +1,29 @@
+name: Linux alpha checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  linux:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --no-deps -r requirements.txt
+      - run: bash scripts/verify.sh
+      - name: Compile against pinned FPP reference headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libjsoncpp-dev
+          git clone --no-checkout https://github.com/FalconChristmas/fpp.git .upstream/fpp
+          git -C .upstream/fpp checkout $(python -c 'import json; print(json.load(open("upstream.lock.json"))["fpp"]["reference_commit"])')
+          g++ -std=c++20 -O2 -fPIC -shared -pthread -I.upstream/fpp/src plugin/plugin.cpp -o build/libFPP_WLED_10.x.so
+      - run: python scripts/benchmark.py --output build/benchmark.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verification-${{ matrix.os }}
+          path: build/benchmark.json

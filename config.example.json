@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "bind": "0.0.0.0",
+  "port": 8787,
+  "fps": 40,
+  "quiet_ms": 2000,
+  "heartbeat_ms": 500,
+  "pixels": {"count": 1000, "channels": 3, "width": 1000, "height": 1},
+  "mappings": [{"pixel": 0, "count": 1000, "channel": 1}],
+  "devices": []
+}

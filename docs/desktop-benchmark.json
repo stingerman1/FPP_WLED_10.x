@@ -1,0 +1,31 @@
+{
+  "scope": "renderer only; excludes FPP, networking, physical output and thermal soak",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "machine": "x86_64",
+  "results": [
+    {
+      "width": 1000,
+      "height": 1,
+      "pixels": 1000,
+      "effect_id": 9,
+      "effect": "Rainbow",
+      "frames": 400,
+      "simulated_fps": 40,
+      "mean_ms": 0.020679065,
+      "p95_ms": 0.032275,
+      "max_ms": 0.37071
+    },
+    {
+      "width": 32,
+      "height": 32,
+      "pixels": 1024,
+      "effect_id": 118,
+      "effect": "Spaceships",
+      "frames": 400,
+      "simulated_fps": 40,
+      "mean_ms": 0.0274377375,
+      "p95_ms": 0.037517,
+      "max_ms": 0.293712
+    }
+  ]
+}

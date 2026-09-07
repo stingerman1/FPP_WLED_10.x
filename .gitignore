@@ -1,0 +1,11 @@
+.upstream/
+build/
+__pycache__/
+*.pyc
+.venv/
+*.so
+*.o
+.pytest_cache/
+state/
+.playwright-cli/
+output/playwright/

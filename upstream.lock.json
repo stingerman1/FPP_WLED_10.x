@@ -1,0 +1,16 @@
+{
+  "wled": {
+    "repository": "https://github.com/wled/WLED.git",
+    "tag": "v16.0.1",
+    "commit": "29b389df1c1aaec6ff53aea742d17063b985906c",
+    "fork": "https://github.com/stingerman1/WLED.git",
+    "branch": "linux-fpp-16.0.1",
+    "port_commit": "eb7dce9bc02814a6e3e268c8773e7ac00a8b7b1c"
+  },
+  "fpp": {
+    "repository": "https://github.com/FalconChristmas/fpp.git",
+    "branch": "v10.0",
+    "reference_commit": "370e62ed7e8c8318da6ee5b01312b8b75082d952",
+    "plugin_api": 6
+  }
+}

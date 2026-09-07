@@ -1,0 +1,12 @@
+{
+  "repoName": "FPP_WLED_10.x",
+  "name": "WLED for FPP 10 (experimental alpha)",
+  "author": "stingerman1",
+  "description": "Isolated WLED 16.0.1 Linux renderer with show-aware FPP channel integration. Hardware acceptance pending.",
+  "homeURL": "https://github.com/stingerman1/FPP_WLED_10.x",
+  "srcURL": "https://github.com/stingerman1/FPP_WLED_10.x.git",
+  "bugURL": "https://github.com/stingerman1/FPP_WLED_10.x/issues",
+  "minMemoryMB": 1024,
+  "minCpuCores": 4,
+  "versions": [{"minFPPVersion": "10.0", "maxFPPVersion": "10.99", "branch": "main", "sha": "", "allowUpdates": 1}]
+}

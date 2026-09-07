@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WLED for FPP · Setup</title>
+<style>body{font:16px system-ui;background:#17191d;color:#e5e7eb;max-width:850px;margin:40px auto;padding:0 20px}a{color:#93c5fd}button,input,textarea{font:inherit;padding:10px;margin:4px 0;border:1px solid #536075;border-radius:5px;background:#252a34;color:inherit}textarea{width:100%;box-sizing:border-box;min-height:300px}pre{white-space:pre-wrap;overflow-wrap:anywhere}label{display:block}button{cursor:pointer}h1{font-size:28px}section{margin:28px 0}#result{color:#fcd34d}</style>
+<h1>WLED for FPP <small>Linux alpha</small></h1>
+<p><a href="/">Open WLED</a> · <a href="https://github.com/stingerman1/FPP_WLED_10.x">Documentation</a></p>
+<p>FPP owns physical outputs. Ambient waits while shows run, then resumes after two quiet seconds. This alpha supports a subset of WLED; unavailable capabilities are listed below.</p>
+<section><h2>Runtime access</h2><p>Read the token from <code>auth.json</code> in the plugin configuration directory. Login enables controls on this browser.</p>
+<label>API token <input id="token" type="password" autocomplete="off"></label><button id="login">Login</button></section>
+<section><h2>Ambient ownership</h2><button data-op="ambient-enable">Enable ambient</button> <button data-op="ambient-disable">Disable ambient</button>
+<label>Show source <input id="source" placeholder="xschedule:main"></label><button data-op="show-start">Show Start</button> <button data-op="show-end">Show End / clear this lock</button>
+<p>Clear only the source you intend to release. Other sources keep ownership.</p><pre id="status">Loading status…</pre></section>
+<section><h2>Configuration</h2><p>FPP channel numbers start at 1; virtual pixel indexes start at 0. Each native device must have one control mode. Saved changes take effect after restarting the runtime service.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate & save</button></section>
+<section><h2>Native WLED devices</h2><p>Enable discovery in configuration to list mDNS candidates. Enroll an IPv4 address in the devices list and choose effect, sync, or fpp-stream mode. Configure streamed channels in FPP.</p><button id="discover">Refresh discovered devices</button><pre id="discovered">Discovery results appear here.</pre>
+<label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:70px" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
+<section><h2>Compatibility</h2><pre id="compat"></pre></section><p id="result" role="status"></p>
+<script>
+const el=id=>document.getElementById(id);
+async function post(path,body,token){const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await fetch(path,{method:'POST',headers,body:JSON.stringify(body)});const data=await r.json();el('result').textContent=JSON.stringify(data);if(!r.ok)throw Error(data.error);return data;}
+el('login').onclick=()=>post('/api/login',{},el('token').value).then(()=>{el('token').value='';el('result').textContent='Logged in. Return to WLED to use lighting controls.';}).catch(()=>{});
+document.querySelectorAll('[data-op]').forEach(button=>button.onclick=()=>post('/api/command',{operation:button.dataset.op,source:el('source').value}).catch(()=>{}));
+el('save').onclick=()=>{try{post('/api/config',JSON.parse(el('config').value)).catch(()=>{});}catch(e){el('result').textContent=e.message;}};
+el('discover').onclick=()=>fetch('/api/discovery').then(r=>r.json()).then(data=>el('discovered').textContent=data.length?JSON.stringify(data,null,2):'No devices found. Check discovery configuration or enroll manually.').catch(()=>el('discovered').textContent='Discovery unavailable');
+el('sendDevice').onclick=()=>{try{post('/api/devices/command',{target:el('target').value,state:JSON.parse(el('deviceState').value)}).catch(()=>{});}catch(e){el('result').textContent=e.message;}};
+fetch('/api/config').then(r=>r.json()).then(c=>el('config').value=JSON.stringify(c,null,2));
+async function refresh(){try{const s=await(await fetch('/api/status')).json();el('compat').textContent='Unavailable: '+s.unsupported.join(', ')+'\nUnavailable effect IDs: '+s.unsupported_effect_ids.join(', ');delete s.unsupported;delete s.unsupported_effect_ids;el('status').textContent=JSON.stringify(s,null,2);}catch{el('status').textContent='Runtime unavailable';}}
+refresh();setInterval(refresh,1000);
+</script></html>
