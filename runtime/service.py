@@ -9,6 +9,7 @@ import threading
 import time
 
 from .config import validate
+from .config import integer
 from .devices import Devices
 from .engine import Engine
 from .ipc import Link
@@ -123,10 +124,22 @@ class Controller:
                     return {'success': True}
                 if not self.ownership.status()['allowed']:
                     raise PermissionError('ambient changes rejected: show owns targets or ambient is disabled')
-                if 'ps' in payload:
+                if 'pd' in payload:
+                    # Upstream UI sends a cached preset body with pd instead of
+                    # recalling ps. Validate the body atomically before stopping.
+                    pid = integer(payload['pd'], 1, 250, 'preset id')
+                    patch = {k: v for k, v in payload.items() if k not in ('pd', 'ps', 'pl')}
+                    self.state.set(patch)
+                    self.state.stop_playlist()
+                    self.state.value['ps'] = pid
+                    save_json(self.directory / 'state.json', self.state.value)
+                elif 'ps' in payload:
                     self.state.select(payload['ps'])
                 elif 'playlist' in payload:
-                    self.state.start_playlist(payload['playlist'])
+                    if payload['playlist'] == {}:
+                        self.state.stop_playlist()
+                    else:
+                        self.state.start_playlist(payload['playlist'])
                 else:
                     self.state.set(payload)
                     self.state.stop_playlist()

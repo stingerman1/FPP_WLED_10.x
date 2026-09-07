@@ -102,6 +102,19 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.control.state.set({'seg': {'n': '<script>'}})
 
+    def test_upstream_cached_preset_recall_and_playlist_stop(self):
+        self.enable()
+        self.control.post('/json/state', {'psave': 1, 'n': 'Rainbow', 'seg': {'fx': 9}})
+        preset = self.control.get('/presets.json')['1']
+        self.assertNotIn('ps', preset)
+        self.control.post('/json/state', {'pd': 1, **preset})
+        self.assertEqual(self.control.state.value['ps'], 1)
+        self.assertEqual(self.control.state.value['seg'][0]['fx'], 9)
+        self.control.post('/json/state', {'playlist': {'ps': [1], 'dur': [10]}})
+        self.control.post('/json/state', {'playlist': {}})
+        self.assertIsNone(self.control.state.playlist)
+        self.assertEqual(self.control.state.value['pl'], -1)
+
     def test_http_auth_gating_and_unsupported_endpoints(self):
         self.control.config['port'] = 0 # ephemeral port is test-only, bypasses install validation
         run_dir = self.directory / 'run'

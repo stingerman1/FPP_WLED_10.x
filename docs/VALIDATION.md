@@ -1,7 +1,8 @@
 # Local validation — 2026-09-07
 
 - Linux x86-64 under Ubuntu 24.04 / WSL2: actual WLED renderer compiled and linked with no undefined symbols.
-- Plugin suite: all 25 tests passed in the final combined run with the pinned Linux-port checkout and optional dependencies installed.
+- Plugin suite: 25 tests passed in the combined run with the pinned Linux-port checkout and optional dependencies installed. A subsequent cached-preset/playlist-stop regression increased the suite to 26 tests; all nine targeted runtime/API tests passed after that change.
+- GitHub Actions passed on both Ubuntu x86-64 and arm64, including the renderer suite, sanitized IPC test, FPP10 reference-header compilation and renderer benchmarks. [Initial successful run](https://github.com/stingerman1/FPP_WLED_10.x/actions/runs/34159344306).
 - All 129 strip-supported and 171 matrix-supported effect IDs rendered bounded frames; separate exact RGBW, distinct-segment mapping and fresh-process deterministic Rainbow checks passed. These do not certify all effects visually or exhaustively.
 - C++ frame parser/copy checks passed with AddressSanitizer and UndefinedBehaviorSanitizer.
 - FPP adapter compiled against the pinned stock FPP10 reference headers. No installed FPP daemon/library or Pi hardware was available, so ABI load and playback acceptance remain open.

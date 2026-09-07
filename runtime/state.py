@@ -40,7 +40,9 @@ class State:
     def stop_playlist(self):
         self.playlist = None
         self.value['pl'] = -1
+        self.value['ps'] = -1
         self.persist_playlist()
+        save_json(self.directory / 'state.json', self.value)
 
     def merge(self, patch, base=None):
         if not isinstance(patch, dict):
@@ -165,6 +167,8 @@ class State:
         else:
             preset = self.merge(patch)
             preset['n'] = patch.get('n', 'Preset ' + key)
+            preset.pop('ps', None)
+            preset.pop('pl', None)
         if not isinstance(preset['n'], str) or len(preset['n']) > 128:
             raise ValueError('preset name must be a string of at most 128 characters')
         if any(c in preset['n'] for c in '<>&'):

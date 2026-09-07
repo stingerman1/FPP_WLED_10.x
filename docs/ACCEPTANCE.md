@@ -11,7 +11,7 @@ Status: **alpha implementation; hardware acceptance open**. Do not publish produ
 | Native devices | Mock HTTP takeover/realtime tests, UDP codec tests | Each mode, groups, actual ESP versions, direct/mixed routing, network loss, restart, missing End and runtime crashes |
 | MQTT/HA/mDNS | Real pinned Paho client against loopback MQTT wire fixture; discovery/command/retained rejection/show-gate checks | Production broker reconnect/TLS, HA application acceptance, multicast discovery and physical interoperability |
 | Lifecycle | Staged install, health check, rollback/removal scripts and syntax checks | Fresh Pi install, upgrade failure injection, FPP restart, rollback and config-preserving removal |
-| Publication | Upstream-history Linux port branch, repository metadata, pinned inputs, notices, CI definition and source packaging script | Remote CI, source-release publication, binary reproducibility and catalog review |
+| Publication | Public upstream-history Linux port branch, repository metadata, pinned inputs, notices, passing x86-64/arm64 CI and checksummed source packaging | Pi binary reproducibility and catalog review |
 
 Run `bash scripts/verify.sh` and retain stdout, compiler/Python versions and commit IDs. `scripts/benchmark.py` emits JSON for a 1,000 RGB strip and 32×32 workload with 40 fps simulated time. It measures rendering only, not real-time scheduling or FPP delivery. Desktop results are not a substitute for Pi acceptance.
 

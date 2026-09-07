@@ -15,7 +15,7 @@ The compatibility layer does **not** implement every WLED API or setting. Read t
 
 ## Install and configure
 
-See [installation, upgrades, rollback and removal](docs/INSTALL.md). Repository-based installation is provided; plugin-catalog acceptance and published release assets are pending.
+See [installation, upgrades, rollback and removal](docs/INSTALL.md). Repository-based installation is provided, with [alpha source releases](https://github.com/stingerman1/FPP_WLED_10.x/releases). Pi binary releases and plugin-catalog acceptance remain pending.
 
 ```sh
 cd /home/fpp/media/plugins
@@ -43,6 +43,6 @@ FPP_SRC=/opt/fpp/src bash scripts/build-plugin.sh
 python3 scripts/verify-abi.py /opt/fpp/src build/libFPP_WLED_10.x.so
 ```
 
-The last two commands require an installed FPP build. Desktop reference-header compilation is a compile check only. CI is defined for Linux x86-64 and arm64; its first remote run is pending publication.
+The last two commands require an installed FPP build. Reference-header compilation is a compile check only. [CI](https://github.com/stingerman1/FPP_WLED_10.x/actions/workflows/verify.yml) passes on Linux x86-64 and arm64; this does not replace Pi/FPP hardware acceptance.
 
 `scripts/prepare_renderer.py` verifies the pinned Linux-port commit, unchanged upstream rendering tree and matching local platform wrappers, then applies explicit Linux substitutions. No ESP firmware is built or flashed by the plugin installer. The dedicated [Linux port branch](https://github.com/stingerman1/WLED/tree/linux-fpp-16.0.1/ports/fpp-linux) preserves upstream WLED history; its exact commit is in `upstream.lock.json`. See [architecture](docs/ARCHITECTURE.md), [third-party notices](THIRD_PARTY_NOTICES.md) and [license](LICENSE).
