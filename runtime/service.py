@@ -117,14 +117,20 @@ class Controller:
             elif path in ('/json', '/json/state', '/json/si'):
                 if 'psave' in payload:
                     patch = {k: v for k, v in payload.items() if k not in ('psave', 'ib', 'sb', 'sc', 'v', 'o')}
-                    self.state.save_preset(payload['psave'], patch)
+                    options = {k: payload[k] for k in ('ib', 'sb', 'sc', 'o') if k in payload}
+                    self.state.save_preset(payload['psave'], patch, options)
                     return {'success': True}
                 if 'pdel' in payload:
                     self.state.delete_preset(payload['pdel'])
                     return {'success': True}
                 if not self.ownership.status()['allowed']:
                     raise PermissionError('ambient changes rejected: show owns targets or ambient is disabled')
-                if 'pd' in payload:
+                if 'np' in payload:
+                    if type(payload['np']) is not bool or set(payload) - {'np', 'v', 'time'}:
+                        raise ValueError('np requires a standalone boolean playlist-advance request')
+                    if payload['np']:
+                        self.state.tick(0, advance=True)
+                elif 'pd' in payload:
                     # Upstream UI sends a cached preset body with pd instead of
                     # recalling ps. Validate the body atomically before stopping.
                     pid = integer(payload['pd'], 1, 250, 'preset id')

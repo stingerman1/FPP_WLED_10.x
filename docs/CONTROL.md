@@ -41,6 +41,8 @@ Other operations are `show-end`, `ambient-enable`, `ambient-disable`, `status`. 
 | POST `/json/state` with `psave` / `pdel` | Save/edit/delete a preset, including during a show without modifying live state |
 | `/ws` | WLED state/info WebSocket; login cookie or bearer header required for mutation |
 
-Use `{"ps":1}` to recall a preset and `{"playlist":{"ps":[1,2],"dur":[100],"transition":[7],"repeat":0}}` to run a sequential playlist. Durations and transitions use upstream deciseconds. Repeat 0 is continuous. Retained MQTT commands are ignored to avoid replaying stale control after reconnect.
+Use `{"ps":1}` to recall a preset and `{"playlist":{"ps":[1,2],"dur":[100],"transition":[7],"repeat":0}}` to run a sequential playlist. Durations and transitions use upstream deciseconds. Repeat 0 is continuous. Add `"r":true` inside the playlist to shuffle each pass. Duration 0 holds an entry until `{"np":true}` advances it. `"end":255` returns to the saved preset selected before starting the playlist. Retained MQTT commands are ignored to avoid replaying stale control after reconnect.
+
+Selective save example: `{"psave":1,"n":"Rainbow","ql":"R","ib":false,"sb":false,"sc":true}` preserves the recall-time global brightness and segment geometry. Custom JSON example: `{"psave":2,"o":true,"n":"Dim","bri":42}` stores only the brightness change. Both saves leave live output untouched during shows. Full-state saves remain the default when flags are omitted. Unsupported command strings and non-default hardware settings still reject with 422.
 
 The quiet period begins when the last automatic or explicit owner clears. Black show frames still count as live input. A playlist pause or gap retains playlist ownership. If observation becomes stale, ambient stops and a new quiet period is required after observation recovers.

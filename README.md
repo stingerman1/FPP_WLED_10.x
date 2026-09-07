@@ -8,7 +8,7 @@ An experimental FPP plugin that renders upstream WLED effects in a separate Linu
 - Engine: WLED v16.0.1, commit `29b389df1c1aaec6ff53aea742d17063b985906c`.
 - Dedicated WLED UI/API: port **8787**, configurable; FPP's existing WLED endpoints remain separate.
 - 129 supported effect IDs on a strip; 171 on a matrix, retaining upstream numbering across all 220 slots. Audio, reserved and dimension-incompatible effects are marked unavailable.
-- RGB/RGBW, segments, built-in palettes, mapping, normal transitions, persistent presets, sequential playlists, local timers, HTTP/JSON, WebSocket, optional UDP, MQTT/HA discovery and native-device enrollment.
+- RGB/RGBW, segments, built-in palettes, mapping, normal transitions, selective/partial presets, sequential or shuffled playlists, local timers, HTTP/JSON, WebSocket, optional UDP, MQTT/HA discovery and native-device enrollment.
 - Explicit source-scoped show locks persist across restarts. Unknown ownership or a stale 500 ms heartbeat disables ambient. All sources must clear, followed by at least two quiet seconds, before ambient resumes.
 
 The compatibility layer does **not** implement every WLED API or setting. Read the [compatibility matrix](docs/COMPATIBILITY.md) before importing presets or integrating a controller.
