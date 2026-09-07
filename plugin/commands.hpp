@@ -44,7 +44,7 @@ public:
       int fd=socket(AF_UNIX,SOCK_STREAM|SOCK_CLOEXEC,0);
       if(fd<0) return Reply{true,"Cannot open runtime command socket"};
       struct SocketGuard {int fd;~SocketGuard(){close(fd);}} socketGuard{fd};
-      timeval timeout{4,0};setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout));
+      timeval timeout{10,0};setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout));
       setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeout,sizeof(timeout));
       sockaddr_un address{};address.sun_family=AF_UNIX;strcpy(address.sun_path,"/run/fpp-wled/control.sock");
       if(connect(fd,reinterpret_cast<sockaddr*>(&address),sizeof(address))) return Reply{true,"Runtime is unavailable; show handoff not acknowledged"};

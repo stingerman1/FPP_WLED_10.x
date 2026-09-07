@@ -62,6 +62,40 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(self.control.state.entry, 1)
         self.assertEqual(self.control.state.remaining_ms, 1000)
 
+    def test_native_recovery_is_wired_to_explicit_and_automatic_takeover(self):
+        import threading
+        self.enable()
+        devices = self.control.devices
+        devices.config['one'] = {'id': 'one', 'address': '192.0.2.1', 'mode': 'effect'}
+        devices.locks['one'] = threading.Lock()
+        devices.recovery.clock = lambda: self.now / 1e9
+        native = {'info': {'mac': 'aabbccddeeff', 'live': False, 'leds': {'maxseg': 1}},
+                  'state': {**deepcopy(self.control.state.value), 'bri': 31}}
+        writes = []
+        def request(address, path, payload=None):
+            if payload is not None:
+                writes.append(payload)
+                return {'success': True}
+            return deepcopy(native if path == '/json' else native[path.rsplit('/', 1)[1]])
+        devices.request = request
+        self.control.tick(25)
+        devices.drain()
+        native['state']['bri'] = 61
+        self.control.post('/api/command', {'operation': 'show-start', 'source': 'test'})
+        self.control.tick(25)
+        self.assertEqual(devices.recovery.saved['one']['payload']['bri'], 61)
+        self.control.post('/api/command', {'operation': 'show-end', 'source': 'test'})
+        self.idle(2200)
+        self.control.tick(25)
+        devices.drain()
+        self.assertEqual(writes[-1]['bri'], 61)
+        self.control.ownership.observe(['fpp:sequence'])
+        self.assertFalse(self.control.tick(25)[1])
+        self.idle(2200)
+        self.control.tick(25)
+        devices.drain()
+        self.assertEqual(len(writes), 2)
+
     def test_invalid_patch_is_atomic(self):
         self.enable()
         original = deepcopy(self.control.state.value)

@@ -1,5 +1,7 @@
 # Local validation — 2026-09-07
 
+Native recovery increment: all 63 Python tests passed locally. Added tests cover lighting-only snapshot projection, persisted actual settings, preset/playlist selection, off-state restoration, identity mismatch, realtime retry, overlapping locks, takeover races, capture deadlines, storage/network failures, command supersession/rejection, controller wiring, and loopback HTTP device behavior. Native saved playlists deliberately restart at the beginning; exact cursor recovery is not claimed. The adapter also compiled locally against the pinned FPP reference headers and the existing jsoncpp include tree.
+
 Current main preset-import increment: all 43 Python tests passed locally, including whole-batch rejection, forward playlist references, catalog/input conflicts, storage failure, active-playlist protection, and real-daemon HTTP import during show ownership. Browser file upload, translation preview, overwrite reporting, and save were exercised against the local runtime fixture. These are simulated FPP checks, not hardware acceptance.
 
 - Linux x86-64 under Ubuntu 24.04 / WSL2: actual WLED renderer compiled and linked with no undefined symbols.

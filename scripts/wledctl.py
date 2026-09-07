@@ -19,7 +19,7 @@ def main():
     p.add_argument('source', nargs='?')
     p.add_argument('--socket', default='/run/fpp-wled/control.sock')
     args = p.parse_args()
-    connection = LocalConnection(args.socket, timeout=5)
+    connection = LocalConnection(args.socket, timeout=10)
     connection.request('POST', '/api/command', json.dumps({'operation': args.operation, 'source': args.source}),
                        {'Content-Type': 'application/json'})
     response = connection.getresponse()

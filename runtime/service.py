@@ -100,12 +100,16 @@ class Controller:
             raise ValueError('request must be an object')
         drain = False
         revoked = None
+        capture_epoch = None
         with self.lock:
             if path == '/api/command':
                 operation = payload.get('operation')
                 if operation == 'status':
                     return self.status()
+                was_allowed = self.ownership.status()['allowed']
                 result = self.ownership.command(operation, payload.get('source'))
+                if operation == 'show-start' and was_allowed:
+                    capture_epoch = self.ownership.epoch
                 drain = operation in ('show-start', 'ambient-disable')
                 if drain and self.link:
                     revoked = self.link.send(self.latest_frame, self.config, False)
@@ -160,6 +164,8 @@ class Controller:
                 raise KeyError(path)
         if drain:
             self.devices.drain()
+            if capture_epoch is not None:
+                self.devices.recovery.capture_before_show(capture_epoch)
             if self.link:
                 deadline = time.monotonic() + 2
                 while time.monotonic() < deadline:
@@ -190,6 +196,7 @@ class Controller:
                 self.dirty = True
             elif self.state.tick(step_ms):
                 self.dirty = True
+            self.devices.recovery.tick()
             if self.dirty:
                 self.engine.apply(self.state.value)
                 self.dirty = False

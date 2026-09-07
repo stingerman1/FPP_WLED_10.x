@@ -7,6 +7,7 @@ import threading
 from urllib.request import Request, build_opener, ProxyHandler
 from .storage import read_json, save_json
 from .udp import encode
+from .native_restore import NativeRecovery
 
 
 class Devices:
@@ -23,6 +24,7 @@ class Devices:
         self.desired = read_json(self.path, {})
         if not isinstance(self.desired, dict):
             raise ValueError('native-state.json must be an object')
+        self.recovery = NativeRecovery(self, directory)
 
     def request(self, address, path, payload=None):
         body = None if payload is None else json.dumps(payload).encode()
@@ -72,6 +74,7 @@ class Devices:
                 save_json(self.path, desired)
                 self.desired = desired
             for device in targets:
+                self.recovery.cancel(device['id'])
                 self.futures.add(self.executor.submit(self._send, device, deepcopy(payload), self.ownership.epoch))
         return {'accepted': [d['id'] for d in targets]}
 
@@ -80,8 +83,8 @@ class Devices:
         try:
             with self.locks[key]:
                 info = self.request(device['address'], '/json/info')
-                if info.get('live'):
-                    raise PermissionError('device is receiving realtime data')
+                if info.get('live') is not False:
+                    raise PermissionError('device is receiving realtime data or its state is unknown')
                 with self.state_lock:
                     status = self.ownership.status()
                     if not status['allowed'] or status['epoch'] != epoch:
@@ -91,7 +94,10 @@ class Devices:
                 if device['mode'] == 'sync':
                     self._sync(device, payload)
                 else:
-                    self.request(device['address'], '/json/state', payload)
+                    reply = self.request(device['address'], '/json/state', payload)
+                    if not isinstance(reply, dict) or reply.get('error') or reply.get('success') is False:
+                        raise ValueError('native device rejected command')
+                    self.recovery.command_sent(key)
                 result = {'reachable': True, 'last_command': 'sent', 'version': info.get('ver')}
         except Exception as exc:
             result = {'last_command': 'blocked' if isinstance(exc, PermissionError) else 'failed', 'error': str(exc)}
@@ -114,8 +120,9 @@ class Devices:
             sock.sendto(packet, (device['address'], device.get('sync_port', 21324)))
 
     def resume(self):
+        recovered = self.recovery.resume()
         for key, payload in list(self.desired.items()):
-            if key not in self.config or self.config[key]['mode'] == 'fpp-stream':
+            if key in recovered or key not in self.config or self.config[key]['mode'] == 'fpp-stream':
                 continue
             try:
                 self.command(key, payload, persist=False)
@@ -132,7 +139,8 @@ class Devices:
     def public(self):
         with self.mutex:
             return [{'id': key, 'address': d['address'], 'mode': d['mode'],
-                     'groups': d.get('groups', []), **self.status.get(key, {'last_command': 'not probed'})}
+                     'groups': d.get('groups', []), **self.status.get(key, {'last_command': 'not probed'}),
+                     **(self.recovery.public(key) if d['mode'] == 'effect' else {})}
                     for key, d in self.config.items()]
 
     def close(self):
