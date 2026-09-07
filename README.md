@@ -35,6 +35,8 @@ Native devices have exactly one enrolled mode: HTTP effects/presets, UDP synchro
 
 ## Develop and verify
 
+For the current pickup point, completed work, remaining implementation, and local tooling details, read the [development handoff](docs/HANDOFF.md).
+
 Linux requires Git, Python 3.10+, GCC/G++ with C++20 support and standard development tools. Optional network libraries are pinned in `requirements.txt`.
 
 ```sh
