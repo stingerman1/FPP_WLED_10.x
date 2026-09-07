@@ -1,5 +1,7 @@
 # Local validation — 2026-09-07
 
+Current main preset-import increment: all 43 Python tests passed locally, including whole-batch rejection, forward playlist references, catalog/input conflicts, storage failure, active-playlist protection, and real-daemon HTTP import during show ownership. Browser file upload, translation preview, overwrite reporting, and save were exercised against the local runtime fixture. These are simulated FPP checks, not hardware acceptance.
+
 - Linux x86-64 under Ubuntu 24.04 / WSL2: actual WLED renderer compiled and linked with no undefined symbols.
 - Plugin suite: all 26 tests passed in x86-64 and arm64 CI, including the cached-preset/playlist-stop regression. All nine targeted runtime/API tests also passed locally after the final UI integration changes.
 - GitHub Actions passed on both Ubuntu x86-64 and arm64, including the renderer suite, sanitized IPC test, FPP10 reference-header compilation and renderer benchmarks. [Initial successful run](https://github.com/stingerman1/FPP_WLED_10.x/actions/runs/34159344306).

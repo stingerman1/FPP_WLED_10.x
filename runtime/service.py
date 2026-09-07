@@ -14,6 +14,7 @@ from .devices import Devices
 from .engine import Engine
 from .ipc import Link
 from .ownership import Ownership
+from .preset_import import import_presets
 from .state import State
 from .storage import read_json, save_json
 from .timers import Timers
@@ -108,6 +109,8 @@ class Controller:
                 drain = operation in ('show-start', 'ambient-disable')
                 if drain and self.link:
                     revoked = self.link.send(self.latest_frame, self.config, False)
+            elif path == '/api/presets/import':
+                return import_presets(self.state, payload)
             elif path == '/api/config':
                 validate(payload)
                 save_json(self.directory / 'config.json', payload)

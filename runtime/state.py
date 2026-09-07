@@ -251,7 +251,8 @@ class State:
             self.value.update(ps=pid, pl=-1)
         save_json(self.directory / 'state.json', self.value)
 
-    def validate_playlist(self, playlist):
+    def validate_playlist(self, playlist, presets=None):
+        presets = self.presets if presets is None else presets
         if not isinstance(playlist, dict) or set(playlist) - {'ps', 'dur', 'transition', 'repeat', 'end', 'r'}:
             raise ValueError('unsupported playlist fields')
         ids = playlist.get('ps')
@@ -259,9 +260,9 @@ class State:
             raise ValueError('playlist must have 1..100 preset entries')
         for pid in ids:
             integer(pid, 1, 250, 'playlist preset')
-            if str(pid) not in self.presets or 'playlist' in self.presets[str(pid)]:
+            if not isinstance(presets.get(str(pid)), dict) or 'playlist' in presets[str(pid)]:
                 raise ValueError('playlist entries must refer to existing non-playlist presets')
-            self.merge(self.presets[str(pid)])
+            self.merge(presets[str(pid)])
         for field, default, low in [('dur', 100, 0), ('transition', 7, 0)]:
             values = playlist.get(field, [default])
             if type(values) is int:
@@ -274,10 +275,10 @@ class State:
         if type(playlist.get('r', False)) not in (bool, int) or playlist.get('r', False) not in (False, True, 0, 1):
             raise ValueError('playlist r must be boolean or 0/1')
         end = integer(playlist.get('end', 0), 0, 255, 'end')
-        if end not in (0, 255) and (str(end) not in self.presets or 'playlist' in self.presets[str(end)]):
+        if end not in (0, 255) and (not isinstance(presets.get(str(end)), dict) or 'playlist' in presets[str(end)]):
             raise ValueError('end must refer to an existing non-playlist preset')
         if 1 <= end <= 250:
-            self.merge(self.presets[str(end)])
+            self.merge(presets[str(end)])
 
     def start_playlist(self, playlist):
         self.validate_playlist(playlist)

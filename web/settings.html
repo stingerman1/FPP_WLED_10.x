@@ -13,9 +13,41 @@
 <section><h2>Configuration</h2><p>FPP channel numbers start at 1; virtual pixel indexes start at 0. Each native device must have one control mode. Saved changes take effect after restarting the runtime service.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate & save</button></section>
 <section><h2>Native WLED devices</h2><p>Enable discovery in configuration to list mDNS candidates. Enroll an IPv4 address in the devices list and choose effect, sync, or fpp-stream mode. Configure streamed channels in FPP.</p><button id="discover">Refresh discovered devices</button><pre id="discovered">Discovery results appear here.</pre>
 <label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:70px" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
+<section><h2>Import WLED presets</h2>
+<p>Merge a WLED presets.json file into this runtime. Matching IDs will be overwritten; other presets remain. Preview checks the current pixel layout and reports translations. Unsupported entries block the whole import. Lighting and show locks remain active.</p>
+<p><a href="/presets.json" download="presets.json">Download existing presets before importing</a></p>
+<label>Preset file <input id="presetFile" type="file" accept=".json,application/json"></label>
+<label>Preset JSON<textarea id="presetImport" spellcheck="false" placeholder='{"1":{"n":"Warm","seg":{"col":[[255,160,0]]}}}'></textarea></label>
+<button id="previewImport">Preview import</button> <button id="commitImport" disabled>Save imported presets</button>
+<pre id="importReport" role="status">Choose a file or paste JSON, then preview. Request limit: 256 KiB.</pre>
+</section>
 <section><h2>Compatibility</h2><pre id="compat"></pre></section><p id="result" role="status"></p>
 <script>
 const el=id=>document.getElementById(id);
+let importPreview=null, importGeneration=0;
+function invalidateImport(){importGeneration++;importPreview=null;el('commitImport').disabled=true;}
+function importSummary(report){
+ const lines=[report.saved?'Saved. Reload WLED to refresh its preset list.':report.valid?'Ready to save.':'Cannot import; fix the reported entries.',
+  'Add: '+(report.added.join(', ')||'none')+' | Overwrite: '+(report.overwritten.join(', ')||'none')];
+ for(const entry of report.entries)lines.push('Preset '+entry.id+': '+([...entry.errors,...entry.translations].join('; ')||'Compatible'));
+ lines.push(...report.errors);return lines.join('\n');
+}
+el('presetImport').oninput=invalidateImport;
+el('presetFile').onchange=async()=>{invalidateImport();const generation=importGeneration;try{const file=el('presetFile').files[0];if(!file)return;if(file.size>262000)throw Error('File too large; split into smaller preset batches.');const text=await file.text();if(generation===importGeneration)el('presetImport').value=text;}catch(e){el('importReport').textContent=e.message;}};
+async function runImport(preview){
+ const generation=importGeneration;el('commitImport').disabled=true;
+ try{
+  const presets=JSON.parse(el('presetImport').value);
+  const request={presets,preview};if(!preview)request.revision=importPreview?.revision;
+  if(new TextEncoder().encode(JSON.stringify(request)).length>262144)throw Error('Request exceeds 256 KiB; split into smaller preset batches.');
+  const report=await post('/api/presets/import',request);
+  if(generation!==importGeneration)return;
+  el('importReport').textContent=importSummary(report);el('result').textContent=report.saved?'Preset import saved.':'Preset import preview complete.';
+  importPreview=preview&&report.valid?report:null;el('commitImport').disabled=!importPreview;
+ }catch(e){importPreview=null;el('importReport').textContent=e.message;}
+}
+el('previewImport').onclick=()=>runImport(true);
+el('commitImport').onclick=()=>runImport(false);
 async function post(path,body,token){const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await fetch(path,{method:'POST',headers,body:JSON.stringify(body)});const data=await r.json();el('result').textContent=JSON.stringify(data);if(!r.ok)throw Error(data.error);return data;}
 el('login').onclick=()=>post('/api/login',{},el('token').value).then(()=>{el('token').value='';el('result').textContent='Logged in. Return to WLED to use lighting controls.';}).catch(()=>{});
 document.querySelectorAll('[data-op]').forEach(button=>button.onclick=()=>post('/api/command',{operation:button.dataset.op,source:el('source').value}).catch(()=>{}));

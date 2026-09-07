@@ -38,6 +38,7 @@ Other operations are `show-end`, `ambient-enable`, `ambient-disable`, `status`. 
 | POST `/json/state` | e.g. `{"bri":128,"seg":{"fx":9,"fxdef":true}}` |
 | GET `/json/effects`, `/json/fxdata`, `/json/palettes` | Stable IDs and metadata |
 | GET `/presets.json` | Saved preset document |
+| POST `/api/presets/import` | Preview and atomically merge a WLED preset catalog; authentication required, also available during shows |
 | POST `/json/state` with `psave` / `pdel` | Save/edit/delete a preset, including during a show without modifying live state |
 | `/ws` | WLED state/info WebSocket; login cookie or bearer header required for mutation |
 
@@ -46,3 +47,13 @@ Use `{"ps":1}` to recall a preset and `{"playlist":{"ps":[1,2],"dur":[100],"tran
 Selective save example: `{"psave":1,"n":"Rainbow","ql":"R","ib":false,"sb":false,"sc":true}` preserves the recall-time global brightness and segment geometry. Custom JSON example: `{"psave":2,"o":true,"n":"Dim","bri":42}` stores only the brightness change. Both saves leave live output untouched during shows. Full-state saves remain the default when flags are omitted. Unsupported command strings and non-default hardware settings still reject with 422.
 
 The quiet period begins when the last automatic or explicit owner clears. Black show frames still count as live input. A playlist pause or gap retains playlist ownership. If observation becomes stale, ambient stops and a new quiet period is required after observation recovers.
+
+## Importing native WLED presets
+
+Open Linux Setup, log in, and use **Import WLED presets**. Download your existing presets first, choose a native `presets.json` file or paste its contents, then preview. The report lists added/overwritten IDs, neutral settings translated, and incompatibilities. Save imports only after the whole batch passes. Reload the WLED page afterward to refresh its cached preset list.
+
+API preview: `{"presets":{"1":{"n":"Warm","bs":0,"seg":{"cct":127,"col":["FFA000"]}}},"preview":true}`. Send the same document with `"preview":false` and the returned `revision` to save. Preview defaults to true. A changed input or saved catalog requires another preview. Invalid previews return 200 with `valid:false` and detailed errors; invalid saves return 422 and save nothing.
+
+Imports merge by ID (1–250), preserve other presets, ignore WLED's empty `"0":{}` placeholder, and resolve playlist references across the complete batch. They preserve partial state patches and current live output, playlist position, and ownership. Neutral `bs:0`, `ledmap:0`, `cct:127`, `set:0`, `si:0`, and `bm:0` are removed with explicit translation notes. Non-default unsupported features are rejected rather than approximated. Geometry must fit the current canvas; import does not resize it. References used by existing or active playlists must remain valid.
+
+The complete HTTP request is limited to 256 KiB; split larger files into batches, importing lighting presets before playlists that reference them. Imports do not translate legacy command strings, nested playlists, custom palettes, preset-reference commands, or ESP hardware features. Editing an imported preset during a show is allowed; recalling it still waits for ownership to clear.

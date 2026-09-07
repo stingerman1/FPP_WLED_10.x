@@ -2,6 +2,8 @@
 
 This matrix describes current `main`. The `v0.1.0-alpha.1` release predates the preset/playlist compatibility expansion described below.
 
+Current main also provides a native WLED preset-file importer in Linux Setup: previewed translations, per-entry errors, forward playlist references, catalog conflict detection, and atomic merge. See [import instructions](CONTROL.md#importing-native-wled-presets). Unsupported effects and non-default hardware features remain explicit incompatibilities; import does not synthesize replacements.
+
 Pinned WLED: v16.0.1 (`29b389df1c1aaec6ff53aea742d17063b985906c`). Reference FPP headers: v10.0 branch commit `370e62ed7e8c8318da6ee5b01312b8b75082d952`. Installed FPP 10 ABI 6 is checked during installation. Other FPP majors are rejected. No Pi/FPP combination is yet hardware certified.
 
 | Capability | Current implementation / limitation |

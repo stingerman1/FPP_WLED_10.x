@@ -82,6 +82,18 @@ class ProcessTest(unittest.TestCase):
                 self.assertFalse(frames[-1][1])
                 self.assertEqual(request('/json/state', {'bri': 1})[0], 409)
                 self.assertEqual(request('/json/state', {'psave': 1, 'n': 'Night', 'bri': 20})[0], 200)
+                live = request('/json/state')[1]
+                imported = {'presets': {'2': {'n': 'Imported', 'bs': 0, 'bri': 42}}}
+                code, preview = request('/api/presets/import', imported)
+                self.assertEqual(code, 200)
+                self.assertTrue(preview['valid'])
+                self.assertNotIn('2', request('/presets.json')[1])
+                imported.update(preview=False, revision=preview['revision'])
+                self.assertTrue(request('/api/presets/import', imported)[1]['saved'])
+                self.assertEqual(request('/presets.json')[1]['2']['bri'], 42)
+                self.assertEqual(request('/json/state')[1], live)
+                self.assertFalse(frames[-1][1])
+                self.assertEqual(request('/api/presets/import', imported)[0], 422)
                 request('/api/command', {'operation': 'show-end', 'source': 'xschedule:main'})
                 until(lambda: frames[-1][1])
                 observed[0] = False
