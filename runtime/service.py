@@ -61,12 +61,22 @@ class Controller:
                 'unsupported_effect_ids': sorted(self.engine.unsupported),
                 'unsupported': ['ESP firmware and provisioning', 'ESP-NOW', 'GPIO', 'audio input',
                                 'usermods', 'Philips Hue', 'file-based fonts',
-                                'custom transition styles', 'boot preset overrides'],
+                                'custom transition styles', 'boot preset overrides',
+                                'nightlight sunrise mode', 'sunrise/sunset schedules'],
                 'integrations': {name: True for name in self.integrations},
                 'devices': self.devices.public()}
 
     def get(self, path):
         with self.lock:
+            if path == '/api/preview':
+                allowed = self.ownership.status()['allowed']
+                count = self.config['pixels']['count']
+                channels = self.config['pixels']['channels']
+                stride = max(1, (count + 4095) // 4096)
+                return {'allowed': allowed, 'width': self.engine.width, 'height': self.engine.height,
+                        'count': count, 'stride': stride, 'channels': channels,
+                        'pixels': [[i, *self.latest_frame[i * channels:(i + 1) * channels]]
+                                   for i in range(0, count, stride)] if allowed else []}
             if path.startswith('/json/palx'):
                 from urllib.parse import urlsplit, parse_qs
                 url = urlsplit(path)
@@ -226,9 +236,14 @@ class Controller:
                 self.dirty = True
             elif self.state.tick(step_ms):
                 self.dirty = True
+            if self.state.tick_nightlight(step_ms):
+                self.dirty = True
             self.devices.recovery.tick()
             if self.dirty:
-                self.engine.apply(self.state.value)
+                render_state = self.state.value
+                if self.state.nightlight:
+                    render_state = dict(render_state, transition=0)
+                self.engine.apply(render_state)
                 self.dirty = False
             self.render_ms += step_ms
             self.latest_frame = self.engine.render(self.render_ms)

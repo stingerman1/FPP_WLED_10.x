@@ -3,6 +3,9 @@
 <title>WLED for FPP · Setup</title>
 <style>body{font:16px system-ui;background:#17191d;color:#e5e7eb;max-width:850px;margin:40px auto;padding:0 20px}a{color:#93c5fd}button,input,textarea{font:inherit;padding:10px;margin:4px 0;border:1px solid #536075;border-radius:5px;background:#252a34;color:inherit}textarea{width:100%;box-sizing:border-box;min-height:300px}pre{white-space:pre-wrap;overflow-wrap:anywhere}label{display:block}button{cursor:pointer}h1{font-size:28px}section{margin:28px 0}#result{color:#fcd34d}</style>
 <h1>WLED for FPP <small>Linux alpha</small></h1>
+<style>
+[hidden]{display:none!important}body{overflow-wrap:anywhere}input{max-width:100%;box-sizing:border-box}canvas{max-width:100%}.lighting-panel{border:1px solid #536075;border-top:3px solid #edb45b;padding:22px;border-radius:8px;background:#1d2026}.lighting-panel h2{margin-top:0}.lighting-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.lighting-panel fieldset{border:0;padding:0;margin:0;min-width:0}.lighting-panel legend{font-weight:650;margin-bottom:12px}.lighting-panel select{font:inherit;background:#252a34;color:inherit;border:1px solid #536075;border-radius:5px;padding:10px;max-width:100%;width:100%}.lighting-panel input[type=number]{width:85px}.lighting-panel input[type=color]{height:44px;width:80px;padding:4px}.lighting-panel input[type=range]{width:100%;box-sizing:border-box;accent-color:#edb45b}.lighting-panel button{margin-top:14px}button:disabled{opacity:.45;cursor:not-allowed}.lighting-panel canvas{display:block;width:100%;height:200px;background:#0d0f12;border-radius:5px;margin:14px 0;image-rendering:pixelated}.lighting-note{color:#c4cbd5;font-size:14px}.lighting-panel progress{width:100%;accent-color:#edb45b}#lightingStatus{color:#edc58a;min-height:24px}@media(max-width:580px){.lighting-grid{grid-template-columns:1fr}.lighting-panel{padding:16px}body{margin-top:20px}}
+</style>
 <p><a href="/">Open WLED</a> · <a href="https://github.com/stingerman1/FPP_WLED_10.x">Documentation</a></p>
 <p>FPP owns physical outputs. Ambient waits while shows run, then resumes after two quiet seconds. This alpha supports a subset of WLED; unavailable capabilities are listed below.</p>
 <section><h2>Runtime access</h2><p>Read the token from <code>auth.json</code> in the plugin configuration directory. Login enables controls on this browser.</p>
@@ -10,6 +13,28 @@
 <section><h2>Ambient ownership</h2><button data-op="ambient-enable">Enable ambient</button> <button data-op="ambient-disable">Disable ambient</button>
 <label>Show source <input id="source" placeholder="xschedule:main"></label><button data-op="show-start">Show Start</button> <button data-op="show-end">Show End / clear this lock</button>
 <p>Clear only the source you intend to release. Other sources keep ownership.</p><pre id="status">Loading status…</pre></section>
+<section id="ambient-lighting" class="lighting-panel" aria-labelledby="lightingTitle"><h2 id="lightingTitle">Ambient lighting</h2>
+<p class="lighting-note">Shape the light, then set how it winds down. Controls apply to selected segments in WLED.</p>
+<label><input id="previewEnabled" type="checkbox" checked> Live pixel preview</label>
+<canvas id="pixelPreview" width="768" height="240" role="img" aria-label="Runtime ambient pixel preview"></canvas>
+<p id="previewStatus" class="lighting-note">Waiting for the renderer…</p>
+<div class="lighting-grid"><fieldset><legend>Light &amp; color</legend>
+<label>Brightness <input id="lightBrightness" type="range" min="0" max="255" value="128"></label>
+<label>Effect <select id="lightEffect"><option value="0">Solid</option></select></label>
+<label>Primary color <input id="lightPrimary" type="color" value="#ffa000"></label>
+<label>Secondary color <input id="lightSecondary" type="color" value="#000000"></label>
+<label id="primaryWhiteLabel" hidden>Primary white channel <input id="lightWhite" type="range" min="0" max="255" value="0"></label>
+<label id="secondaryWhiteLabel" hidden>Secondary white channel <input id="lightWhite2" type="range" min="0" max="255" value="0"></label>
+<label>Transition seconds <input id="lightTransition" type="number" min="0" max="65.5" step="0.1" value="0.7"></label>
+<button id="applyLighting" disabled>Apply lighting</button> <button id="lightOff" disabled>Turn off</button>
+</fieldset><fieldset><legend>Nightlight</legend>
+<label>Mode <select id="nightMode"><option value="0">Wait, then change brightness</option><option value="1" selected>Fade brightness</option><option value="2">Fade brightness &amp; color</option></select></label>
+<label>Duration in minutes <input id="nightMinutes" type="number" min="1" max="255" value="30"></label>
+<label>Target brightness <input id="nightTarget" type="number" min="0" max="255" value="0"></label>
+<button id="startNightlight" disabled>Start nightlight</button> <button id="stopNightlight" disabled>Stop nightlight</button>
+<p id="nightStatus" role="status">No nightlight running.</p><progress id="nightProgress" max="1" value="0" aria-label="Nightlight progress"></progress>
+<p class="lighting-note">Color fade moves each selected segment toward its secondary color. Show ownership pauses the countdown. Applying new lighting cancels it. Runtime restarts leave it stopped.</p>
+</fieldset></div><p id="lightingStatus" role="status"></p></section>
 <section><h2>Configuration</h2><p>FPP channel numbers start at 1; virtual pixel indexes start at 0. Each native device must have one control mode. Saved changes take effect after restarting the runtime service.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate & save</button></section>
 <section><h2>Native WLED devices</h2><p>Enable discovery in configuration to list mDNS candidates. Enroll an IPv4 address in the devices list and choose effect, sync, or fpp-stream mode. Configure streamed channels in FPP.</p><button id="discover">Refresh discovered devices</button><pre id="discovered">Discovery results appear here.</pre>
 <label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:70px" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
@@ -36,6 +61,19 @@
 <section><h2>Compatibility</h2><pre id="compat"></pre></section><p id="result" role="status"></p>
 <script>
 const el=id=>document.getElementById(id);
+let lightingInitialized=false;
+const lightButtons=['applyLighting','lightOff','startNightlight','stopNightlight'];
+function rgb(hex){return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));}
+function hexColor(c){return '#'+c.slice(0,3).map(n=>n.toString(16).padStart(2,'0')).join('');}
+function inputNumber(id,lo,hi){const input=el(id),value=Number(input.value);if(input.value===''||!input.checkValidity()||value<lo||value>hi)throw Error('Check '+input.parentElement.textContent.trim()+'.');return value;}
+async function lightingPost(body){try{await post('/json/state',body);el('result').textContent='Lighting updated.';el('lightingStatus').textContent='Lighting updated.';}catch(e){el('lightingStatus').textContent=e.message;}}
+el('applyLighting').onclick=()=>{try{lightingPost({on:true,bri:inputNumber('lightBrightness',0,255),transition:Math.round(inputNumber('lightTransition',0,65.5)*10),seg:{fx:Number(el('lightEffect').value),col:[[...rgb(el('lightPrimary').value),Number(el('lightWhite').value)],[...rgb(el('lightSecondary').value),Number(el('lightWhite2').value)]]}});}catch(e){el('lightingStatus').textContent=e.message;}};
+el('lightOff').onclick=()=>lightingPost({on:false});
+el('startNightlight').onclick=()=>{try{lightingPost({nl:{on:true,mode:Number(el('nightMode').value),dur:inputNumber('nightMinutes',1,255),tbri:inputNumber('nightTarget',0,255)}});}catch(e){el('lightingStatus').textContent=e.message;}};
+el('stopNightlight').onclick=()=>lightingPost({nl:{on:false}});
+function drawPixels(preview){const canvas=el('pixelPreview'),ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);if(!preview.allowed){el('previewStatus').textContent='Preview paused — ambient does not own the outputs.';return;}const columns=preview.height>1?preview.width:Math.min(32,preview.count),rows=preview.height>1?preview.height:Math.ceil(preview.count/columns);for(const [i,r,g,b,w=0] of preview.pixels){ctx.fillStyle=`rgb(${Math.min(255,r+w)},${Math.min(255,g+w)},${Math.min(255,b+w)})`;ctx.fillRect((i%columns)*canvas.width/columns,Math.floor(i/columns)*canvas.height/rows,Math.max(1,canvas.width/columns-1),Math.max(1,canvas.height/rows-1));}el('previewStatus').textContent=preview.count+' runtime output pixels'+(preview.stride>1?' · sampled every '+preview.stride+' pixels':'')+' · preview excludes FPP overlays and physical-output verification';}
+async function refreshLighting(){try{if(!document.hidden){const response=await fetch('/json/si');if(!response.ok)throw Error('Lighting status unavailable');const data=await response.json(),s=data.state,allowed=data.info.fpp.allowed;lightButtons.forEach(id=>el(id).disabled=!allowed);if(!lightingInitialized){const effects=await(await fetch('/json/effects')).json();el('lightEffect').replaceChildren(...effects.flatMap((name,i)=>data.info.fpp.unsupported_effect_ids.includes(i)?[]:[new Option(name,String(i))]));const seg=s.seg.find(seg=>seg.sel)||s.seg[0];el('lightEffect').value=seg.fx;el('lightBrightness').value=s.bri;el('lightPrimary').value=hexColor(seg.col[0]);el('lightSecondary').value=hexColor(seg.col[1]);el('lightTransition').value=s.transition/10;el('lightWhite').value=seg.col[0][3]||0;el('lightWhite2').value=seg.col[1][3]||0;el('primaryWhiteLabel').hidden=el('secondaryWhiteLabel').hidden=!data.info.leds.rgbw;lightingInitialized=true;}el('nightStatus').textContent=s.nl.on?(allowed?'Running':'Paused for ownership')+' · '+Math.ceil(s.nl.rem/60)+' min remaining':'No nightlight running.';el('nightProgress').value=s.nl.on?1-s.nl.rem/(s.nl.dur*60):0;if(el('previewEnabled').checked){const p=await fetch('/api/preview');if(!p.ok)throw Error('Preview unavailable');drawPixels(await p.json());}else{el('pixelPreview').getContext('2d').clearRect(0,0,768,240);el('previewStatus').textContent='Preview off.';}}}catch(e){lightButtons.forEach(id=>el(id).disabled=true);el('pixelPreview').getContext('2d').clearRect(0,0,768,240);el('previewStatus').textContent='Preview unavailable';el('lightingStatus').textContent=e.message;}finally{setTimeout(refreshLighting,500);}}
+refreshLighting();
 let paletteCatalog=null;
 function paletteSlot(){const slot=Number(el('paletteSlot').value);if(!Number.isInteger(slot)||slot<0||slot>Number(el('paletteSlot').max))throw Error('Choose a valid palette slot.');return slot;}
 function displayPalette(){const slot=paletteSlot();const stops=paletteCatalog?.previews[String(200-slot)];el('palettePreview').style.background=stops?'linear-gradient(to right,'+stops.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${s[0]/255*100}%`).join(',')+')':'none';el('downloadPalette').href='/palette'+slot+'.json';el('downloadPalette').download='palette'+slot+'.json';}

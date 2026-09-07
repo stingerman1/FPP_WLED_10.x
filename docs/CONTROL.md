@@ -1,5 +1,17 @@
 # Show hooks and APIs
 
+## Lighting panel and nightlights
+
+Open **Linux Setup → Ambient lighting** (or WLED's nightlight button) for a live pixel preview, supported effect selection, primary/secondary RGB colors, RGBW white channels, brightness, ordinary transition duration, and nightlight controls. Authenticate through Runtime access first. Live changes require ambient ownership.
+
+`POST /json/state` accepts `{"nl":{"on":true,"dur":30,"mode":1,"tbri":0}}`. Modes are 0 (wait, then set brightness), 1 (linear brightness fade), and 2 (brightness plus primary-to-secondary color fade for each selected segment). Duration is 1–255 whole minutes; target brightness is 0–255. Zero target turns off while remembering the starting brightness. `{"nl":{"on":false}}` stops at the current light level. `GET /json/state` exposes `nl.rem` in seconds, or -1 when inactive. Rendering bypasses ordinary transitions while the nightlight is active.
+
+Nightlight time advances only while ambient is allowed. Shows, uncertain ownership, disabled ambient, and the quiet period all pause the countdown; it resumes once ambient is allowed. A new lighting/preset selection cancels the timer. Changing nightlight settings restarts an active timer from the current level. Saving/editing presets does not change the active timer. Explicit nightlight presets can be saved/imported and recalled; active nightlights are not allowed as playlist entries. Process restarts restore the last saved lighting state with the nightlight stopped, rather than replaying a timed action. Completion is saved; intermediate fade frames are not written to disk.
+
+These modes run in the local renderer and flow through FPP mappings. Native-device nightlight control/recovery, sunrise mode 3, astronomical schedules, and custom transition styles remain unsupported.
+
+`GET /api/preview` returns the latest rendered RGB/RGBW output as `[pixelIndex, R, G, B, optional W]` entries, geometry, and sample stride. At most 4,096 samples are returned. It returns no pixels while ambient is suspended. The setup page polls twice per second only while visible and preview is enabled, wraps strips into rows, and displays matrix geometry. White is approximated by adding it to RGB for the screen. This is the runtime frame after its pixel mapping, before FPP channel mappings/overlays; it does not verify physical outputs or display show data.
+
 FPP commands registered by the adapter are **WLED Show Start**, **WLED Show End**, **WLED Ambient Enable**, **WLED Ambient Disable**, and **WLED Status**. Show Start/End take a source identifier. Use stable, distinct identifiers for independently overlapping show producers. The `fpp:` namespace is reserved for automatic observers.
 
 From the Pi, as the fpp user:

@@ -4,6 +4,7 @@ import random
 from .config import integer
 from .storage import save_json, read_json
 from .commands import lighting, number
+from .nightlight import DEFAULT as NIGHTLIGHT_DEFAULT, Nightlight, settings as nightlight_settings
 
 
 def default_segment(width, height):
@@ -20,6 +21,8 @@ class State:
                       'seg': [default_segment(engine.width, engine.height)]}
         saved = read_json(directory / 'state.json', self.value)
         self.value = self.merge(saved)
+        self.value['nl']['on'] = False  # Never restart a timed action after a process restart.
+        self.nightlight = None
         self.presets = read_json(directory / 'presets.json', {})
         if not isinstance(self.presets, dict):
             raise ValueError('presets.json must be an object')
@@ -70,11 +73,12 @@ class State:
         for key, default in (('bs', 0), ('ledmap', 0)):
             if key in patch:
                 integer(patch.pop(key), default, default, key + ' (only the default is supported)')
-        allowed = {'on', 'bri', 'transition', 'seg', 'ps', 'pl', 'mainseg', 'v', 'tt', 'n', 'ql', 'time'}
+        allowed = {'on', 'bri', 'transition', 'seg', 'ps', 'pl', 'mainseg', 'v', 'tt', 'n', 'ql', 'time', 'nl'}
         extra = set(patch) - allowed
         if extra:
             raise ValueError('unsupported state fields: ' + ', '.join(sorted(extra)))
         result = deepcopy(self.value if base is None else base)
+        result['nl'] = nightlight_settings(patch.get('nl', {}), result.get('nl', NIGHTLIGHT_DEFAULT))
         for key in ('ps', 'pl'):
             if key in patch:
                 result[key] = integer(patch[key], -1, 250, key)
@@ -189,10 +193,26 @@ class State:
 
     def set(self, patch, persist=True):
         value = self.merge(patch)
+        # A new lighting selection replaces the timed action; editing only its
+        # settings restarts it from the current light level. All validation precedes this.
+        if 'nl' not in patch:
+            value['nl']['on'] = False
+        nightlight = Nightlight(value) if value['nl']['on'] else None
         if persist:
             save_json(self.directory / 'state.json', value)
         self.value = value
+        self.nightlight = nightlight
         return deepcopy(value)
+
+    def tick_nightlight(self, elapsed_ms):
+        if self.nightlight is None:
+            return False
+        changed = self.nightlight.advance(self.value, elapsed_ms)
+        if self.nightlight.remaining == 0:
+            self.value['nl']['on'] = False
+            self.nightlight = None
+            save_json(self.directory / 'state.json', self.value)
+        return changed
 
     def save_preset(self, pid, patch, options=None):
         key = str(integer(pid, 1, 250, 'preset id'))
@@ -206,6 +226,8 @@ class State:
             preset = {'playlist': deepcopy(patch['playlist']), 'n': patch.get('n', 'Playlist ' + key)}
         else:
             checked = self.merge(patch)
+            if 'nl' not in patch:
+                checked['nl']['on'] = False
             if options.get('o', False):
                 if 'ps' in patch or 'pl' in patch:
                     raise ValueError('custom preset references are not yet supported')
@@ -279,6 +301,8 @@ class State:
             if not isinstance(presets.get(str(pid)), dict) or 'playlist' in presets[str(pid)]:
                 raise ValueError('playlist entries must refer to existing non-playlist presets')
             self.merge(presets[str(pid)])
+            if presets[str(pid)].get('nl', {}).get('on', False):
+                raise ValueError('active nightlights cannot be playlist entries')
         for field, default, low in [('dur', 100, 0), ('transition', 7, 0)]:
             values = playlist.get(field, [default])
             if type(values) is int:
@@ -366,6 +390,6 @@ class State:
         state = deepcopy(self.value)
         for segment in state['seg']:
             segment['lc'] = 3 if self.engine.config['pixels']['channels'] == 4 else 1
-        state.update(nl={'on': False, 'dur': 60, 'mode': 1, 'tbri': 0, 'rem': -1},
-                     udpn={'send': False, 'recv': False, 'sgrp': 1, 'rgrp': 1}, lor=0)
+        state['nl']['rem'] = self.nightlight.remaining if self.nightlight else -1
+        state.update(udpn={'send': False, 'recv': False, 'sgrp': 1, 'rgrp': 1}, lor=0)
         return state

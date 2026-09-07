@@ -35,7 +35,12 @@
   }
   new MutationObserver(disableBootOverride).observe(document.body, {childList:true, subtree:true});
   disableBootOverride();
-  for (const id of ['buttonNl', 'buttonSync', 'buttonSr']) {
+  const nightlightButton = document.getElementById('buttonNl');
+  if (nightlightButton) {
+    nightlightButton.onclick = () => { location.href = '/settings#ambient-lighting'; };
+    nightlightButton.title = 'Nightlight and lighting controls';
+  }
+  for (const id of ['buttonSync', 'buttonSr']) {
     const button = document.getElementById(id);
     if (button) {
       button.disabled = true;

@@ -2,7 +2,7 @@
 
 ## Pickup point
 
-The latest increment implements lighting-only `win` command presets through authenticated JSON, relative numeric lighting controls, and bounded preset cycling. Commands survive partial saves/import and execute on recall or playlist-entry restart. Unknown/duplicate keys reject atomically; show ownership still blocks live commands. See `runtime/commands.py`, `tests/test_commands.py`, and `docs/CONTROL.md` for the exact subset. Local verification passes all 80 Python tests, renderer preparation/build, sanitized IPC and syntax checks. The renderer port pin remains `6aaf34dd2fcbdc9e3211ec395d0d1f449bfe4b4e`. Next recommended implementation: extend command compatibility with a legacy HTTP endpoint and safely validated preset-reference chains. Random expressions and legacy side-effect commands remain unsupported.
+The latest increment adds local nightlight modes 0/1/2 and an Ambient lighting panel with supported effects, RGBW colors, brightness, ordinary transitions and live pixel preview. Nightlights pause through shows and quiet periods, cancel on new lighting selections, and stop across process restarts. Native-device nightlights and sunrise/sunset scheduling remain unsupported. Main files: `runtime/nightlight.py`, `runtime/state.py`, `runtime/service.py`, `web/settings.html`, `web/linux-ui.js`, `tests/test_lighting.py`. See `docs/CONTROL.md` for API and persistence behavior. The full local verification passed 89 tests; an additional bounded RGBW preview regression also passes (90 tests total). Browser checks cover login/start, show pause/resume, disabled controls, cleared preview, applying colors, and desktop/mobile layout without horizontal overflow. Screenshots are in ignored `output/playwright/lighting-desktop.png` and `lighting-mobile.png`. Next lighting priorities: astronomical schedules, nightlight sunrise mode, additional transition styles, and portable missing effects. Command-reference chains and legacy HTTP remain separate open work.
 
 The project is an implemented, publicly available **alpha**, not a hardware-validated release. Continue expanding software compatibility; verification is not the only remaining work. The user asked to save current status for later pickup. No implementation task is currently in progress.
 
@@ -80,9 +80,9 @@ The first lighting-only command subset is implemented. Next, extend legacy HTTP 
 Other outstanding software work:
 
 1. Legacy `/win` HTTP endpoint, broader command keys, preset-reference chains and random expressions, boot presets, and nested local playlists. Lighting-only JSON `win` strings and deterministic numeric cycling now work.
-2. Nightlight modes, sunrise/sunset timers, and custom transition styles.
+2. Nightlight sunrise mode (0/1/2 now implemented), sunrise/sunset timers, and custom transition styles.
 3. Review remaining unsupported effects individually; distinguish portable missing implementations from audio-dependent or dimension-incompatible IDs.
-4. Pixel preview, more configuration UI/API coverage, and fragmented WebSocket requests. Palette JSON editing and previews are now implemented; arbitrary filesystem editing remains excluded.
+4. Broader configuration UI/API coverage and fragmented WebSocket requests. Lighting controls, nightlights, pixel preview and palette JSON editing/previews are implemented; arbitrary filesystem editing remains excluded.
 5. Resolve FPP models by name; currently users supply resolved channel ranges. Native custom HTTP ports and credentials are not implemented.
 6. Publish a newer alpha source release, produce reproducible Pi binary assets, and submit plugin-catalog metadata once validated. Catalog acceptance is upstream's decision.
 
