@@ -44,7 +44,7 @@ class Controller:
                 'live': owned, 'liveseg': -1, 'lm': 'FPP show', 'lip': '',
                 'leds': {'count': p['count'], 'rgbw': p['channels'] == 4, 'wv': p['channels'] == 4,
                          'cct': False, 'seglc': [3 if p['channels'] == 4 else 1] * len(self.state.value['seg']),
-                         'lc': 3 if p['channels'] == 4 else 1, 'maxseg': 32, 'bootps': 0,
+                         'lc': 3 if p['channels'] == 4 else 1, 'maxseg': 32, 'bootps': -1,
                          **({'matrix': {'w': self.engine.width, 'h': self.engine.height}} if self.engine.height > 1 else {})},
                 'str': False, 'sync': {'recv': False, 'send': False}, 'wifi': {'ap': False, 'signal': 100},
                 'fs': {'u': 0, 't': 0, 'pmt': 1}, 'ndc': 0, 'ws': 0,
@@ -57,7 +57,7 @@ class Controller:
                 'unsupported_effect_ids': sorted(self.engine.unsupported),
                 'unsupported': ['ESP firmware and provisioning', 'ESP-NOW', 'GPIO', 'audio input',
                                 'usermods', 'Philips Hue', 'file-based fonts',
-                                'custom palettes', 'custom transition styles'],
+                                'custom palettes', 'custom transition styles', 'boot preset overrides'],
                 'integrations': {name: True for name in self.integrations},
                 'devices': self.devices.public()}
 

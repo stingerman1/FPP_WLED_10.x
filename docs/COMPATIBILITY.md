@@ -9,7 +9,7 @@ Pinned WLED: v16.0.1 (`29b389df1c1aaec6ff53aea742d17063b985906c`). Reference FPP
 | Segments | Up to 32, selected-segment updates, colors, brightness, grouping/spacing/offset, reverse/mirror, 2D transforms, mapping options, custom sliders and options. Deleting segments compacts IDs. |
 | RGB/RGBW and 2D | Virtual RGB(W) canvas, dimensions and explicit ledmap; FPP owns physical bus types and ordering. No CCT bus or hardware current limiting. |
 | Transitions | Upstream ordinary transitions/mode blending compiled; custom transition styles are unavailable. |
-| Presets | JSON IDs 1–250; supported state fields preserve upstream formats. Unsupported fields reject with 422. UI save currently stores full supported state regardless of `ib/sb/sc` selection flags. Quick-load labels and preset HTTP command strings unavailable. |
+| Presets | JSON IDs 1–250; supported state fields preserve upstream formats. Unsupported fields reject with 422. UI save currently stores full supported state regardless of `ib/sb/sc` selection flags. Quick-load labels, boot-preset overrides and preset HTTP command strings unavailable. |
 | Playlists | Sequential preset IDs, durations, transitions, repeat/end; restart interrupted entry after takeover and process restart. Random ordering and nested playlists unavailable. |
 | Timers | Linux local weekday/hour/minute/preset schedules. No sunrise/sunset, nightlight or upstream settings-page parity. |
 | UI | Upstream main WLED UI, Linux setup/status page. Firmware update, provisioning, upstream configuration pages, pixel peek and file/palette editors unavailable. |

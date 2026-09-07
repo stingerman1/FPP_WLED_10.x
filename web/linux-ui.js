@@ -1,5 +1,40 @@
 // Linux capability and ownership notice added alongside upstream WLED's UI.
 (() => {
+  // Upstream assumes each WS message is state/info. Handle the Linux API's
+  // explicit rejection response before it reaches that state parser.
+  function hookErrors() {
+    if (!ws || ws.linuxErrors) return;
+    ws.linuxErrors = true;
+    const readMessage = ws.onmessage;
+    ws.onmessage = event => {
+      if (typeof event.data === 'string') {
+        const value = JSON.parse(event.data);
+        if (value.error) {
+          clearTimeout(jsonTimeout);
+          jsonTimeout = null;
+          const safe = document.createElement('span');
+          safe.textContent = value.message || 'Linux runtime rejected the command';
+          showToast(safe.innerHTML, true);
+          return;
+        }
+      }
+      readMessage(event);
+    };
+  }
+  const originalMakeWS = makeWS;
+  makeWS = function () { originalMakeWS(); hookErrors(); };
+  hookErrors();
+  function disableBootOverride() {
+    document.querySelectorAll('input[id$="bps"]').forEach(input => {
+      input.checked = false;
+      input.disabled = true;
+      input.parentElement.style.pointerEvents = 'none';
+      input.parentElement.title = 'Linux restores the interrupted ambient selection; boot preset overrides are unavailable';
+      input.parentElement.style.opacity = '.4';
+    });
+  }
+  new MutationObserver(disableBootOverride).observe(document.body, {childList:true, subtree:true});
+  disableBootOverride();
   for (const id of ['buttonNl', 'buttonSync', 'buttonSr']) {
     const button = document.getElementById(id);
     if (button) {

@@ -1,12 +1,12 @@
 # Local validation — 2026-09-07
 
 - Linux x86-64 under Ubuntu 24.04 / WSL2: actual WLED renderer compiled and linked with no undefined symbols.
-- Plugin suite: 25 tests passed in the combined run with the pinned Linux-port checkout and optional dependencies installed. A subsequent cached-preset/playlist-stop regression increased the suite to 26 tests; all nine targeted runtime/API tests passed after that change.
+- Plugin suite: all 26 tests passed in x86-64 and arm64 CI, including the cached-preset/playlist-stop regression. All nine targeted runtime/API tests also passed locally after the final UI integration changes.
 - GitHub Actions passed on both Ubuntu x86-64 and arm64, including the renderer suite, sanitized IPC test, FPP10 reference-header compilation and renderer benchmarks. [Initial successful run](https://github.com/stingerman1/FPP_WLED_10.x/actions/runs/34159344306).
 - All 129 strip-supported and 171 matrix-supported effect IDs rendered bounded frames; separate exact RGBW, distinct-segment mapping and fresh-process deterministic Rainbow checks passed. These do not certify all effects visually or exhaustively.
 - C++ frame parser/copy checks passed with AddressSanitizer and UndefinedBehaviorSanitizer.
 - FPP adapter compiled against the pinned stock FPP10 reference headers. No installed FPP daemon/library or Pi hardware was available, so ABI load and playback acceptance remain open.
-- Browser: the real upstream UI loaded without console errors after integration fixes, authenticated through Linux setup, and selecting Rainbow changed `/json/state` to `fx:9`. Desktop screenshot inspected locally. Automated API regressions cover the UI's partial colors, selected segments and `fxdef` payloads.
+- Browser: the real upstream UI loaded without console errors after integration fixes, authenticated through Linux setup, and selecting Rainbow changed `/json/state` to `fx:9`. Saving a preset through the real UI persisted the expected state after disabling unsupported boot-preset overrides. Desktop screenshot inspected locally. Automated API regressions cover partial colors, selected segments, `fxdef`, cached preset recall and playlist stop payloads.
 - Standalone `ports/fpp-linux` build passed. Upstream `npm test` passed 16 tests; `pio run -e esp32dev` compiled successfully (101.8 seconds; 81,536 RAM / 1,298,125 flash bytes). This was a compile regression check; no ESP device was flashed. Initial Windows test runs exposed timestamp/concurrent-build sensitivity; the isolated final run passed and the original firmware tree remained unchanged.
 - The upstream npm dependency install reported one high-severity advisory in its existing development dependency tree. Those npm packages are not installed by the Linux plugin installer; upstream tooling dependency review remains outstanding.
 
