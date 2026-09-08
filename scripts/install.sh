@@ -18,6 +18,12 @@ python3 scripts/check-platform.py "$fpp_src"
 # remains an explicit administrator action if their image lacks the compiler.
 install -d -o fpp -g fpp -m 0750 "$state_dir"
 install -d -o fpp -g fpp -m 0770 /run/fpp-wled
+# Repair a socket made by an older adapter already loaded in FPP. New adapters
+# set these permissions themselves on every bind, including after a reboot.
+if [[ -S /run/fpp-wled/frames.sock && ! -L /run/fpp-wled/frames.sock ]]; then
+  chgrp fpp /run/fpp-wled/frames.sock
+  chmod 0660 /run/fpp-wled/frames.sock
+fi
 printf 'd /run/fpp-wled 0770 fpp fpp -\n' >/etc/tmpfiles.d/fpp-wled.conf
 if [[ ! -f "$state_dir/config.json" ]]; then
   install -o fpp -g fpp -m 0600 config.example.json "$state_dir/config.json"

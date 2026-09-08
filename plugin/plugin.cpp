@@ -7,12 +7,14 @@
 #include <sys/random.h>
 #include <unistd.h>
 #include <poll.h>
+#include <grp.h>
 #include "Plugin.h"
 #include "Sequence.h"
 #include "Player.h"
 #include "channeloutput/channeloutputthread.h"
 #include "frame.hpp"
 #include "commands.hpp"
+#include "socket_permissions.hpp"
 
 static_assert(FPP_PLUGIN_API_VERSION == 6, "Unvalidated FPP ABI; rebuild after adapting the plugin");
 static_assert(sizeof(void*) == 8, "Only 64-bit FPP is supported");
@@ -96,6 +98,10 @@ public:
     sockaddr_un addr{}; addr.sun_family=AF_UNIX; strcpy(addr.sun_path,framePath);
     unlink(framePath);
     if(bind(socketFd,reinterpret_cast<sockaddr*>(&addr),sizeof(addr))) {close(socketFd);socketFd=-1;return;}
+    const auto* runtimeGroup = getgrnam("fpp");
+    if(!runtimeGroup || !grantFrameSocketAccess(framePath, runtimeGroup->gr_gid)) {
+      close(socketFd); socketFd=-1; unlink(framePath); return;
+    }
     worker=std::thread([this]{run();});
   }
   void modifySequenceData(int,uint8_t* channels) override {

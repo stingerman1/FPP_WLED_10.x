@@ -11,6 +11,7 @@ class Ownership:
         self.enabled = False
         self.locks = set()
         self.fault = None
+        self.transport_fault = None
         self.observed = None
         self.seen_ns = None
         self.clear_since = None
@@ -80,12 +81,13 @@ class Ownership:
         now = self.clock()
         healthy = self.seen_ns is not None and 0 <= now - self.seen_ns <= self.timeout_ns
         sources = sorted(self.locks | set(self.observed or ()))
-        uncertain = not healthy or self.fault is not None
+        fault = self.fault or self.transport_fault
+        uncertain = not healthy or fault is not None
         if uncertain:
             self.clear_since = None
         quiet = healthy and self.clear_since is not None and now - self.clear_since >= self.quiet_ns
         allowed = self.enabled and not sources and not uncertain and quiet
         return {'version': 1, 'enabled': self.enabled, 'allowed': allowed,
                 'show_owned': bool(sources) or uncertain, 'sources': sources,
-                'observer_healthy': healthy, 'quiet': quiet, 'fault': self.fault,
+                'observer_healthy': healthy, 'quiet': quiet, 'fault': fault,
                 'epoch': self.epoch}

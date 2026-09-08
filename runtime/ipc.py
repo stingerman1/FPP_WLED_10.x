@@ -25,8 +25,10 @@ class Link:
         self.acknowledged = 0
         self.ack_allowed = False
         self.last_observation = 0
+        self.fault = None
 
     def poll(self, ownership):
+        ownership.transport_fault = self.fault
         # Drain bounded work; timestamp on the sender prevents queued heartbeats
         # from manufacturing freshness after either process was suspended.
         for _ in range(64):
@@ -58,8 +60,10 @@ class Link:
                             len(config['mappings']), len(data)) + ranges + data
         try:
             self.socket.sendto(packet, str(self.directory / 'frames.sock'))
+            self.fault = None
             return self.serial
-        except (BlockingIOError, FileNotFoundError, ConnectionRefusedError):
+        except OSError as exc:
+            self.fault = 'FPP frame socket unavailable: ' + (exc.strerror or str(exc))
             return False
 
     def close(self):
