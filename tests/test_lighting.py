@@ -70,12 +70,12 @@ class LightingTests(unittest.TestCase):
         self.start()
         timer = self.state.nightlight
         before = deepcopy(self.state.value)
-        for patch in ({'mode': 3}, {'dur': 0}, {'dur': True}, {'tbri': 256}, {'on': 1}, {'rem': 0}):
+        for patch in ({'mode': 4}, {'dur': 0}, {'dur': True}, {'tbri': 256}, {'on': 1}, {'rem': 0}):
             with self.assertRaises(ValueError):
                 self.controller.post('/json/state', {'bri': 42, 'nl': patch})
             self.assertEqual(self.state.value, before)
             self.assertIs(self.state.nightlight, timer)
-        report = import_presets(self.state, {'presets': {'1': {'nl': {'mode': 3}}}})
+        report = import_presets(self.state, {'presets': {'1': {'nl': {'mode': 4}}}})
         self.assertFalse(report['valid'])
 
     def test_manual_changes_cancel_and_restart_does_not_rearm(self):

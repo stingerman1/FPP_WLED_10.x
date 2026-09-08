@@ -34,6 +34,7 @@ class Controller:
         self.dirty = True
         self.render_ms = 0
         self.was_allowed = False
+        self.rendered_nightlight = None
         self.started = time.monotonic()
         self.latest_frame = bytes(len(engine.buffer))
         self.timers = Timers(config.get('timers', []), config.get('location'), directory / 'timers-fired.json')
@@ -62,8 +63,7 @@ class Controller:
                 'unsupported_effect_ids': sorted(self.engine.unsupported),
                 'unsupported': ['ESP firmware and provisioning', 'ESP-NOW', 'GPIO', 'audio input',
                                 'usermods', 'Philips Hue', 'file-based fonts',
-                                'custom transition styles', 'boot preset overrides',
-                                'nightlight sunrise mode'],
+                                'custom transition styles', 'boot preset overrides'],
                 'integrations': {name: True for name in self.integrations},
                 'devices': self.devices.public()}
 
@@ -247,8 +247,18 @@ class Controller:
             if self.dirty:
                 render_state = self.state.value
                 if self.state.nightlight:
-                    render_state = dict(render_state, transition=0)
+                    render_state = self.state.nightlight.render_state(render_state)
+                    if self.state.nightlight.mode == 3 and self.rendered_nightlight is not self.state.nightlight:
+                        # Reset effect 104 even when restarting the same direction/duration.
+                        # Two mode assignments mark upstream segment runtime for reset;
+                        # no intermediate frame is rendered or transmitted.
+                        reset = deepcopy(render_state)
+                        for segment in reset['seg']:
+                            if segment['id'] in self.state.nightlight.colors:
+                                segment['fx'] = 0
+                        self.engine.apply(reset)
                 self.engine.apply(render_state)
+                self.rendered_nightlight = self.state.nightlight
                 self.dirty = False
             self.render_ms += step_ms
             self.latest_frame = self.engine.render(self.render_ms)

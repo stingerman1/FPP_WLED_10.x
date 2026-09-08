@@ -202,7 +202,7 @@ class RuntimeTests(unittest.TestCase):
         self.assertFalse(json.loads(body)['saved'])
         self.assertEqual(request('POST', '/json/state', {'nl': {'on': True, 'dur': 1}})[0], 401)
         self.assertEqual(request('POST', '/json/state', {'nl': {'on': True, 'dur': 1}}, True)[0], 200)
-        self.assertEqual(request('POST', '/json/state', {'nl': {'mode': 3}}, True)[0], 422)
+        self.assertEqual(request('POST', '/json/state', {'nl': {'mode': 4}}, True)[0], 422)
         self.assertEqual(request('POST', '/json/state', {'bri': -1}, True)[0], 422)
 
 

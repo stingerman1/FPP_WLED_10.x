@@ -4,7 +4,7 @@ import random
 from .config import integer
 from .storage import save_json, read_json
 from .commands import lighting, number
-from .nightlight import DEFAULT as NIGHTLIGHT_DEFAULT, Nightlight, settings as nightlight_settings
+from .nightlight import DEFAULT as NIGHTLIGHT_DEFAULT, Nightlight, settings as nightlight_settings, sun_length
 
 
 def default_segment(width, height):
@@ -189,10 +189,22 @@ class State:
             segment['id'] = index
         if result['mainseg'] >= len(result['seg']):
             result['mainseg'] = 0
+        if 'nl' in patch and result['nl']['on'] and result['nl']['mode'] == 3:
+            selected = [s for s in result['seg'] if s['sel']]
+            if 104 in self.engine.unsupported or not selected:
+                raise ValueError('sunrise requires supported effect 104 and a selected segment')
+            for segment in selected:
+                if sun_length(segment) <= 1 or segment.get('frz', False):
+                    raise ValueError('sunrise requires at least two virtual pixels and unfrozen selected segments')
         return result
 
     def set(self, patch, persist=True):
-        value = self.merge(patch)
+        base = self.nightlight.cancel_state(self.value) if self.nightlight else self.value
+        # Remove the old activation before validating an unrelated replacement.
+        base = deepcopy(base)
+        if 'nl' not in patch:
+            base['nl']['on'] = False
+        value = self.merge(patch, base)
         # A new lighting selection replaces the timed action; editing only its
         # settings restarts it from the current light level. All validation precedes this.
         if 'nl' not in patch:
@@ -209,9 +221,11 @@ class State:
             return False
         changed = self.nightlight.advance(self.value, elapsed_ms)
         if self.nightlight.remaining == 0:
+            self.nightlight.finish(self.value)
             self.value['nl']['on'] = False
             self.nightlight = None
             save_json(self.directory / 'state.json', self.value)
+            changed = True
         return changed
 
     def save_preset(self, pid, patch, options=None):
@@ -387,7 +401,8 @@ class State:
         return True
 
     def public(self):
-        state = deepcopy(self.value)
+        state = self.nightlight.render_state(self.value) if self.nightlight and self.nightlight.mode == 3 else deepcopy(self.value)
+        state['transition'] = self.value['transition']
         for segment in state['seg']:
             segment['lc'] = 3 if self.engine.config['pixels']['channels'] == 4 else 1
         state['nl']['rem'] = self.nightlight.remaining if self.nightlight else -1

@@ -2,7 +2,7 @@
 
 ## Clock, sunrise and sunset schedules
 
-Open **Linux Setup ? Follow the daylight**. Enable location, enter latitude/longitude and an IANA timezone (for example `America/Chicago`), then add timers using existing preset IDs. Select weekdays and an offset from -720 to +720 minutes for solar events. Preview upcoming events, then save. This dedicated editor applies schedules immediately; editing the raw Configuration JSON still requires a runtime restart. No location lookup or solar API is contacted.
+Open **Linux Setup > Follow the daylight**. Enable location, enter latitude/longitude and an IANA timezone (for example `America/Chicago`), then add timers using existing preset IDs. Select weekdays and an offset from -720 to +720 minutes for solar events. Preview upcoming events, then save. This dedicated editor applies schedules immediately; editing the raw Configuration JSON still requires a runtime restart. No location lookup or solar API is contacted.
 
 `GET /api/schedules` returns active definitions, the configuration revision, today's solar times and upcoming occurrences. Authenticated `POST /api/schedules` accepts the following preview request; set `preview:false` and include the returned `revision` to save:
 
@@ -23,7 +23,7 @@ The local renderer recalls presets only while ambient owns the outputs. Events d
 
 Previewing/saving schedules leaves current lighting and show locks unchanged. Saves reject stale configuration revisions and preserve unrelated pending configuration changes. Preset IDs must exist when saving. Preview dates extend through the next eight calendar days; no occurrence means disabled, filtered weekdays, or no solar event in that window. Polar day/night never substitutes an arbitrary time.
 
-Solar calculations use pinned [Astral 3.2](https://sffjunkie.github.io/astral/package.html), with its standard horizon/refraction calculation and observer elevation zero. Terrain, weather, and custom horizon corrections are not modeled. The Pi needs an accurate clock and system timezone data (`tzdata`). Scheduling sunrise is separate from the still-unimplemented WLED nightlight sunrise animation mode.
+Solar calculations use pinned [Astral 3.2](https://sffjunkie.github.io/astral/package.html), with its standard horizon/refraction calculation and observer elevation zero. Terrain, weather, and custom horizon corrections are not modeled. The Pi needs an accurate clock and system timezone data (`tzdata`). Solar schedules can recall a preset that starts the nightlight sunrise animation described below.
 
 ## Lighting panel and nightlights
 
@@ -33,7 +33,11 @@ Open **Linux Setup → Ambient lighting** (or WLED's nightlight button) for a li
 
 Nightlight time advances only while ambient is allowed. Shows, uncertain ownership, disabled ambient, and the quiet period all pause the countdown; it resumes once ambient is allowed. A new lighting/preset selection cancels the timer. Changing nightlight settings restarts an active timer from the current level. Saving/editing presets does not change the active timer. Explicit nightlight presets can be saved/imported and recalled; active nightlights are not allowed as playlist entries. Process restarts restore the last saved lighting state with the nightlight stopped, rather than replaying a timed action. Completion is saved; intermediate fade frames are not written to disk.
 
-These modes run in the local renderer and flow through FPP mappings. Native-device nightlight control/recovery, sunrise mode 3, and custom transition styles remain unsupported. Solar scheduling is described below.
+Mode 3 uses the actual upstream Sunrise effect (ID 104). For example, `{"on":false,"nl":{"on":true,"mode":3,"dur":30}}` starts sunrise; set `on:true` to start sunset. Without an explicit power field, the current power/brightness chooses the direction. Duration is limited to 1–60 minutes to match the effect's supported animation range; `tbri` is unused in this mode. Selected segments must be unfrozen and have at least two virtual pixels. Other segments retain their settings; power/brightness remain global. Palette 0 gives the effect its upstream Fire default. Normal segment geometry, colors, intensity and mapping are retained.
+
+Sunrise powers on at remembered brightness (128 if no nonzero level is available) and holds the completed sun using effect 104 with speed 0. Sunset restores the prior effect, speed and palette and turns off. Stopping early restores the prior effects and leaves power on; explicit replacement lighting takes precedence. Shows pause both the renderer clock and countdown, preserving animation phase. Restarting the same animation deliberately resets its phase without transmitting an intermediate frame. During animation, the public state reports the temporary effect, while normal preset snapshots and process restart retain the underlying saved selection. Runtime restart stops the animation; it does not resume its phase.
+
+These modes run in the local renderer and flow through FPP mappings. Native-device nightlight control/recovery and custom transition styles remain unsupported.
 
 `GET /api/preview` returns the latest rendered RGB/RGBW output as `[pixelIndex, R, G, B, optional W]` entries, geometry, and sample stride. At most 4,096 samples are returned. It returns no pixels while ambient is suspended. The setup page polls twice per second only while visible and preview is enabled, wraps strips into rows, and displays matrix geometry. White is approximated by adding it to RGB for the screen. This is the runtime frame after its pixel mapping, before FPP channel mappings/overlays; it does not verify physical outputs or display show data.
 
