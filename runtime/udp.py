@@ -88,6 +88,9 @@ class Sync:
                 packet, sender = self.socket.recvfrom(1473)
             except BlockingIOError:
                 return
+            except OSError as exc:
+                self.last_error = str(exc)
+                return
             if not self.config.get('receive', True) or sender[0] not in self.peers or len(packet) > 1472:
                 continue
             try:
@@ -106,6 +109,10 @@ class Sync:
                     self.last_error = None
             except (ValueError, TypeError, KeyError) as exc:
                 self.last_error = str(exc)
+            except OSError as exc:
+                self.last_error = str(exc)
+                with self.controller.lock:
+                    self.controller.ownership.fault = 'persistent storage unavailable'
 
     def send(self):
         if not self.config.get('send', True) or not self.controller.ownership.status()['allowed']:

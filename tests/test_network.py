@@ -84,6 +84,22 @@ class DiscoverySyncTests(unittest.TestCase):
         self.assertEqual(len(changes), 1)
         controller.config['devices'] = [{'address': '127.0.0.1', 'mode': 'fpp-stream'}]
         self.assertEqual(sync.peers, set())
+        controller.config['devices'] = []
+        sync.config['receive'] = True
+        def failed_save(_):
+            raise OSError('disk unavailable')
+        controller.state.set = failed_save
+        peer.sendto(packet, target); sync.tick()
+        self.assertEqual(controller.ownership.fault, 'persistent storage unavailable')
+        from unittest.mock import MagicMock
+        actual = sync.socket
+        try:
+            sync.socket = MagicMock()
+            sync.socket.recvfrom.side_effect = OSError('network down')
+            sync.tick()
+            self.assertIn('network down', sync.last_error)
+        finally:
+            sync.socket = actual
 
     def test_live_configuration_validation_persistence_and_listener_failure(self):
         config = {'version': 1, 'pixels': {'count': 100, 'channels': 3}, 'mappings': []}
