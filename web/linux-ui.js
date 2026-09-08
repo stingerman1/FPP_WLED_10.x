@@ -37,7 +37,7 @@
   disableBootOverride();
   const nightlightButton = document.getElementById('buttonNl');
   if (nightlightButton) {
-    nightlightButton.onclick = () => { location.href = '/settings#ambient-lighting'; };
+    nightlightButton.onclick = () => { location.href = wledURL('/settings#ambient-lighting'); };
     nightlightButton.title = 'Nightlight and lighting controls';
   }
   for (const id of ['buttonSync', 'buttonSr']) {
@@ -50,7 +50,7 @@
   }
   for (const button of document.querySelectorAll('button')) {
     if (/\/cpal/.test(button.getAttribute('onclick') || '')) {
-      button.onclick = () => { location.href = '/settings#custom-palettes'; };
+      button.onclick = () => { location.href = wledURL('/settings#custom-palettes'); };
       continue;
     }
     if (['updBt', 'resetbtn'].includes(button.id) ||
@@ -76,10 +76,10 @@
   document.body.append(notice);
   async function refresh() {
     try {
-      const status = await (await fetch('/api/status')).json();
+      const status = await (await wledFetch('/api/status')).json();
       notice.replaceChildren(document.createTextNode(status.allowed ? 'Linux alpha · Ambient active · ' : 'Linux alpha · Ambient suspended: ' + (status.sources.join(', ') || (!status.enabled ? 'disabled' : 'waiting for FPP / quiet period')) + ' · '));
       const link = document.createElement('a');
-      link.href = '/settings'; link.textContent = 'Setup, login & compatibility'; link.style.color = '#9ddcff';
+      link.href = wledURL('/settings'); link.textContent = 'Setup, login & compatibility'; link.style.color = '#9ddcff';
       notice.append(link);
     } catch { notice.textContent = 'Runtime unavailable'; }
   }

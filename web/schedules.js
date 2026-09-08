@@ -82,7 +82,7 @@
     const version = ++generation;
     byId('saveSchedules').disabled = true;
     try {
-      const [response, presetsResponse] = await Promise.all([fetch('/api/schedules'), fetch('/presets.json')]);
+      const [response, presetsResponse] = await Promise.all([wledFetch('/api/schedules'), wledFetch('/presets.json')]);
       if (!response.ok || !presetsResponse.ok) throw Error('Schedules unavailable');
       const data = await response.json(), presets = await presetsResponse.json();
       if (version !== generation) return;

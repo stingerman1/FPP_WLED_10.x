@@ -68,6 +68,9 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(body)
 
     def do_POST(self):
+        proxied = self.path.startswith('/wled/')
+        if proxied:
+            self.path = self.path[len('/wled'):]
         try:
             if not self.authenticated():
                 self.close_connection = True
@@ -76,7 +79,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = self.body()
             if path == '/api/login':
                 return self.reply(200, {'success': True}, headers={
-                    'Set-Cookie': 'fpp_wled=' + self.server.token + '; HttpOnly; SameSite=Strict; Path=/'})
+                    'Set-Cookie': 'fpp_wled=' + self.server.token + '; HttpOnly; SameSite=Strict; Path=' + ('/wled/' if proxied else '/')})
             self.reply(200, self.server.controller.post(path, payload))
         except PermissionError as exc:
             self.reply(409, {'error': str(exc), 'status': self.server.controller.ownership.status()})
@@ -92,6 +95,8 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(503, {'error': str(exc)})
 
     def do_GET(self):
+        if self.path.startswith('/wled/'):
+            self.path = self.path[len('/wled'):]
         path = urlsplit(self.path).path
         try:
             if path == '/ws':
@@ -104,9 +109,9 @@ class Handler(BaseHTTPRequestHandler):
             if asset in ASSETS:
                 data = (self.server.assets / asset).read_bytes()
                 if asset == 'index.htm':
-                    data = data.replace(b'</body>', b'<script src="/linux-ui.js"></script></body>')
+                    data = data.replace(b'</body>', b'<script src="base.js"></script><script src="linux-ui.js"></script></body>')
                 return self.reply(200, data, mimetypes.guess_type(asset)[0] or 'application/octet-stream')
-            if path in ('/settings', '/login', '/linux-ui.js', '/schedules.js'):
+            if path in ('/settings', '/login', '/linux-ui.js', '/schedules.js', '/base.js'):
                 from .service import ROOT
                 filename = path[1:] if path.endswith('.js') else 'settings.html'
                 return self.reply(200, (ROOT / 'web' / filename).read_bytes(),
@@ -233,10 +238,13 @@ def start_servers(controller, run_dir, state_dir):
     local_path.unlink(missing_ok=True)
     http = HTTPServer((controller.config.get('bind', '127.0.0.1'), controller.config.get('port', 8787)), Handler)
     local = UnixServer(str(local_path), Handler)
-    for server, is_local in ((http, False), (local, True)):
+    web_path = run_dir / 'web.sock'
+    web_path.unlink(missing_ok=True)
+    web = UnixServer(str(web_path), Handler)
+    for server, is_local in ((http, False), (local, True), (web, False)):
         server.controller, server.local, server.token = controller, is_local, auth['token']
         server.assets = ROOT / 'build/ui'
         server.slots = threading.BoundedSemaphore(16)
         server.stop_event = threading.Event()
         threading.Thread(target=server.serve_forever, daemon=True).start()
-    return http, local
+    return http, local, web

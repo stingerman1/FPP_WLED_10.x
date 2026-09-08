@@ -11,7 +11,7 @@ case "$model" in 'Raspberry Pi 4 '*|'Raspberry Pi 5 '*) ;; *) echo "Unsupported 
 if [[ "$plugin_dir" != /home/fpp/media/plugins/FPP_WLED_10.x ]]; then
   echo 'Clone this repository into /home/fpp/media/plugins/FPP_WLED_10.x first.' >&2; exit 1
 fi
-for tool in git g++ python3 systemctl; do command -v "$tool" >/dev/null; done
+for tool in git g++ python3 systemctl apache2ctl a2enconf a2disconf; do command -v "$tool" >/dev/null; done
 test -f "$fpp_src/Plugin.h"
 # Do not install guessed FPP headers or modify stock FPP. Dependency installation
 # remains an explicit administrator action if their image lacks the compiler.
@@ -48,7 +48,7 @@ chmod 0755 callbacks.sh scripts/*.sh scripts/wledctl.py
 install -m 0644 systemd/fpp-wled.service /etc/systemd/system/fpp-wled.service
 systemctl daemon-reload
 systemctl enable fpp-wled.service
-if ! { systemctl restart fpp-wled.service && python3 scripts/check-health.py; }; then
+if ! { systemctl restart fpp-wled.service && python3 scripts/check-health.py && bash scripts/configure-web.sh; }; then
   if [[ -L build/previous ]]; then
     ln -s "$(readlink build/previous)" build/current.restore
     mv -Tf build/current.restore build/current

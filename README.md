@@ -6,7 +6,7 @@ An experimental FPP plugin that renders upstream WLED effects in a separate Linu
 
 - Target: Raspberry Pi 4/5, aarch64, stock FPP 10, plugin ABI 6.
 - Engine: WLED v16.0.1, commit `29b389df1c1aaec6ff53aea742d17063b985906c`.
-- Dedicated WLED UI/API: port **8787**, configurable; FPP's existing WLED endpoints remain separate.
+- WLED UI/API through **`/wled/` on FPP's existing web port**, including WebSockets. An optional direct runtime listener defaults to loopback port 8787; FPP's existing WLED endpoints remain separate.
 - 129 supported effect IDs on a strip; 171 on a matrix, retaining upstream numbering across all 220 slots. Audio, reserved and dimension-incompatible effects are marked unavailable.
 - RGB/RGBW, segments, built-in and custom palettes with previews/import/editing, mapping, normal transitions, selective/partial presets, sequential or shuffled playlists, local timers, HTTP/JSON, WebSocket, optional UDP, MQTT/HA discovery and native-device enrollment.
 - Explicit source-scoped show locks persist across restarts. Unknown ownership or a stale 500 ms heartbeat disables ambient. All sources must clear, followed by at least two quiet seconds, before ambient resumes.
@@ -25,7 +25,7 @@ cd FPP_WLED_10.x
 sudo bash scripts/install.sh
 ```
 
-Restart FPP through its UI after installation. Visit `http://FPP-IP:8787/settings`, log in with the locally stored token, configure channel ranges, and then enable ambient. Initial ambient output is disabled. Configuration is under `/home/fpp/media/config/plugin.FPP_WLED_10.x`, outside the plugin directory.
+Restart FPP through its UI after installation. Visit `http://FPP-IP/wled/settings`, log in with the locally stored token, configure channel ranges, and then enable ambient. Initial ambient output is disabled. Configuration is under `/home/fpp/media/config/plugin.FPP_WLED_10.x`, outside the plugin directory.
 
 ## Shows and native devices
 
