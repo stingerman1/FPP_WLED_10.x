@@ -20,7 +20,8 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=/home/fpp/media/config/plugin.FPP_WLED_10.x /run/fpp-wled
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# getifaddrs/if_nameindex and zeroconf enumerate interfaces through netlink.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
 MemoryMax=256M
 TasksMax=64
 
