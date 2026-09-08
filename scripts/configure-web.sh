@@ -10,12 +10,13 @@ was_enabled=0
 [[ ! -f "$target" ]] || { cp "$target" "$backup"; had_config=1; }
 [[ ! -e "$enabled" ]] || was_enabled=1
 restore() {
+    if [[ $was_enabled == 0 ]]; then a2disconf fpp-wled >/dev/null; fi
     if [[ $had_config == 1 ]]; then cp "$backup" "$target"; else rm -f "$target"; fi
-    if [[ $was_enabled == 1 ]]; then a2enconf fpp-wled >/dev/null; else a2disconf fpp-wled >/dev/null; fi
+    if [[ $was_enabled == 1 ]]; then a2enconf fpp-wled >/dev/null; fi
 }
 trap 'rm -f "$backup"' EXIT
 if [[ ${1:-} == --remove ]]; then
-    a2disconf fpp-wled >/dev/null
+    if [[ -f "$target" || -L "$enabled" ]]; then a2disconf fpp-wled >/dev/null; fi
 else
     install -m 0644 apache/fpp-wled.conf "$target"
     a2enconf fpp-wled >/dev/null
