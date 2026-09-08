@@ -4,6 +4,8 @@
 
 Use a **64-bit stock FPP 10** image on Raspberry Pi 4 or 5. The installer rejects other architectures, models, FPP major versions and ABI fingerprints. It compiles against `/opt/fpp/src`; missing headers or incompatible libraries fail installation instead of downloading substitute FPP binaries. It does not patch FPP.
 
+A 64-bit kernel (`uname -m` reporting `aarch64`) is not enough: Python, the compiler and installed `libfpp.so` must also be 64-bit AArch64. The installer checks these before changing state or compiling. A 32-bit userspace cannot be converted by reinstalling this plugin.
+
 An administrator must provide `git`, `g++`, `python3`, `python3-venv`, timezone data (`tzdata`), `sudo`, `systemd` and JSONcpp development headers (`libjsoncpp-dev` on Debian). The installed FPP headers/library must match the running FPP version. Internet access is required for the pinned WLED source and Python dependencies. No sudo dependency installation is hidden inside the installer.
 
 Clone to exactly `/home/fpp/media/plugins/FPP_WLED_10.x`, then run `sudo bash scripts/install.sh`. FPP's plugin install callback delegates to the same script. A pinned Linux-port checkout is retained under `.upstream/WLED-linux`; an altered rendering tree, different commit or divergent platform wrapper stops the build.

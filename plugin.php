@@ -1,4 +1,8 @@
-<h2>WLED for FPP · Linux alpha</h2>
+<h2>WLED for FPP &middot; Linux alpha</h2>
+<?php if (PHP_INT_SIZE !== 8): ?>
+<p role="alert"><strong>This FPP web environment is 32-bit.</strong> This plugin requires a fully 64-bit FPP installation. A 64-bit Pi or kernel alone is not sufficient. The runtime cannot be installed on this environment; changing ports or reinstalling the plugin will not resolve it.</p>
+<p>Check <a href="/api/file/logs/fpp_plugin_manager.log" target="_blank" rel="noopener">the plugin installation log</a> for the build failure. Back up FPP configuration before planning an OS migration.</p>
+<?php return; endif; ?>
 <p>Ambient lighting yields to FPP shows. Direct-to-device shows need explicit Show Start and Show End hooks.</p>
 <p><a href="/fpp-wled/" target="_blank" rel="noopener">Open WLED runtime</a> · <a href="/fpp-wled/settings" target="_blank" rel="noopener">Setup and compatibility</a></p>
 <p>This alpha requires Raspberry Pi 4/5 hardware acceptance. FPP's built-in WLED interface remains separate.</p>

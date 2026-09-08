@@ -13,6 +13,7 @@ if [[ "$plugin_dir" != /home/fpp/media/plugins/FPP_WLED_10.x ]]; then
 fi
 for tool in git g++ python3 systemctl apache2ctl a2enconf a2disconf; do command -v "$tool" >/dev/null; done
 test -f "$fpp_src/Plugin.h"
+python3 scripts/check-platform.py "$fpp_src"
 # Do not install guessed FPP headers or modify stock FPP. Dependency installation
 # remains an explicit administrator action if their image lacks the compiler.
 install -d -o fpp -g fpp -m 0750 "$state_dir"
