@@ -30,7 +30,6 @@ Automated suite at this audit: 120 passing tests. Route tests are in `tests/test
 ## Remaining boundaries
 
 - Configuration is still a JSON editor. Changes requiring runtime restart do not have a restart button here; follow the installation/service instructions. Schedules and lighting changes apply immediately.
-- Discovery requires enabling discovery in configuration. Device enrollment and output mapping are still configured through JSON/FPP, not guided forms.
-- The upstream Sync shortcut is disabled; configure UDP synchronization in Setup.
+- Discovery and sync now have live settings controls and automatic peers; the Sync shortcut opens them. See [discovery and sync](DISCOVERY_SYNC.md). Manual effect-mode enrollment and output mapping still use JSON/FPP.
 - ESP flashing, Wi-Fi provisioning, GPIO, audio input, usermods, Hue, PixelForge and arbitrary filesystem editing remain unsupported. Their upstream controls are disabled where exposed; unsupported APIs may return 404/422 intentionally.
 - Native-device handoff, physical output, show timing under load, and Pi performance acceptance require the hardware checklist in the project documentation. HTTP success does not establish those guarantees.

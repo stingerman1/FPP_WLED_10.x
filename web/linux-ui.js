@@ -47,14 +47,28 @@
     peek.onclick = () => { location.href = wledURL('/settings#ambient-lighting'); };
     peek.title = 'Open ambient pixel preview';
   }
-  for (const id of ['buttonSync']) {
-    const button = document.getElementById(id);
-    if (button) {
-      button.disabled = true;
-      button.title = 'Configure Linux schedules and UDP synchronization in Setup';
-      button.style.opacity = '.4';
-    }
+  const sync = document.getElementById('buttonSync');
+  if (sync) {
+    sync.onclick = () => { location.href = wledURL('/settings#network'); };
+    sync.title = 'Discovery and synchronization settings';
   }
+  // Render network-supplied names as text; use advertised paths and avoid the
+  // upstream unauthenticated remote toggle, which bypasses FPP ownership.
+  populateNodes = (info, data) => {
+    const panel = document.getElementById('kn');
+    panel.replaceChildren();
+    const heading = document.createElement('p');
+    heading.textContent = 'Current instance: ' + info.name;
+    panel.append(heading);
+    for (const node of data.nodes || []) {
+      const link = document.createElement('a');
+      link.className = 'btn'; link.textContent = node.name || node.ip;
+      link.href = node.url; link.style.display = 'block'; panel.append(link);
+    }
+    const setup = document.createElement('a');
+    setup.href = wledURL('/settings#network'); setup.textContent = 'Discovery and sync settings';
+    panel.append(setup);
+  };
   for (const button of document.querySelectorAll('button')) {
     if (/\/cpal/.test(button.getAttribute('onclick') || '')) {
       button.onclick = () => { location.href = wledURL('/settings#custom-palettes'); };

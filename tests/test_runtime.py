@@ -30,10 +30,10 @@ class RuntimeTests(unittest.TestCase):
             self.assertEqual(response.status, expected, (method, route, data[:200]))
             return json.loads(data) if response.getheader('Content-Type', '').startswith('application/json') else data
         for route in ('/', '/settings', '/login', '/index.js', '/index.css', '/common.js', '/iro.js',
-                      '/rangetouch.js', '/base.js', '/access.js', '/linux-ui.js', '/schedules.js', '/skin.css',
+                      '/rangetouch.js', '/base.js', '/access.js', '/linux-ui.js', '/schedules.js', '/network.js', '/skin.css',
                       '/json', '/json/si', '/json/state', '/json/info', '/json/effects', '/json/fxdata',
                       '/json/palettes', '/json/nodes', '/json/palx?page=0', '/presets.json', '/api/auth',
-                      '/api/status', '/api/config', '/api/devices', '/api/discovery', '/api/schedules', '/api/preview', '/api/palettes'):
+                      '/api/status', '/api/config', '/api/devices', '/api/discovery', '/api/network', '/api/schedules', '/api/preview', '/api/palettes'):
             request('GET', route)
         # All advertised mutation routes operate only on this isolated fixture.
         request('POST', '/api/login', {})
@@ -50,6 +50,8 @@ class RuntimeTests(unittest.TestCase):
         request('POST', '/api/schedules', {'revision': schedule['revision'], 'preview': True, 'timers': [], 'location': None})
         config = deepcopy(self.control.config); config['port'] = 8787
         request('POST', '/api/config', config)
+        self.control.config['port'] = 8787  # Ephemeral HTTP fixture port is not a valid saved config.
+        request('POST', '/api/network', {'discovery': False, 'udp': {'enabled': False}})
         request('POST', '/api/devices/command', {'target': 'missing', 'state': {'on': True}}, expected=422)
         for operation in ('status', 'show-start', 'show-end', 'ambient-disable'):
             request('POST', '/api/command', {'operation': operation, 'source': 'audit:show'})

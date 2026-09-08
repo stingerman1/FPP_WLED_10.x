@@ -39,20 +39,24 @@ class Controller:
         self.latest_frame = bytes(len(engine.buffer))
         self.timers = Timers(config.get('timers', []), config.get('location'), directory / 'timers-fired.json')
         self.integrations = {}
+        from .network import Network
+        self.network = Network(self)
         self.link = None
 
     def info(self):
         owned = self.ownership.status()['show_owned']
         p = self.config['pixels']
-        return {'ver': '16.0.1-linux-alpha.1', 'vid': 2609070, 'name': 'WLED for FPP',
+        sync = self.sync_state()
+        discovery = self.integrations.get('discovery')
+        return {'ver': '16.0.1-linux-alpha.1', 'vid': 2609080, 'name': self.config.get('name', 'WLED for FPP'),
                 'arch': 'linux', 'brand': 'WLED', 'product': 'FPP Linux alpha',
                 'live': owned, 'liveseg': -1, 'lm': 'FPP show', 'lip': '',
                 'leds': {'count': p['count'], 'rgbw': p['channels'] == 4, 'wv': p['channels'] == 4,
                          'cct': False, 'seglc': [3 if p['channels'] == 4 else 1] * len(self.state.value['seg']),
                          'lc': 3 if p['channels'] == 4 else 1, 'maxseg': 32, 'bootps': -1,
                          **({'matrix': {'w': self.engine.width, 'h': self.engine.height}} if self.engine.height > 1 else {})},
-                'str': False, 'sync': {'recv': False, 'send': False}, 'wifi': {'ap': False, 'signal': 100},
-                'fs': {'u': 0, 't': 0, 'pmt': 1}, 'ndc': 0, 'ws': 0,
+                'str': False, 'sync': {'recv': sync['recv'], 'send': sync['send']}, 'wifi': {'ap': False, 'signal': 100},
+                'fs': {'u': 0, 't': 0, 'pmt': 1}, 'ndc': len(discovery.public()) if discovery else -1, 'ws': 0,
                 'fxcount': len(self.engine.effects), 'palcount': len(self.engine.palettes) + self.palettes.count,
                 'cpalcount': self.palettes.count, 'umpalcount': 0, 'palrev': self.palettes.revision,
                 'uptime': int(time.monotonic() - self.started), 'opt': 0, 'maps': [],
@@ -69,6 +73,8 @@ class Controller:
 
     def get(self, path):
         with self.lock:
+            if path == '/api/network':
+                return self.network.public()
             if path == '/api/schedules':
                 return schedules.public(self)
             if path == '/api/preview':
@@ -97,10 +103,10 @@ class Controller:
                     raise KeyError(path)
                 return deepcopy(self.palettes.saved[slot])
             if path in ('/json', '/json/si'):
-                return {'state': self.state.public(), 'info': self.info(),
+                return {'state': self.public_state(), 'info': self.info(),
                         'effects': self.effect_names(), 'palettes': self.engine.palettes}
             if path == '/json/state':
-                return self.state.public()
+                return self.public_state()
             if path == '/json/info':
                 return self.info()
             if path == '/json/effects':
@@ -110,7 +116,8 @@ class Controller:
             if path == '/json/palettes':
                 return self.engine.palettes
             if path == '/json/nodes':
-                return {'nodes': []}
+                discovery = self.integrations.get('discovery')
+                return {'nodes': [{**n, 'ip': n['address']} for n in discovery.public()] if discovery else []}
             if path == '/presets.json':
                 return deepcopy(self.state.presets)
             if path == '/api/status':
@@ -127,9 +134,20 @@ class Controller:
         return ['RSVD - unsupported on Linux' if i in self.engine.unsupported else name
                 for i, name in enumerate(self.engine.effects)]
 
+    def sync_state(self):
+        udp = self.integrations.get('udp')
+        cfg = udp.config if udp else {}
+        return {'send': bool(udp and cfg.get('send', True)), 'recv': bool(udp and cfg.get('receive', True)),
+                'sgrp': cfg.get('groups', 1), 'rgrp': cfg.get('groups', 1)}
+
+    def public_state(self):
+        return {**self.state.public(), 'udpn': self.sync_state()}
+
     def post(self, path, payload):
         if not isinstance(payload, dict):
             raise ValueError('request must be an object')
+        if path == '/api/network':
+            return self.network.configure(payload)
         drain = False
         revoked = None
         capture_epoch = None
@@ -204,7 +222,7 @@ class Controller:
                 self.dirty = True
                 if 'udp' in self.integrations:
                     self.integrations['udp'].send()
-                result = {'state': self.state.public(), 'info': self.info()}
+                result = {'state': self.public_state(), 'info': self.info()}
             else:
                 raise KeyError(path)
         if drain:
@@ -225,11 +243,13 @@ class Controller:
     def tick(self, step_ms):
         with self.lock:
             allowed = self.ownership.status()['allowed']
+            notify = False
             for preset in self.timers.due():
                 if allowed:
                     try:
                         self.state.select(preset)
                         self.dirty = True
+                        notify = True
                     except ValueError as exc:
                         logging.warning('Timer skipped: %s', exc)
             if not allowed:
@@ -239,8 +259,10 @@ class Controller:
                 self.state.restart_entry()
                 self.devices.resume()
                 self.dirty = True
+                notify = True
             elif self.state.tick(step_ms):
                 self.dirty = True
+                notify = True
             if self.state.tick_nightlight(step_ms):
                 self.dirty = True
             self.devices.recovery.tick()
@@ -261,6 +283,8 @@ class Controller:
                 self.rendered_nightlight = self.state.nightlight
                 self.dirty = False
             self.render_ms += step_ms
+            if notify and 'udp' in self.integrations:
+                self.integrations['udp'].send()
             self.latest_frame = self.engine.render(self.render_ms)
             self.was_allowed = True
             return self.latest_frame, True
@@ -291,14 +315,10 @@ def main():
     link = Link(args.run_dir)
     controller.link = link
     servers = start_servers(controller, args.run_dir, args.state_dir)
-    from .integrations import MQTT, Discovery
-    from .udp import Sync
+    from .integrations import MQTT
     if config.get('mqtt', {}).get('enabled', False):
         controller.integrations['mqtt'] = MQTT(controller)
-    if config.get('discovery', False):
-        controller.integrations['discovery'] = Discovery()
-    if config.get('udp', {}).get('enabled', False):
-        controller.integrations['udp'] = Sync(controller)
+    controller.network.configure()
     stopping = threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stopping.set())
     signal.signal(signal.SIGINT, lambda *_: stopping.set())
@@ -313,8 +333,7 @@ def main():
                 link.send(data, config, allowed)
             if 'mqtt' in controller.integrations:
                 controller.integrations['mqtt'].tick()
-            if 'udp' in controller.integrations:
-                controller.integrations['udp'].tick()
+            controller.network.tick()
             previous = started
             stopping.wait(max(0, interval - (time.monotonic() - started)))
     finally:

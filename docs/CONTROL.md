@@ -73,7 +73,8 @@ Other operations are `show-end`, `ambient-enable`, `ambient-disable`, `status`. 
 | GET `/api/status` | Enabled/allowed state, locks, observer freshness, unsupported capabilities, device results |
 | POST `/api/command` | Ownership and ambient controls |
 | GET/POST `/api/config` | Read or validate/save configuration; restart service after saving |
-| GET `/api/devices`, `/api/discovery` | Enrolled device status and mDNS suggestions |
+| GET `/api/devices`, `/api/discovery` | Enrolled device status and mDNS/WLED node discovery |
+| GET/POST `/api/network` | Discovery, advertising and sync settings/status; authenticated POST applies network settings live |
 | POST `/api/devices/command` | `{"target":"porch","state":{"ps":1}}` or `{"target":"group:outside","state":{"seg":{"fx":9}}}` |
 | GET `/json`, `/json/si`, `/json/state`, `/json/info` | WLED-compatible supported state/info |
 | POST `/json/state` | e.g. `{"bri":128,"seg":{"fx":9,"fxdef":true}}` |

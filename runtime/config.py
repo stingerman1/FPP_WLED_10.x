@@ -124,15 +124,28 @@ def validate(config):
             value = mqtt.get(key, default)
             if not isinstance(value, str) or not 1 <= len(value) <= 128 or any(c in value for c in '#+\x00'):
                 raise ValueError('invalid MQTT ' + key)
+    for key in ('discovery', 'discoverable'):
+        if key in config and type(config[key]) is not bool:
+            raise ValueError(key + ' must be boolean')
+    if not isinstance(config.get('name', 'WLED for FPP'), str) or not 1 <= len(config.get('name', 'WLED for FPP')) <= 32:
+        raise ValueError('name must contain 1..32 characters')
+    integer(config.get('discovery_http_port', 80), 1, 65535, 'FPP HTTP port')
     udp = config.get('udp', {})
     if not isinstance(udp, dict):
         raise ValueError('udp must be an object')
     if udp.get('enabled', False):
         integer(udp.get('port', 21324), 1024, 65535, 'UDP port')
         integer(udp.get('groups', 1), 1, 255, 'UDP sync group mask')
-        if not isinstance(udp.get('peers'), list) or not 1 <= len(udp['peers']) <= 64:
-            raise ValueError('UDP sync requires 1..64 explicit peer addresses')
-        for peer in udp['peers']:
+        for key in ('enabled', 'send', 'receive', 'auto_peers'):
+            if key in udp and type(udp[key]) is not bool:
+                raise ValueError('udp ' + key + ' must be boolean')
+        if udp.get('auto_peers', False) and not config.get('discovery', False):
+            raise ValueError('automatic sync peers require discovery')
+        if udp.get('port', 21324) == 65506 and config.get('discovery', False):
+            raise ValueError('sync port conflicts with WLED discovery port 65506')
+        if not isinstance(udp.get('peers', []), list) or len(udp.get('peers', [])) > 64:
+            raise ValueError('UDP sync supports at most 64 explicit peer addresses')
+        for peer in udp.get('peers', []):
             ipaddress.IPv4Address(peer)
             if peer in addresses:
                 raise ValueError('a device cannot use both global UDP sync and an enrolled control mode')

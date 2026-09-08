@@ -61,10 +61,26 @@ class Sync:
         self.controller = controller
         self.config = controller.config['udp']
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.bind(('0.0.0.0', self.config.get('port', 21324)))
-        self.socket.setblocking(False)
-        self.peers = set(self.config.get('peers', []))
+        try:
+            self.socket.bind(('0.0.0.0', self.config.get('port', 21324)))
+            self.socket.setblocking(False)
+        except Exception:
+            self.socket.close()
+            raise
         self.last_error = None
+        self.received = 0
+        self.sent = 0
+
+    @property
+    def peers(self):
+        peers = set(self.config.get('peers', []))
+        discovery = self.controller.integrations.get('discovery')
+        if self.config.get('auto_peers', False) and discovery:
+            peers.update(n['address'] for n in discovery.public() if not n['enrolled'])
+        excluded = {d['address'] for d in self.controller.config.get('devices', [])}
+        if discovery:
+            excluded.update(a for a, _ in discovery.local)
+        return peers - excluded
 
     def tick(self):
         for _ in range(16):
@@ -72,24 +88,33 @@ class Sync:
                 packet, sender = self.socket.recvfrom(1473)
             except BlockingIOError:
                 return
-            if sender[0] not in self.peers or len(packet) > 1472:
+            if not self.config.get('receive', True) or sender[0] not in self.peers or len(packet) > 1472:
                 continue
             try:
                 patch = decode(packet, self.config.get('groups', 1))
                 with self.controller.lock:
                     if not self.controller.ownership.status()['allowed']:
                         continue
+                    local_ids = {s.get('id', i) for i, s in enumerate(self.controller.state.value['seg'])}
+                    patch['seg'] = [s for s in patch['seg'] if s['id'] in local_ids]
                     # Received notifications must not generate a notification loop.
                     self.controller.state.set(patch)
+                    self.controller.state.stop_playlist()
+                    self.controller.render_ms = struct.unpack_from('!I', packet, 25)[0]
                     self.controller.dirty = True
+                    self.received += 1
+                    self.last_error = None
             except (ValueError, TypeError, KeyError) as exc:
                 self.last_error = str(exc)
 
     def send(self):
+        if not self.config.get('send', True) or not self.controller.ownership.status()['allowed']:
+            return
         packet = encode(self.controller.state.value, self.config.get('groups', 1), self.controller.render_ms)
         for peer in self.peers:
             try:
                 self.socket.sendto(packet, (peer, self.config.get('port', 21324)))
+                self.sent += 1
             except OSError as exc:
                 self.last_error = str(exc)
 

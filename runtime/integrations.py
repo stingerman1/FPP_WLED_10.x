@@ -124,36 +124,3 @@ class MQTT:
         self.client.publish(self.topic + '/status', 'offline', retain=True)
         self.client.disconnect()
         self.client.loop_stop()
-
-
-class Discovery:
-    def __init__(self):
-        from zeroconf import Zeroconf, ServiceBrowser
-        self.found = {}
-        self.lock = threading.Lock()
-        self.zc = Zeroconf()
-        self.browser = ServiceBrowser(self.zc, '_wled._tcp.local.', self)
-
-    def add_service(self, zeroconf, service_type, name):
-        info = zeroconf.get_service_info(service_type, name, timeout=500)
-        if info:
-            addresses = info.parsed_addresses()
-            with self.lock:
-                if len(self.found) < 128:
-                    self.found[name] = {'name': name, 'addresses': addresses, 'port': info.port,
-                                        'enrolled': False}
-
-    def update_service(self, zeroconf, service_type, name):
-        self.add_service(zeroconf, service_type, name)
-
-    def remove_service(self, zeroconf, service_type, name):
-        with self.lock:
-            self.found.pop(name, None)
-
-    def public(self):
-        with self.lock:
-            return list(self.found.values())
-
-    def close(self):
-        self.browser.cancel()
-        self.zc.close()

@@ -31,7 +31,7 @@ fi
 bash scripts/build-renderer.sh
 bash scripts/build-plugin.sh
 python3 scripts/verify-abi.py "$fpp_src" build/libFPP_WLED_10.x.so >build/abi.json
-sudo -u fpp python3 -m runtime.service --state-dir "$state_dir" --validate
+runuser -u fpp -- python3 -m runtime.service --state-dir "$state_dir" --validate
 # Immutable release trees keep running Python code and dlopened libraries intact
 # while a new version builds. A single symlink selects the next runtime release.
 release="releases/$(date -u +%Y%m%dT%H%M%S)-$$"

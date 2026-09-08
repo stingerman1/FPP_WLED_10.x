@@ -31,7 +31,7 @@ Restart FPP through its UI after installation. Visit `http://FPP-IP/fpp-wled/set
 
 The adapter observes FPP playlists, running sequences and bridge/live input. It holds ownership through playlist gaps and pauses. Explicit hooks are required for guaranteed handoff when xSchedule or another sender routes directly to devices. [Hook and API examples](docs/CONTROL.md) explain how to wait for successful Show Start, retain independent source locks and release them after the last show packet.
 
-Native devices have exactly one enrolled mode: HTTP effects/presets, UDP synchronization, or FPP-rendered streaming. For streaming, configure DDP/E1.31/Art-Net in FPP and map channels here; this plugin does not open a second competing pixel sender. mDNS discovery only suggests candidates; enrollment is manual. Physical-device integration remains experimental.
+Native devices have exactly one enrolled mode: HTTP effects/presets, UDP synchronization, or FPP-rendered streaming. For streaming, configure DDP/E1.31/Art-Net in FPP and map channels here; this plugin does not open a second competing pixel sender. [Automatic discovery and bidirectional sync](docs/DISCOVERY_SYNC.md) use WLED node broadcasts and mDNS; automatic sync requires no manual enrollment. Physical-device integration remains experimental. See the [FPP template conformance audit](docs/TEMPLATE_AUDIT.md) for outstanding platform-integration work.
 
 ## Develop and verify
 
