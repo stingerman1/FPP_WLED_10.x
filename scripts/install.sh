@@ -11,7 +11,7 @@ case "$model" in 'Raspberry Pi 4 '*|'Raspberry Pi 5 '*) ;; *) echo "Unsupported 
 if [[ "$plugin_dir" != /home/fpp/media/plugins/FPP_WLED_10.x ]]; then
   echo 'Clone this repository into /home/fpp/media/plugins/FPP_WLED_10.x first.' >&2; exit 1
 fi
-for tool in git g++ python3 systemctl apache2ctl a2enconf a2disconf; do command -v "$tool" >/dev/null; done
+for tool in git g++ objdump python3 systemctl apache2ctl a2enconf a2disconf; do command -v "$tool" >/dev/null; done
 test -f "$fpp_src/Plugin.h"
 python3 scripts/check-platform.py "$fpp_src"
 # Do not install guessed FPP headers or modify stock FPP. Dependency installation

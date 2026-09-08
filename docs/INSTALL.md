@@ -6,9 +6,11 @@ Use a **64-bit stock FPP 10** image on Raspberry Pi 4 or 5. The installer reject
 
 A 64-bit kernel (`uname -m` reporting `aarch64`) is not enough: Python, the compiler and installed `libfpp.so` must also be 64-bit AArch64. The installer checks these before changing state or compiling. A 32-bit userspace cannot be converted by reinstalling this plugin.
 
-An administrator must provide `git`, `g++`, `python3`, `python3-venv`, timezone data (`tzdata`), `sudo`, `systemd` and JSONcpp development headers (`libjsoncpp-dev` on Debian). The installed FPP headers/library must match the running FPP version. Internet access is required for the pinned WLED source and Python dependencies. No sudo dependency installation is hidden inside the installer.
+An administrator must provide `git`, `g++`, `objdump` (binutils), `python3`, `python3-venv`, timezone data (`tzdata`), `sudo`, `systemd` and JSONcpp development headers (`libjsoncpp-dev` on Debian). The installed FPP headers/library must match the running FPP version. Internet access is required for the pinned WLED source and Python dependencies. No sudo dependency installation is hidden inside the installer.
 
 Clone to exactly `/home/fpp/media/plugins/FPP_WLED_10.x`, then run `sudo bash scripts/install.sh`. FPP's plugin install callback delegates to the same script. A pinned Linux-port checkout is retained under `.upstream/WLED-linux`; an altered rendering tree, different commit or divergent platform wrapper stops the build.
+
+ABI verification reads the compiled constant fingerprints from the installed library and candidate with objdump, without loading daemon-dependent libraries into Python. Unrecognized code or mismatched fingerprints fail closed. FPP performs final symbol resolution and its ABI checks when it loads the adapter.
 
 The installer stages an immutable runtime release, validates state and the plugin ABI, installs a supervised `fpp-wled.service`, checks its local status endpoint, and switches `build/current`. It retains `build/previous` for rollback. It does not automatically restart FPP or interrupt playback. **Install or upgrade between shows, then restart FPP from its UI.** The adapter loaded into an existing FPP process is not hot-replaced.
 
