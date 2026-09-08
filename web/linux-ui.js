@@ -1,5 +1,7 @@
 // Linux capability and ownership notice added alongside upstream WLED's UI.
 (() => {
+  // ESP firmware reporting/upload paths do not apply to this Linux runtime.
+  checkVersionUpgrade = () => {};
   // Upstream assumes each WS message is state/info. Handle the Linux API's
   // explicit rejection response before it reaches that state parser.
   function hookErrors() {
@@ -40,7 +42,12 @@
     nightlightButton.onclick = () => { location.href = wledURL('/settings#ambient-lighting'); };
     nightlightButton.title = 'Nightlight and lighting controls';
   }
-  for (const id of ['buttonSync', 'buttonSr']) {
+  const peek = document.getElementById('buttonSr');
+  if (peek) {
+    peek.onclick = () => { location.href = wledURL('/settings#ambient-lighting'); };
+    peek.title = 'Open ambient pixel preview';
+  }
+  for (const id of ['buttonSync']) {
     const button = document.getElementById(id);
     if (button) {
       button.disabled = true;
@@ -72,14 +79,15 @@
     overlay.append(message, document.createTextNode('Ambient lighting resumes after all show sources end and the quiet period expires.'));
   }
   const notice = document.createElement('div');
-  notice.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#222;color:#eee;padding:8px;text-align:center;font:14px sans-serif';
+  notice.id = 'linux-status-notice';
+  notice.style.cssText = 'position:fixed;bottom:var(--bh,0px);left:0;right:0;z-index:9999;background:#222;color:#eee;padding:8px;text-align:center;font:14px sans-serif;pointer-events:none';
   document.body.append(notice);
   async function refresh() {
     try {
       const status = await (await wledFetch('/api/status')).json();
       notice.replaceChildren(document.createTextNode(status.allowed ? 'Linux alpha · Ambient active · ' : 'Linux alpha · Ambient suspended: ' + (status.sources.join(', ') || (!status.enabled ? 'disabled' : 'waiting for FPP / quiet period')) + ' · '));
       const link = document.createElement('a');
-      link.href = wledURL('/settings'); link.textContent = 'Setup, login & compatibility'; link.style.color = '#9ddcff';
+      link.href = wledURL('/settings'); link.textContent = 'Setup, login & compatibility'; link.style.cssText = 'color:#9ddcff;pointer-events:auto';
       notice.append(link);
     } catch { notice.textContent = 'Runtime unavailable'; }
   }

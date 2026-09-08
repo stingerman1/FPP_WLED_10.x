@@ -11,6 +11,19 @@
     show.textContent = 'Show token';
     result.hidden = true;
   }
+  async function refreshAccess() {
+    try {
+      const response = await fetch('/fpp-wled/api/auth', {cache: 'no-store'});
+      if (!response.ok) throw Error();
+      const auth = await response.json();
+      byId('wled-saved-access').textContent = auth.authenticated
+        ? 'Runtime access is saved on this browser. WLED Settings is connected.'
+        : 'Runtime access is not saved on this browser yet.';
+    } catch { byId('wled-saved-access').textContent = 'Runtime access status unavailable.'; }
+  }
+  refreshAccess();
+  window.addEventListener('focus', refreshAccess);
+  setInterval(() => { if (!document.hidden) refreshAccess(); }, 15000);
   get.onclick = async () => {
     if (!window.confirm('This token permits lighting, preset and configuration changes. Retrieve the existing token from this FPP installation? Keep it private.')) return;
     clear();
@@ -52,7 +65,8 @@
       });
       if (!response.ok) throw Error('Runtime login failed. Check that the runtime is running, then retrieve the token again.');
       clear();
-      status.textContent = 'Logged in for this browser. Open WLED runtime or Setup and compatibility above.';
+      await refreshAccess();
+      status.textContent = 'Access saved on this browser across restarts. WLED Settings will show your connected status.';
     } catch (error) { status.textContent = error.message; }
     finally { button.disabled = false; }
   };

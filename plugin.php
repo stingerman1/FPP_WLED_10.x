@@ -9,13 +9,14 @@
 <p id="wled-web-status" role="status">Checking WLED web access...</p>
 <section aria-labelledby="wled-token-heading">
 <h3 id="wled-token-heading">Runtime access</h3>
+<p id="wled-saved-access" role="status">Checking saved access...</p>
 <p>The runtime token authorizes lighting, preset and configuration changes. The button below retrieves the existing token; it does not replace it. Anyone with access to this FPP page can retrieve it, so keep FPP access limited to trusted users.</p>
 <button type="button" id="wled-get-token">Get runtime token</button>
 <div id="wled-token-result" hidden>
     <p><label>API token <input id="wled-token-value" type="password" readonly autocomplete="off" spellcheck="false" size="44" style="max-width:100%;box-sizing:border-box"></label></p>
     <button type="button" id="wled-show-token">Show token</button>
     <button type="button" id="wled-copy-token">Copy token</button>
-    <button type="button" id="wled-token-login">Log in to runtime</button>
+    <button type="button" id="wled-token-login">Save runtime access</button>
     <button type="button" id="wled-clear-token">Clear from page</button>
 </div>
 <p id="wled-token-status" role="status" aria-live="polite"></p>

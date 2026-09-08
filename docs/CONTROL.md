@@ -127,3 +127,7 @@ Authenticated save example: `POST /api/palettes` with `{"slot":0,"palette":[0,"F
 Deletion rejects palettes referenced by current state or any saved preset. Creating or editing inactive saved palettes is allowed during shows; changing the currently selected palette while ambient is suspended returns 409. Invalid gradients return 422. Preview requests do not advance the renderer or change lighting state. Definitions persist atomically in `custom-palettes.json`; a storage failure leaves the loaded table unchanged. A content revision invalidates upstream browser preview caches even when slot counts stay the same.
 
 This is a JSON/gradient editor, not native WLED's arbitrary filesystem editor. It accepts 2–18 stops from 0 through 255, with RGB colors. It does not transmit palette definitions to enrolled native devices. Before rolling back to code without custom-palette support, select built-in palettes or restore a compatible settings backup; older runtimes cannot load state that selects a custom palette.
+
+## Browser access
+
+POST /api/login with a bearer token saves a persistent HttpOnly cookie. GET /api/auth reports authenticated/persistent status without returning the token and renews authenticated cookies for one year. POST /api/logout with {} clears browser access. Settings and the FPP plugin page use this shared status. See [the route audit](ROUTE_AUDIT.md) for verification and remaining UI limitations.

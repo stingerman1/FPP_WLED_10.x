@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 from .storage import read_json, save_json
 
 MAX_BODY = 262144
+LOGIN_MAX_AGE = 365 * 24 * 60 * 60
 ASSETS = {'index.htm', 'index.js', 'index.css', 'common.js', 'iro.js', 'rangetouch.js', 'favicon.ico'}
 
 
@@ -37,11 +38,16 @@ class Handler(BaseHTTPRequestHandler):
         cookie = SimpleCookie()
         try:
             cookie.load(self.headers.get('Cookie', ''))
-            if 'fpp_wled' in cookie:
+            if not supplied and 'fpp_wled' in cookie:
                 supplied = cookie['fpp_wled'].value
         except Exception:
             return False
         return bool(supplied) and hmac.compare_digest(supplied, self.server.token)
+
+    def login_cookie(self, proxied, clear=False):
+        return ('fpp_wled=' + ('' if clear else self.server.token)
+                + '; HttpOnly; SameSite=Strict; Path=' + ('/fpp-wled/' if proxied else '/')
+                + '; Max-Age=' + str(0 if clear else LOGIN_MAX_AGE))
 
     def reply(self, code, body, content_type='application/json', headers=None):
         if not isinstance(body, bytes):
@@ -52,7 +58,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         for key, value in (headers or {}).items():
-            self.send_header(key, value)
+            for item in value if isinstance(value, list) else [value]:
+                self.send_header(key, item)
         self.end_headers()
         self.wfile.write(body)
 
@@ -72,6 +79,11 @@ class Handler(BaseHTTPRequestHandler):
         if proxied:
             self.path = self.path[len('/fpp-wled'):]
         try:
+            if urlsplit(self.path).path == '/api/logout':
+                self.body()
+                return self.reply(200, {'authenticated': False}, headers={
+                    'Set-Cookie': [self.login_cookie(proxied, clear=True), self.login_cookie(False, clear=True)]
+                    if proxied else self.login_cookie(False, clear=True)})
             if not self.authenticated():
                 self.close_connection = True
                 return self.reply(401, {'error': 'bearer token required'})
@@ -79,7 +91,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = self.body()
             if path == '/api/login':
                 return self.reply(200, {'success': True}, headers={
-                    'Set-Cookie': 'fpp_wled=' + self.server.token + '; HttpOnly; SameSite=Strict; Path=' + ('/fpp-wled/' if proxied else '/')})
+                    'Set-Cookie': self.login_cookie(proxied)})
             self.reply(200, self.server.controller.post(path, payload))
         except PermissionError as exc:
             self.reply(409, {'error': str(exc), 'status': self.server.controller.ownership.status()})
@@ -95,10 +107,16 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(503, {'error': str(exc)})
 
     def do_GET(self):
-        if self.path.startswith('/fpp-wled/'):
+        proxied = self.path.startswith('/fpp-wled/')
+        if proxied:
             self.path = self.path[len('/fpp-wled'):]
         path = urlsplit(self.path).path
         try:
+            if path == '/api/auth':
+                authenticated = self.authenticated()
+                return self.reply(200, {'authenticated': authenticated, 'persistent': authenticated,
+                                       'remember_days': LOGIN_MAX_AGE // 86400}, headers={
+                    'Set-Cookie': self.login_cookie(proxied)} if authenticated else None)
             if path == '/ws':
                 return self.websocket()
             if path == '/skin.css':
@@ -111,7 +129,7 @@ class Handler(BaseHTTPRequestHandler):
                 if asset == 'index.htm':
                     data = data.replace(b'</body>', b'<script src="base.js"></script><script src="linux-ui.js"></script></body>')
                 return self.reply(200, data, mimetypes.guess_type(asset)[0] or 'application/octet-stream')
-            if path in ('/settings', '/login', '/linux-ui.js', '/schedules.js', '/base.js'):
+            if path in ('/settings', '/login', '/linux-ui.js', '/schedules.js', '/base.js', '/access.js'):
                 from .service import ROOT
                 filename = path[1:] if path.endswith('.js') else 'settings.html'
                 return self.reply(200, (ROOT / 'web' / filename).read_bytes(),

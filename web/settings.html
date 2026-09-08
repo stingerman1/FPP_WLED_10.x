@@ -8,8 +8,12 @@
 </style>
 <p><a href="./">Open WLED</a> · <a href="https://github.com/stingerman1/FPP_WLED_10.x">Documentation</a></p>
 <p>FPP owns physical outputs. Ambient waits while shows run, then resumes after two quiet seconds. This alpha supports a subset of WLED; unavailable capabilities are listed below.</p>
-<section><h2>Runtime access</h2><p>Read the token from <code>auth.json</code> in the plugin configuration directory. Login enables controls on this browser.</p>
-<label>API token <input id="token" type="password" autocomplete="off"></label><button id="login">Login</button></section>
+<section id="runtime-access"><h2>Runtime access</h2>
+<p id="accessStatus" role="status">Checking saved access...</p>
+<div id="loginFields"><label>API token <input id="token" type="password" autocomplete="off"></label><button id="login">Save access on this browser</button></div>
+<button id="logout" hidden>Forget access on this browser</button>
+<p>Access is remembered for one year and renewed when this page checks it. Clearing browser data, forgetting access, or changing the runtime token requires login again. Other browsers and FPP addresses need their own login.</p>
+</section>
 <section><h2>Ambient ownership</h2><button data-op="ambient-enable">Enable ambient</button> <button data-op="ambient-disable">Disable ambient</button>
 <label>Show source <input id="source" placeholder="xschedule:main"></label><button data-op="show-start">Show Start</button> <button data-op="show-end">Show End / clear this lock</button>
 <p>Clear only the source you intend to release. Other sources keep ownership.</p><pre id="status">Loading status…</pre></section>
@@ -63,14 +67,14 @@
 <label>Palette file <input id="paletteFile" type="file" accept=".json,application/json"></label>
 <label>Palette JSON<textarea id="paletteJson" spellcheck="false" style="min-height:110px">{"palette":[0,"FF0000",128,"00FF00",255,"0000FF"]}</textarea></label>
 <button id="loadPalette">Load slot</button> <button id="savePalette">Save palette</button> <button id="deletePalette">Delete palette</button>
-<p><a id="downloadPalette" href="/palette0.json" download="palette0.json">Download saved slot</a></p>
+<p><a id="downloadPalette" href="palette0.json" download="palette0.json">Download saved slot</a></p>
 <div id="palettePreview" role="img" aria-label="Saved palette preview" style="height:32px;border:1px solid #536075;border-radius:5px"></div>
 <pre id="paletteStatus" role="status">Loading palette slots…</pre>
 <p>Reload the WLED page after saving to refresh its palette list. Deletion is blocked while a palette is referenced. Editing the active palette is blocked during show ownership or suspended ambient.</p>
 </section>
 <section><h2>Import WLED presets</h2>
 <p>Merge a WLED presets.json file into this runtime. Matching IDs will be overwritten; other presets remain. Preview checks the current pixel layout and reports translations. Unsupported entries block the whole import. Lighting and show locks remain active.</p>
-<p><a href="/presets.json" download="presets.json">Download existing presets before importing</a></p>
+<p><a href="presets.json" download="presets.json">Download existing presets before importing</a></p>
 <label>Preset file <input id="presetFile" type="file" accept=".json,application/json"></label>
 <label>Preset JSON<textarea id="presetImport" spellcheck="false" placeholder='{"1":{"n":"Warm","seg":{"col":[[255,160,0]]}}}'></textarea></label>
 <button id="previewImport">Preview import</button> <button id="commitImport" disabled>Save imported presets</button>
@@ -95,7 +99,7 @@ async function refreshLighting(){try{if(!document.hidden){const response=await w
 refreshLighting();
 let paletteCatalog=null;
 function paletteSlot(){const slot=Number(el('paletteSlot').value);if(!Number.isInteger(slot)||slot<0||slot>Number(el('paletteSlot').max))throw Error('Choose a valid palette slot.');return slot;}
-function displayPalette(){const slot=paletteSlot();const stops=paletteCatalog?.previews[String(200-slot)];el('palettePreview').style.background=stops?'linear-gradient(to right,'+stops.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${s[0]/255*100}%`).join(',')+')':'none';el('downloadPalette').href=wledURL('/palette'+slot+'.json');el('downloadPalette').download='palette'+slot+'.json';}
+function displayPalette(){const slot=paletteSlot();const stops=paletteCatalog?.previews[String(200-slot)];el('palettePreview').style.background=stops?'linear-gradient(to right,'+stops.map(s=>`rgb(${s[1]},${s[2]},${s[3]}) ${s[0]/255*100}%`).join(',')+')':'none';if(stops){el('downloadPalette').href=wledURL('/palette'+slot+'.json');el('downloadPalette').removeAttribute('aria-disabled');}else{el('downloadPalette').removeAttribute('href');el('downloadPalette').setAttribute('aria-disabled','true');}el('downloadPalette').download='palette'+slot+'.json';}
 async function refreshPalettes(){const r=await wledFetch('/api/palettes');if(!r.ok)throw Error('Palette catalog unavailable');paletteCatalog=await r.json();el('paletteSlot').max=paletteCatalog.max_slot;el('paletteStatus').textContent='Saved slots: '+(Object.keys(paletteCatalog.palettes).join(', ')||'none');displayPalette();}
 el('paletteSlot').oninput=()=>{try{displayPalette();}catch(e){el('paletteStatus').textContent=e.message;}};
 el('paletteFile').onchange=async()=>{try{const file=el('paletteFile').files[0];if(!file)return;if(file.size>8192)throw Error('Palette file exceeds 8 KiB.');el('paletteJson').value=await file.text();}catch(e){el('paletteStatus').textContent=e.message;}};
@@ -128,7 +132,7 @@ async function runImport(preview){
 el('previewImport').onclick=()=>runImport(true);
 el('commitImport').onclick=()=>runImport(false);
 async function post(path,body,token){const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await wledFetch(path,{method:'POST',headers,body:JSON.stringify(body)});const data=await r.json();el('result').textContent=JSON.stringify(data);if(!r.ok)throw Error(data.error);return data;}
-el('login').onclick=()=>post('/api/login',{},el('token').value).then(()=>{el('token').value='';el('result').textContent='Logged in. Return to WLED to use lighting controls.';}).catch(()=>{});
+
 document.querySelectorAll('[data-op]').forEach(button=>button.onclick=()=>post('/api/command',{operation:button.dataset.op,source:el('source').value}).catch(()=>{}));
 el('save').onclick=()=>{try{post('/api/config',JSON.parse(el('config').value)).catch(()=>{});}catch(e){el('result').textContent=e.message;}};
 el('discover').onclick=()=>wledFetch('/api/discovery').then(r=>r.json()).then(data=>el('discovered').textContent=data.length?JSON.stringify(data,null,2):'No devices found. Check discovery configuration or enroll manually.').catch(()=>el('discovered').textContent='Discovery unavailable');
@@ -136,4 +140,4 @@ el('sendDevice').onclick=()=>{try{post('/api/devices/command',{target:el('target
 wledFetch('/api/config').then(r=>r.json()).then(c=>el('config').value=JSON.stringify(c,null,2));
 async function refresh(){try{const s=await(await wledFetch('/api/status')).json();el('compat').textContent='Unavailable: '+s.unsupported.join(', ')+'\nUnavailable effect IDs: '+s.unsupported_effect_ids.join(', ');delete s.unsupported;delete s.unsupported_effect_ids;el('status').textContent=JSON.stringify(s,null,2);}catch{el('status').textContent='Runtime unavailable';}}
 refresh();setInterval(refresh,1000);
-</script><script src="schedules.js"></script></html>
+</script><script src="access.js"></script><script src="schedules.js"></script></html>

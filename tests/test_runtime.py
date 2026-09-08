@@ -12,6 +12,51 @@ from runtime.web import start_servers
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_advertised_http_route_inventory(self):
+        self.enable()
+        self.control.config['port'] = 0
+        run_dir = self.directory / 'route-run'
+        run_dir.mkdir()
+        servers = start_servers(self.control, run_dir, self.directory)
+        def close():
+            for server in servers:
+                server.stop_event.set(); server.shutdown(); server.server_close()
+        self.addCleanup(close)
+        def request(method, route, body=None, expected=200):
+            conn = http.client.HTTPConnection('127.0.0.1', servers[0].server_address[1], timeout=2)
+            conn.request(method, '/fpp-wled' + route, None if body is None else json.dumps(body),
+                         {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + servers[0].token})
+            response = conn.getresponse(); data = response.read(); conn.close()
+            self.assertEqual(response.status, expected, (method, route, data[:200]))
+            return json.loads(data) if response.getheader('Content-Type', '').startswith('application/json') else data
+        for route in ('/', '/settings', '/login', '/index.js', '/index.css', '/common.js', '/iro.js',
+                      '/rangetouch.js', '/base.js', '/access.js', '/linux-ui.js', '/schedules.js', '/skin.css',
+                      '/json', '/json/si', '/json/state', '/json/info', '/json/effects', '/json/fxdata',
+                      '/json/palettes', '/json/nodes', '/json/palx?page=0', '/presets.json', '/api/auth',
+                      '/api/status', '/api/config', '/api/devices', '/api/discovery', '/api/schedules', '/api/preview', '/api/palettes'):
+            request('GET', route)
+        # All advertised mutation routes operate only on this isolated fixture.
+        request('POST', '/api/login', {})
+        for route in ('/json', '/json/state', '/json/si'):
+            request('POST', route, {'bri': 90})
+        request('POST', '/json/state', {'psave': 1, 'n': 'Route audit'})
+        request('POST', '/api/palettes', {'slot': 0, 'palette': [0, 'FF0000', 255, '0000FF']})
+        request('GET', '/palette0.json')
+        request('POST', '/api/palettes', {'slot': 0, 'delete': True})
+        report = request('POST', '/api/presets/import', {'presets': {'2': {'n': 'Imported', 'bri': 80}}})
+        request('POST', '/api/presets/import', {'presets': {'2': {'n': 'Imported', 'bri': 80}},
+                                             'preview': False, 'revision': report['revision']})
+        schedule = request('GET', '/api/schedules')
+        request('POST', '/api/schedules', {'revision': schedule['revision'], 'preview': True, 'timers': [], 'location': None})
+        config = deepcopy(self.control.config); config['port'] = 8787
+        request('POST', '/api/config', config)
+        request('POST', '/api/devices/command', {'target': 'missing', 'state': {'on': True}}, expected=422)
+        for operation in ('status', 'show-start', 'show-end', 'ambient-disable'):
+            request('POST', '/api/command', {'operation': operation, 'source': 'audit:show'})
+        self.idle(2200)
+        request('POST', '/api/command', {'operation': 'ambient-enable'})
+        request('POST', '/api/logout', {})
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
