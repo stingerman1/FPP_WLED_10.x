@@ -32,6 +32,13 @@ class WebProxyTests(unittest.TestCase):
             config += f'PidFile "{path}/apache.pid"\nErrorLog "{path}/error.log"\n'
             config += ''.join(f'LoadModule {m}_module /usr/lib/apache2/modules/mod_{m}.so\n' for m in modules)
             config += (ROOT / 'apache/fpp-wled.conf').read_text().replace('/run/fpp-wled/web.sock', str(path / 'web.sock'))
+            # FPP serves its own /wled/ UI from a virtual host. The plugin's
+            # global Location must inherit without taking over that namespace.
+            native = path / 'www/wled'
+            native.mkdir(parents=True)
+            (native / 'index.html').write_text('Native FPP WLED interface')
+            config += f'<VirtualHost *:{port}>\nDocumentRoot "{path}/www"\n'
+            config += f'<Directory "{path}/www">\nRequire all granted\n</Directory>\n</VirtualHost>\n'
             config_path = path / 'apache.conf'
             config_path.write_text(config)
             process = subprocess.Popen(['apache2', '-f', str(config_path), '-DFOREGROUND'],
@@ -47,7 +54,7 @@ class WebProxyTests(unittest.TestCase):
             try:
                 for _ in range(100):
                     try:
-                        status, _, _ = request('GET', '/wled/api/status')
+                        status, _, _ = request('GET', '/fpp-wled/api/status')
                         break
                     except OSError:
                         if process.poll() is not None:
@@ -56,19 +63,22 @@ class WebProxyTests(unittest.TestCase):
                 else:
                     self.fail('Apache did not start')
                 self.assertEqual(status, 200)
-                self.assertEqual(request('GET', '/wled')[0], 302)
-                for route in ('/', '/index.js', '/index.css', '/base.js', '/linux-ui.js', '/settings', '/schedules.js'):
-                    self.assertEqual(request('GET', '/wled' + route)[0], 200, route)
-                status, _, body = request('GET', '/wled/json/palx?page=2')
-                self.assertEqual(json.loads(body)['route'], '/json/palx?page=2')
-                self.assertEqual(request('POST', '/wled/json/state', {'on': True})[0], 401)
-                status, headers, _ = request('POST', '/wled/api/login', {}, {'Authorization': 'Bearer ' + servers[2].token})
+                status, _, body = request('GET', '/wled/index.html')
                 self.assertEqual(status, 200)
-                self.assertIn('Path=/wled/', headers['Set-Cookie'])
-                status, _, body = request('POST', '/wled/json/state', {'on': True}, {'Cookie': headers['Set-Cookie'].split(';')[0]})
+                self.assertEqual(body, b'Native FPP WLED interface')
+                self.assertEqual(request('GET', '/fpp-wled')[0], 302)
+                for route in ('/', '/index.js', '/index.css', '/base.js', '/linux-ui.js', '/settings', '/schedules.js'):
+                    self.assertEqual(request('GET', '/fpp-wled' + route)[0], 200, route)
+                status, _, body = request('GET', '/fpp-wled/json/palx?page=2')
+                self.assertEqual(json.loads(body)['route'], '/json/palx?page=2')
+                self.assertEqual(request('POST', '/fpp-wled/json/state', {'on': True})[0], 401)
+                status, headers, _ = request('POST', '/fpp-wled/api/login', {}, {'Authorization': 'Bearer ' + servers[2].token})
+                self.assertEqual(status, 200)
+                self.assertIn('Path=/fpp-wled/', headers['Set-Cookie'])
+                status, _, body = request('POST', '/fpp-wled/json/state', {'on': True}, {'Cookie': headers['Set-Cookie'].split(';')[0]})
                 self.assertEqual(status, 200)
                 self.assertEqual(json.loads(body)['body'], {'on': True})
-                status, _, _ = request('GET', '/wled/ws', headers={
+                status, _, _ = request('GET', '/fpp-wled/ws', headers={
                     'Connection': 'Upgrade', 'Upgrade': 'websocket',
                     'Sec-WebSocket-Version': '13', 'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ=='})
                 self.assertEqual(status, 101)
@@ -86,9 +96,9 @@ class WebProxyTests(unittest.TestCase):
         source = (ROOT / 'web/base.js').read_text()
         script = "const assert = require('node:assert/strict');\n" + source + """
 for (const origin of ['http://fpp:8080', 'https://fpp:8443']) {
-  global.window = {location: new URL(origin + '/wled/settings'), fetch: (path) => new URL(path, origin).href};
-  assert.equal(wledFetch('/json/si'), origin + '/wled/json/si');
-  assert.equal(wledURL('/settings#ambient-lighting'), '/wled/settings#ambient-lighting');
+  global.window = {location: new URL(origin + '/fpp-wled/settings'), fetch: (path) => new URL(path, origin).href};
+  assert.equal(wledFetch('/json/si'), origin + '/fpp-wled/json/si');
+  assert.equal(wledURL('/settings#ambient-lighting'), '/fpp-wled/settings#ambient-lighting');
 }
 global.window = {location: new URL('http://fpp:8787/settings')};
 assert.equal(wledURL('/api/status'), '/api/status');

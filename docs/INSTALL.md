@@ -12,13 +12,13 @@ The installer stages an immutable runtime release, validates state and the plugi
 
 ## FPP web access
 
-The plugin opens `/wled/` and `/wled/settings` on FPP's existing browser origin, preserving its port and HTTP/HTTPS protocol. The installer enables a plugin-owned Apache configuration and gracefully reloads Apache after a configuration check. HTTP and WebSocket traffic use a separate authenticated Unix socket, `web.sock`; the trusted `control.sock` is never exposed. Stock FPP listeners and source files are unchanged. Removal disables this Apache configuration.
+The plugin opens `/fpp-wled/` and `/fpp-wled/settings` on FPP's existing browser origin, preserving its port and HTTP/HTTPS protocol. The installer enables a plugin-owned Apache configuration and gracefully reloads Apache after a configuration check. HTTP and WebSocket traffic use a separate authenticated Unix socket, `web.sock`; the trusted `control.sock` is never exposed. Stock FPP listeners and source files are unchanged. Removal disables this Apache configuration.
 
 Port 8787 remains an optional direct runtime listener, bound to loopback on new installs. Existing bind/port settings are preserved and do not affect the FPP proxy. Do not change the runtime port to FPP's port: the runtime and Apache cannot share a TCP listener. Updating an existing installation requires rerunning the installer to enable the proxy. A rollback to a runtime predating web.sock needs direct runtime access again.
 
 ## First setup
 
-1. Restart FPP. Open the plugin page, then its WLED setup link, normally `http://FPP-IP/wled/settings`.
+1. Restart FPP. Open the plugin page, then its WLED setup link, normally `http://FPP-IP/fpp-wled/settings`.
 2. Read `auth.json` as the `fpp` user from `/home/fpp/media/config/plugin.FPP_WLED_10.x`. Enter its token in setup. The HTTP cookie is HttpOnly/SameSite Strict; API clients use `Authorization: Bearer TOKEN`. HTTP is intended for the trusted show network; it does not provide transport encryption.
 3. Edit the configuration JSON. `pixels` defines the virtual canvas, RGB (3) or RGBW (4). Virtual indexes are zero-based. FPP `channel` values are one-based. A mapping copies `count` pixels starting at `pixel` to a consecutive FPP channel range. Destination ranges must not overlap.
 4. Configure actual outputs, native WLED channel destinations and channel ordering in FPP. For an FPP model, use its resolved channel range; automatic model-name resolution is not implemented.

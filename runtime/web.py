@@ -68,9 +68,9 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(body)
 
     def do_POST(self):
-        proxied = self.path.startswith('/wled/')
+        proxied = self.path.startswith('/fpp-wled/')
         if proxied:
-            self.path = self.path[len('/wled'):]
+            self.path = self.path[len('/fpp-wled'):]
         try:
             if not self.authenticated():
                 self.close_connection = True
@@ -79,7 +79,7 @@ class Handler(BaseHTTPRequestHandler):
             payload = self.body()
             if path == '/api/login':
                 return self.reply(200, {'success': True}, headers={
-                    'Set-Cookie': 'fpp_wled=' + self.server.token + '; HttpOnly; SameSite=Strict; Path=' + ('/wled/' if proxied else '/')})
+                    'Set-Cookie': 'fpp_wled=' + self.server.token + '; HttpOnly; SameSite=Strict; Path=' + ('/fpp-wled/' if proxied else '/')})
             self.reply(200, self.server.controller.post(path, payload))
         except PermissionError as exc:
             self.reply(409, {'error': str(exc), 'status': self.server.controller.ownership.status()})
@@ -95,8 +95,8 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(503, {'error': str(exc)})
 
     def do_GET(self):
-        if self.path.startswith('/wled/'):
-            self.path = self.path[len('/wled'):]
+        if self.path.startswith('/fpp-wled/'):
+            self.path = self.path[len('/fpp-wled'):]
         path = urlsplit(self.path).path
         try:
             if path == '/ws':
