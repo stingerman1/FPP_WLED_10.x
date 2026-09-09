@@ -45,7 +45,7 @@ runuser -u fpp -- python3 -m runtime.service --state-dir "$state_dir" --validate
 # while a new version builds. A single symlink selects the next runtime release.
 release="releases/$(date -u +%Y%m%dT%H%M%S)-$$"
 mkdir -p "build/$release/build"
-cp -a runtime web "build/$release/"
+cp -a runtime web licenses LICENSE THIRD_PARTY_NOTICES.md upstream.lock.json requirements.txt "build/$release/"
 cp -a build/ui "build/$release/build/"
 cp build/libwled_linux.so "build/$release/build/"
 cp build/libFPP_WLED_10.x.so "build/$release/"

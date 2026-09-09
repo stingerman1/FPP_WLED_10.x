@@ -5,6 +5,7 @@
 <?php return; endif; ?>
 <p>Ambient lighting yields to FPP shows. Direct-to-device shows need explicit Show Start and Show End hooks.</p>
 <p><a href="/fpp-wled/" target="_blank" rel="noopener">Open WLED runtime</a> · <a href="plugin.php?plugin=FPP_WLED_10.x&amp;page=settings.php" target="_blank" rel="noopener">Setup and compatibility</a></p>
+<p><a href="plugin.php?plugin=FPP_WLED_10.x&amp;page=credits.php">Open-source credits and licenses</a></p>
 <p>This alpha requires Raspberry Pi 4/5 hardware acceptance. FPP's built-in WLED interface remains separate.</p>
 <p id="wled-web-status" role="status">Checking WLED web access...</p>
 <section aria-labelledby="wled-token-heading">

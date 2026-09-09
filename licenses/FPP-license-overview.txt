@@ -1,0 +1,110 @@
+This file describes the licenses which apply to the files included
+with the Falcon Player (FPP) software.
+
+Where applicable, FPP files are Copyright (C) by the Falcon
+Player developers.  For individual attributions, reference
+the git blame logs or the contributors list on github at
+https://github.com/FalconChristmas/fpp/graphs/contributors
+
+The Falcon Player (FPP) is free software; and can be redistributed
+as-is.  Some components of FPP are covered under the GNU General
+Public License (GPL) v2 or the GNU Lesser General Public License
+(LGPL) v2.1 and may be modified and redistributed under the terms of
+the license that applies to those components.  Other parts of FPP such
+as those covered under the CC-BY-ND license are redistributable in
+their original form, but may not be modified and redistibuted.  A
+list of licenses and the affected files is below.  For more
+information on each license, see the appropriate LICENSE.* file
+noted below with the list of files.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+========================================================================
+
+The software included with the Falcon Player (FPP) and in the FPP
+git repository at https://github.com/FalconChristmas/fpp is covered
+under several licenses as listed below.
+
+LGPL Components (see LICENSE.LGPL)
+
+    The core of FPP is contained in libfpp.so and all *.c and *.cpp
+    files which are compiled to generate libfpp.so are covered under
+    the LGPL v2.1 License, or (at your option) any later version.
+    You should have received a copy of the LGPL in a file called
+    LICENSE.LGPL.  The complete list of the *.o object files compiled
+    from these source files can be found in the following makefile
+    include files:
+
+    src/makefiles/fpp_so.mk
+    src/makefiles/platform/*.mk
+    - *.c and *.cpp source for *.o objects in OBJECTS_fpp_so
+
+    src/makefiles/platform/*.mk
+    - *.c and *.cpp source for *.o objects in OBJECTS_GPIO_ADDITIONS
+
+3rd-Party Component Licenses (see LICENSE.external)
+
+    Certain Open Source external components are included as part of the
+    FPP repository.  The licenses for these external components are
+    listed in the LICENSE.external file.
+
+GPL Channel Outputs (see LICENSE.GPL)
+
+    FPP Channel Outputs are normally compiled as separate shared libraries
+    which are loaded into the fppd daemon at run time.  The Channel Outputs
+    included in the "src/channeloutput" directory are covered under the
+    GPL v2 License, or (at your option) any later version.  A copy of the
+    GPL v2 should have been included in the same directory as this file
+    and called LICENSE.GPL.
+
+CC-BY-ND Components (see LICENSE.CC-BY-ND)
+
+    Several components of FPP are covered by the CC-BY-ND license.  This
+    license allows the software to remain Open Source while preventing
+    modified copies of certain files to be distributed.  If a file is
+    covered by the CC-BY-ND license:
+      - you may use the file for any purpose, including commercial
+      - you may modify the code for your own use
+      - you may NOT distribute any modified copy of the code OR any
+        work created using a modified copy of the code.
+
+    The components of FPP which are covered under the CC-BY-ND license
+    include all files under the src/non-gpl directory, including but
+    not limited to the following:
+
+    - src/non-gpl/capeutils/CapeUtils.h
+    - src/non-gpl/capeutils/CapeUtils.cpp
+    - src/non-gpl/BBB48String/BBB48Strings.h
+    - src/non-gpl/BBB48String/BBB48Strings.cpp
+    - src/non-gpl/BBB48String/*.asm
+    - src/non-gpl/BBShiftString/BBShiftString.h
+    - src/non-gpl/BBShiftString/BBShiftString.cpp
+    - src/non-gpl/BBShiftString/*.asm
+    - src/non-gpl/DPIPixels/DPIPixels.h
+    - src/non-gpl/DPIPixels/DPIPixels.cpp
+    - src/non-gpl/FalconV5Support/*
+
+    The Falcon Player developers, Dan Kulp and Chris Pinkham, retain
+    sole Copyright to all files under the non-gpl directory structure
+    including any user-submitted bugfixes or other modifications.
+
+    In the event that Dan and Chris both abandon the FPP project and
+    do not make any commits to the source repository for a period of
+    one year, the FPP components covered by the CC-BY-ND license
+    revert to the GPL license and are no longer covered by the CC-BY-ND.
+
+GPL Components (see LICENSE.GPL)
+
+    Unless covered by one of the above examples, all other code in FPP is
+    licensed under the terms of the GPL; either v2 of the License, or (at
+    your option) any later version.  A copy of the GPL v2 should have been
+    included in the same directory as this file and called LICENSE.GPL.
+
+    The FPP developers have granted a special exception to the GPL license
+    which allows the FPP executable binaries to be linked against and/or
+    dlopen() non-GPL libraries which are FPP-compatible Plugins and Channel
+    Outputs libraries.  For specific wording related to this, see the
+    included LICENSE.exception file.
+

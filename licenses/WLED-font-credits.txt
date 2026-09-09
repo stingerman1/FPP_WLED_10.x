@@ -1,0 +1,61 @@
+Bitmap font credits copied verbatim from the pinned WLED source headers.
+These are upstream descriptions, not new license grants. See THIRD_PARTY_NOTICES.md
+for unresolved provenance questions.
+
+
+c64esque_9px.h
+// code points 0-31 and 127-255 are commented out to save memory, they contain extra characters (CP437),
+// font c64esque is public domain, source: https://nimblebeastscollective.itch.io/nb-pixel-font-bundle-2 - "^ + - *" glyphs modified by @dedeheai
+
+
+console_font_6x8.h
+// code points 0-31 and 127-255 are commented out to save memory, they contain extra characters (CP437),
+// which could be used with an UTF-8 to CP437 conversion
+// font courtesy of https://github.com/idispatch/raster-fonts
+
+
+font_5x12.h
+// code points 0-31 and 127-255 are commented out to save memory, they contain extra characters (CP437),
+// which could be used with an UTF-8 to CP437 conversion
+// source font "6x13.bdf" is public domain, source: https://github.com/IT-Studio-Rech/bdf-fonts modified by @dedehai (cleaner dots)
+
+
+font_TinyUnicode_8px.h
+// code points 0-31 and 127-255 are commented out to save memory
+// font TinyUnicode is public domain, source: https://github.com/IT-Studio-Rech/bdf-fonts
+
+
+font_tom_thumb_6px.h
+// tom-thumb, public domain, source: https://robey.lag.net/2010/01/23/tiny-monospace-font.html
+// ASCII chars 0-31 and 127-255 are not included to save memory
+
+
+old fonts\console_font_4x6.h
+// code points 0-31 and 127-255 are commented out to save memory, they contain extra characters (CP437),
+// which could be used with an UTF-8 to CP437 conversion
+// font courtesy of https://github.com/idispatch/raster-fonts
+
+
+old fonts\console_font_5x12.h
+// code points 0-31 and 127-255 are commented out to save memory, they contain extra characters (CP437),
+// which could be used with an UTF-8 to CP437 conversion
+// font courtesy of https://github.com/idispatch/raster-fonts
+
+
+old fonts\console_font_5x8.h
+// code points 0-31 and 127-255 are commented out to save memory, they contain extra characters (CP437),
+// which could be used with an UTF-8 to CP437 conversion
+// font courtesy of https://github.com/idispatch/raster-fonts
+
+
+old fonts\console_font_6x8.h
+// code points 0-31 and 127-255 are commented out to save memory, they contain extra characters (CP437),
+// which could be used with an UTF-8 to CP437 conversion
+// font courtesy of https://github.com/idispatch/raster-fonts
+
+
+old fonts\console_font_7x9.h
+// code points 0-31 and 127-255 are commented out to save memory, they contain extra characters (CP437),
+// which could be used with an UTF-8 to CP437 conversion
+// font courtesy of https://github.com/idispatch/raster-fonts
+

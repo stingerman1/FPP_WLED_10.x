@@ -49,3 +49,5 @@ python3 scripts/verify-abi.py /opt/fpp/src build/libFPP_WLED_10.x.so
 The last two commands require an installed FPP build. Reference-header compilation is a compile check only. [CI](https://github.com/stingerman1/FPP_WLED_10.x/actions/workflows/verify.yml) passes on Linux x86-64 and arm64; this does not replace Pi/FPP hardware acceptance.
 
 `scripts/prepare_renderer.py` verifies the pinned Linux-port commit, unchanged upstream rendering tree and matching local platform wrappers, then applies explicit Linux substitutions. No ESP firmware is built or flashed by the plugin installer. The dedicated [Linux port branch](https://github.com/stingerman1/WLED/tree/linux-fpp-16.0.1/ports/fpp-linux) preserves upstream WLED history; its exact commit is in `upstream.lock.json`. See [architecture](docs/ARCHITECTURE.md), [third-party notices](THIRD_PARTY_NOTICES.md) and [license](LICENSE).
+
+Open-source credits and full local license texts are also available from the plugin page through **Open-source credits and licenses**, even when the lighting runtime is stopped.

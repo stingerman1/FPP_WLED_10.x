@@ -158,3 +158,8 @@ Use the full commit SHA; abbreviated commit filters previously returned no resul
 No actual Pi 4/5, installed FPP daemon, or native WLED hardware was available for acceptance in this session. The HTTP and FPP observer tests use simulators. Still required: real installation/ABI loading, frame delivery, scheduled/standalone/remote/live playback, gaps/pauses/black frames, mixed routing, native checkpoint restoration, crash/restart/network-loss behavior, lifecycle tests, and Pi performance/thermal benchmarks.
 
 Read [ACCEPTANCE.md](ACCEPTANCE.md), [COMPATIBILITY.md](COMPATIBILITY.md), [CONTROL.md](CONTROL.md), [INSTALL.md](INSTALL.md), and [VALIDATION.md](VALIDATION.md) before making release-support claims. Desktop renderer speed is not a supported Pi output limit.
+
+
+## Attribution update (2026-09-09)
+
+Expanded THIRD_PARTY_NOTICES.md, added dependency license copies and font credits, and exposed an offline credits.php page linked from the plugin landing page. Staged runtime releases retain notices, licenses and dependency/upstream pins. Generated utility code preserves FastLED and dedehai ancestry. Console raster-font and WIcons provenance remain explicit final-release review items. The installer settings helper now supplies REQUEST_URI when running through PHP CLI, addressing the warning in the user-provided successful installation log (rc=0, runtime healthy). The user device reports the preceding update installed; its requested FPP restart and this new change have not been verified on hardware. Local validation: 128 tests passed, PHP lint and credits rendering passed, installer shell syntax passed, pinned dependency/license references checked.

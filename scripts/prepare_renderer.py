@@ -104,7 +104,11 @@ def main():
     fonts = replace_function(fonts, 'void FontManager::getFontFileName(', "buffer[0] = '\\0'; if (getMetadata()) getMetadata()->availableFonts = 0;")
     (OUT / 'fontmanager.cpp').write_text(fonts)
     util_source = (source / 'util.cpp').read_text()
-    chunks = ['#include "wled.h"\n']
+    chunks = ['// Extracted from pinned WLED util.cpp; EUPL-1.2-or-later.\n'
+              '// Copyright (c) Christian Schwinne and individual WLED contributors.\n'
+              '// Beat functions derive from FastLED 3.6.0, MIT; see src/dependencies/fastled_slim/LICENSE.txt.\n'
+              '// Fixed point integer Perlin noise functions by @dedehai.\n'
+              '#include "wled.h"\n']
     for signature in ['uint32_t utf8_decode(', 'size_t utf8_strlen(', 'int16_t extractModeDefaults(',
                       'uint16_t beat88(', 'uint16_t beat16(', 'uint8_t beat8(',
                       'uint16_t beatsin88_t(', 'uint16_t beatsin16_t(', 'uint8_t beatsin8_t(',
