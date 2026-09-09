@@ -128,6 +128,12 @@ def main():
     ui.mkdir(parents=True, exist_ok=True)
     for name in ['index.htm', 'index.js', 'index.css', 'common.js', 'iro.js', 'rangetouch.js', 'favicon.ico']:
         shutil.copyfile(source / 'data' / name, ui / name)
+    shutil.copyfile(ROOT / 'icon.png', ui / 'icon.png')
+    markup = (ui / 'index.htm').read_text()
+    import re
+    markup = re.sub(r'<link rel="(?:shortcut icon|apple-touch-icon)"[^>]*>', '', markup)
+    markup = markup.replace('</head>', '<link rel="icon" type="image/png" href="icon.png"><link rel="apple-touch-icon" href="icon.png"></head>')
+    (ui / 'index.htm').write_text(markup)
     # The upstream device-only WebSocket fallback drops a configurable port.
     js = (ui / 'index.js').read_text()
     js = js.replace('window.location.hostname+"/ws"', 'window.location.host+"/ws"')

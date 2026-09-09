@@ -17,7 +17,7 @@ from .storage import read_json, save_json
 
 MAX_BODY = 262144
 LOGIN_MAX_AGE = 365 * 24 * 60 * 60
-ASSETS = {'index.htm', 'index.js', 'index.css', 'common.js', 'iro.js', 'rangetouch.js', 'favicon.ico'}
+ASSETS = {'index.htm', 'index.js', 'index.css', 'common.js', 'iro.js', 'rangetouch.js', 'favicon.ico', 'icon.png'}
 
 
 class Handler(BaseHTTPRequestHandler):
