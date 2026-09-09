@@ -33,3 +33,29 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 .fpp-wled .setup-row { border:1px solid var(--bs-border-color,ButtonBorder); border-radius:.3rem; padding:.75rem; margin-bottom:.75rem; display:flex; flex-wrap:wrap; gap:.75rem; align-items:end; }
 .fpp-wled .setup-row label { flex:1 1 10rem; min-width:0; }
 .fpp-wled .setup-row input,.fpp-wled .setup-row select { width:100%; box-sizing:border-box; }
+
+/* Foreground/background pairs for readable control states in both appearances. */
+:root {
+ --control-bg:#edf0f4; --control-fg:#202632; --control-hover:#d5dce6;
+ --control-selected:#c9dcf2; --control-selected-fg:#142b45;
+ --control-disabled:#536075; --control-border:#9ca7b5;
+}
+:root[data-bs-theme="dark"] {
+ --control-bg:#343b49; --control-fg:#f5f7fa; --control-hover:#475366;
+ --control-selected:#385c82; --control-selected-fg:#ffffff;
+ --control-disabled:#c0c7d2; --control-border:#8390a3;
+}
+
+.fpp-wled button, .fpp-wled .btn {
+ color:var(--control-fg)!important; background:var(--control-bg)!important;
+ border:1px solid var(--control-border);
+}
+.fpp-wled button:hover:not(:disabled), .fpp-wled .btn:hover:not(:disabled) {
+ color:var(--control-fg)!important; background:var(--control-hover)!important;
+}
+.fpp-wled button:active:not(:disabled), .fpp-wled button[aria-pressed="true"], .fpp-wled .btn.active {
+ color:var(--control-selected-fg)!important; background:var(--control-selected)!important;
+}
+.fpp-wled button:disabled { opacity:1; color:var(--control-disabled)!important; cursor:not-allowed; }
+.fpp-wled button svg { fill:currentColor; }
+.fpp-wled button:focus-visible { outline:2px solid #4b8bd3; outline-offset:2px; }

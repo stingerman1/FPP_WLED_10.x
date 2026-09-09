@@ -178,3 +178,8 @@ Added web/config-editor.js and guided geometry/channel/device forms, active-vers
 ## Appearance refinement (2026-09-09)
 
 Restored borderless WLED top/bottom navigation, moved slim outlines to effect/palette/preset cards and color choices, and styled the normal view with dark navigation framing a light center. The moon/sun control is keyboard accessible and switches normal/dark appearance; Settings provides Follow FPP/system, Normal and Dark. Browser-only appearance preference persists across navigation/reload and synchronizes tabs. Verified mobile normal/dark, menu borders, and cross-page theme persistence in Chromium.
+
+
+## Control contrast and device-name clearance (2026-09-09)
+
+Added matched foreground/background pairs for normal/hover/selected/disabled controls in both modes, with inherited icon colors and readable input placeholders. Color-slot labels choose black/white from swatch luminance. A ResizeObserver measures the main status strip so the device label sits above it when wrapping. Browser checks measured at least 4.5:1 for sampled selected effect/palette, hover, settings and disabled text pairs in both modes and RGB/white/black slot samples. Verified device-name clearance at widths 320/768/1280. These checks are targeted coverage, not a claim of a complete accessibility audit.

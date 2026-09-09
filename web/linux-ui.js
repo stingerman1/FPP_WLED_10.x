@@ -45,6 +45,20 @@
   }
   new MutationObserver(disableBootOverride).observe(document.body, {childList:true, subtree:true});
   disableBootOverride();
+  // Slot labels sit on actual lighting colors, so choose their contrast from RGB luminance.
+  function slotContrast() {
+    document.querySelectorAll('#csl button').forEach(button => {
+      const rgb = getComputedStyle(button).backgroundColor.match(/[\d.]+/g);
+      if (!rgb || rgb.length < 3) return;
+      const linear = rgb.slice(0,3).map(v => { const c = Number(v)/255; return c <= .04045 ? c/12.92 : ((c+.055)/1.055)**2.4; });
+      const luminance = linear[0]*.2126 + linear[1]*.7152 + linear[2]*.0722;
+      const color = luminance > .179 ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)';
+      if (button.style.color !== color) button.style.color = color;
+    });
+  }
+  const slots = document.getElementById('csl');
+  if (slots) new MutationObserver(slotContrast).observe(slots, {subtree:true, attributes:true, attributeFilter:['style','class']});
+  slotContrast();
   const nightlightButton = document.getElementById('buttonNl');
   if (nightlightButton) {
     nightlightButton.onclick = () => { location.href = wledSettingsURL('#ambient-lighting'); };
@@ -138,6 +152,10 @@
   notice.id = 'linux-status-notice';
   notice.style.cssText = 'position:fixed;bottom:var(--bh,0px);left:0;right:0;z-index:9999;background:Canvas;color:CanvasText;padding:8px;text-align:center;font:14px sans-serif;pointer-events:none';
   document.body.append(notice);
+  // The status strip can wrap; keep the device name above its measured height.
+  new ResizeObserver(() => {
+    document.documentElement.style.setProperty('--linux-status-height', notice.getBoundingClientRect().height + 'px');
+  }).observe(notice);
   async function refresh() {
     try {
       const status = await (await wledFetch('/api/status')).json();

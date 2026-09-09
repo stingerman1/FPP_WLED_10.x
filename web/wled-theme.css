@@ -29,3 +29,46 @@ body, #top, .bot { background:#191a24!important; }
 #wled-theme-toggle { border:0; background:transparent; color:inherit; cursor:pointer; padding:0; font-size:22px; line-height:1; vertical-align:middle; float:none; min-width:24px; }
 
 #top { --c-f:#f3f4f6!important; --c-4:#626775!important; }
+
+/* Foreground/background pairs for readable control states in both appearances. */
+:root {
+ --control-bg:#edf0f4; --control-fg:#202632; --control-hover:#d5dce6;
+ --control-selected:#c9dcf2; --control-selected-fg:#142b45;
+ --control-disabled:#536075; --control-border:#9ca7b5;
+}
+:root[data-bs-theme="dark"] {
+ --control-bg:#343b49; --control-fg:#f5f7fa; --control-hover:#475366;
+ --control-selected:#385c82; --control-selected-fg:#ffffff;
+ --control-disabled:#c0c7d2; --control-border:#8390a3;
+}
+
+.btn:not(#csl button), .lstI, .pres {
+ background:var(--control-bg); color:var(--control-fg);
+ --c-d:var(--control-fg); --c-f:var(--control-fg); --c-b:var(--control-fg);
+}
+.btn:not(#csl button):hover, .lstI:hover:not(.expanded) {
+ background:var(--control-hover)!important; color:var(--control-fg)!important;
+}
+.btn.selected:not(#csl button), .btn.active:not(#csl button), .lstI.selected,
+.lstI.selected:hover:not(.expanded), .pres.selected {
+ background:var(--control-selected)!important; color:var(--control-selected-fg)!important;
+ --c-d:var(--control-selected-fg); --c-f:var(--control-selected-fg); --c-b:var(--control-selected-fg);
+}
+.lstI .lstIname, .lstI .icons, .lstI .pid, .btn:not(#csl button) .icons { color:inherit; }
+button:disabled:not(#csl button) {
+ opacity:1!important; color:var(--control-disabled)!important; background:var(--control-bg)!important;
+ cursor:not-allowed; border-color:var(--control-border)!important;
+}
+button:disabled .icons { color:inherit; }
+button:focus-visible, .btn:focus-visible { outline:2px solid #4b8bd3; outline-offset:2px; }
+/* The dark menu frame uses its own matched colors in both modes. */
+.tab button, .tab button p, .tab button .icons { color:#f3f4f6!important; }
+.tab button.active, .tab button:hover { background:#383b49!important; color:#fff!important; }
+
+#namelabel { bottom:calc(var(--bh) + var(--linux-status-height, 36px) + 6px); }
+
+#namelabel { color:var(--control-fg)!important; text-shadow:none; }
+input[type=text], input[type=number], select, textarea {
+ background:var(--control-bg); color:var(--control-fg);
+}
+input::placeholder, textarea::placeholder { color:var(--control-disabled); opacity:1; }
