@@ -16,3 +16,5 @@ $markup = preg_replace_callback('/<input\b[^>]*>/', function ($match) {
 ?>
 <link rel="stylesheet" href="/fpp-wled/settings.css">
 <div class="fpp-wled container-fluid px-0" id="fpp-wled-settings"><?php echo $markup; ?></div>
+
+<script src="/fpp-wled/theme.js"></script>

@@ -11,8 +11,21 @@
 #linux-status-notice { background:Canvas; color:CanvasText; }
 #linux-status-notice a { color:CanvasText; text-decoration:underline; }
 
-/* Subtle edges distinguish controls from light surfaces. */
-:root[data-bs-theme="light"] button,
-:root[data-bs-theme="light"] .btn,
-:root[data-bs-theme="light"] input[type=button],
-:root[data-bs-theme="light"] input[type=submit] { border:1px solid #aeb4bc!important; }
+/* Keep FPP-style dark navigation around the lighter working area. */
+body, #top, .bot { background:#191a24!important; }
+#top, .bot { color:#f3f4f6; }
+#top p, .bot p, .tab button { color:#f3f4f6!important; }
+.tab button { border:0!important; }
+.tab button:hover, .tab button.active { background:#383b49!important; color:#fff!important; }
+:root[data-bs-theme="light"] .container { background:#f6f7f9; }
+:root[data-bs-theme="dark"] .container { background:#23252e; }
+:root[data-bs-theme="light"] .lstI,
+:root[data-bs-theme="light"] .pres,
+:root[data-bs-theme="light"] .psts,
+:root[data-bs-theme="light"] #Colors .btn { box-shadow:inset 0 0 0 1px #aeb4bc; }
+:root[data-bs-theme="light"] .qcs { outline:1px solid #9da4ae; outline-offset:1px; }
+#linux-status-notice { background:#191a24!important; color:#f3f4f6!important; }
+#linux-status-notice a { color:#f3f4f6!important; }
+#wled-theme-toggle { border:0; background:transparent; color:inherit; cursor:pointer; padding:0; font-size:22px; line-height:1; vertical-align:middle; float:none; min-width:24px; }
+
+#top { --c-f:#f3f4f6!important; --c-4:#626775!important; }

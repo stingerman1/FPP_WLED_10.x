@@ -173,3 +173,8 @@ Main WLED and Settings now offer one-step Enable lighting controls: same-origin 
 ## Guided setup / slim light borders (2026-09-09)
 
 Added web/config-editor.js and guided geometry/channel/device forms, active-versus-saved config status, authenticated supervised restart with show/uncertainty guards, per-section action feedback and 1 px light-mode control borders. Runtime exits 75 after orderly shutdown; existing systemd Restart=on-failure relaunches it. Launcher exports FPP_WLED_SUPERVISED=1. Local actual-process restart/relaunch passed; suite 130 tests; browser invalid/save/reload/mobile checks passed. Fixed mDNS loopback/non-peer filtering after a read-only check found self-advertisement. Three real native WLED 16.0.1 devices answered JSON info; this is discovery/reachability validation only. Hardware effects/sync/show/load, destructive lifecycle acceptance and unresolved artwork provenance remain.
+
+
+## Appearance refinement (2026-09-09)
+
+Restored borderless WLED top/bottom navigation, moved slim outlines to effect/palette/preset cards and color choices, and styled the normal view with dark navigation framing a light center. The moon/sun control is keyboard accessible and switches normal/dark appearance; Settings provides Follow FPP/system, Normal and Dark. Browser-only appearance preference persists across navigation/reload and synchronizes tabs. Verified mobile normal/dark, menu borders, and cross-page theme persistence in Chromium.

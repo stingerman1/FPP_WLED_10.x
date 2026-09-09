@@ -2,12 +2,14 @@
 (() => {
   // ESP firmware reporting/upload paths do not apply to this Linux runtime.
   checkVersionUpgrade = () => {};
-  // FPP/OS owns the theme. Do not offer a competing upstream fixed palette.
-  tglTheme = () => {
-    const theme = document.documentElement.dataset.bsTheme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.bsTheme = theme;
-    document.documentElement.style.colorScheme = theme;
-  };
+  // Use one persistent appearance preference across WLED and its settings.
+  tglTheme = () => window.wledTheme.toggle();
+  const oldTheme = document.querySelector('[onclick="tglTheme()"]');
+  if (oldTheme) {
+    const toggle = document.createElement('button');
+    toggle.id = 'wled-theme-toggle'; toggle.type = 'button';
+    toggle.onclick = tglTheme; oldTheme.replaceWith(toggle); window.wledTheme.apply();
+  }
   // Upstream assumes each WS message is state/info. Handle the Linux API's
   // explicit rejection response before it reaches that state parser.
   function hookErrors() {
