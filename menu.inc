@@ -1,3 +1,3 @@
-<?php if (($menu ?? '') === 'output') { ?>
-<a href="plugin.php?plugin=FPP_WLED_10.x&page=plugin.php">WLED for FPP</a>
-<?php } ?>
+<?php
+$menuEntries = [['text' => 'WLED for FPP', 'type' => 'output', 'page' => 'plugin.php', 'wrap' => 1]];
+?>

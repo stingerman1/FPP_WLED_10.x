@@ -30,7 +30,7 @@ class RuntimeTests(unittest.TestCase):
             self.assertEqual(response.status, expected, (method, route, data[:200]))
             return json.loads(data) if response.getheader('Content-Type', '').startswith('application/json') else data
         for route in ('/', '/settings', '/login', '/index.js', '/index.css', '/common.js', '/iro.js',
-                      '/rangetouch.js', '/base.js', '/access.js', '/linux-ui.js', '/schedules.js', '/network.js', '/skin.css',
+                      '/rangetouch.js', '/base.js', '/access.js', '/linux-ui.js', '/schedules.js', '/network.js', '/skin.css', '/settings.css', '/theme.js', '/wled-theme.css',
                       '/json', '/json/si', '/json/state', '/json/info', '/json/effects', '/json/fxdata',
                       '/json/palettes', '/json/nodes', '/json/palx?page=0', '/presets.json', '/api/auth',
                       '/api/status', '/api/config', '/api/devices', '/api/discovery', '/api/network', '/api/schedules', '/api/preview', '/api/palettes'):

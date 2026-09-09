@@ -1,11 +1,9 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WLED for FPP · Setup</title>
-<style>body{font:16px system-ui;background:#17191d;color:#e5e7eb;max-width:850px;margin:40px auto;padding:0 20px}a{color:#93c5fd}button,input,textarea{font:inherit;padding:10px;margin:4px 0;border:1px solid #536075;border-radius:5px;background:#252a34;color:inherit}textarea{width:100%;box-sizing:border-box;min-height:300px}pre{white-space:pre-wrap;overflow-wrap:anywhere}label{display:block}button{cursor:pointer}h1{font-size:28px}section{margin:28px 0}#result{color:#fcd34d}</style>
-<h1>WLED for FPP <small>Linux alpha</small></h1>
-<style>
-[hidden]{display:none!important}body{overflow-wrap:anywhere}input{max-width:100%;box-sizing:border-box}canvas{max-width:100%}.lighting-panel{border:1px solid #536075;border-top:3px solid #edb45b;padding:22px;border-radius:8px;background:#1d2026}.lighting-panel h2{margin-top:0}.lighting-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.lighting-panel fieldset{border:0;padding:0;margin:0;min-width:0}.lighting-panel legend{font-weight:650;margin-bottom:12px}.lighting-panel select{font:inherit;background:#252a34;color:inherit;border:1px solid #536075;border-radius:5px;padding:10px;max-width:100%;width:100%}.lighting-panel input[type=number]{width:85px}.lighting-panel input[type=color]{height:44px;width:80px;padding:4px}.lighting-panel input[type=range]{width:100%;box-sizing:border-box;accent-color:#edb45b}.lighting-panel button{margin-top:14px}button:disabled{opacity:.45;cursor:not-allowed}.lighting-panel canvas{display:block;width:100%;height:200px;background:#0d0f12;border-radius:5px;margin:14px 0;image-rendering:pixelated}.lighting-note{color:#c4cbd5;font-size:14px}.lighting-panel progress{width:100%;accent-color:#edb45b}#lightingStatus{color:#edc58a;min-height:24px}@media(max-width:580px){.lighting-grid{grid-template-columns:1fr}.lighting-panel{padding:16px}body{margin-top:20px}}
-</style>
+
+<link rel="stylesheet" href="settings.css"><script src="theme.js"></script><body class="fpp-wled"><h1>WLED for FPP <small>Linux alpha</small></h1>
+
 <p><a href="./">Open WLED</a> · <a href="https://github.com/stingerman1/FPP_WLED_10.x">Documentation</a></p>
 <p>FPP owns physical outputs. Ambient waits while shows run, then resumes after two quiet seconds. This alpha supports a subset of WLED; unavailable capabilities are listed below.</p>
 <section id="runtime-access"><h2>Runtime access</h2>
@@ -50,10 +48,10 @@
 <label id="scheduleClockLabel">Time <input id="scheduleClock" type="time" value="19:00"></label>
 <label id="scheduleOffsetLabel" hidden>Offset minutes <input id="scheduleOffset" type="number" min="-720" max="720" value="0"><span class="lighting-note"> Negative means before; positive means after.</span></label>
 <label>Preset <select id="schedulePreset"><option value="">Save a preset in WLED first</option></select></label>
-<fieldset><legend>Days of the event</legend><div id="scheduleDays" style="display:flex;flex-wrap:wrap;gap:12px"></div></fieldset>
+<fieldset><legend>Days of the event</legend><div id="scheduleDays" style="display:flex;flex-wrap:wrap;gap:0.75rem"></div></fieldset>
 <label><input id="scheduleEnabled" type="checkbox" checked> Enabled</label>
 <button id="addSchedule">Add timer</button> <button id="cancelScheduleEdit" hidden>Cancel edit</button>
-</fieldset><div><h3 style="margin-top:0">Your timers</h3><ol id="scheduleList" style="padding-left:24px"></ol><p id="scheduleEmpty" class="lighting-note">No timers yet. Add one to build your schedule.</p></div></div>
+</fieldset><div><h3 style="margin-top:0">Your timers</h3><ol id="scheduleList" style="padding-left:1.5rem"></ol><p id="scheduleEmpty" class="lighting-note">No timers yet. Add one to build your schedule.</p></div></div>
 <button id="previewSchedules">Preview upcoming events</button> <button id="saveSchedules" disabled>Save schedules</button> <button id="reloadSchedules">Reload saved schedules</button>
 <pre id="scheduleReport" role="status">Loading schedules…</pre><p class="lighting-note">Offsets use the sunrise/sunset date's weekdays, even if they cross midnight. Polar days with no sunrise or sunset are skipped. Keep the Pi clock synchronized.</p>
 </section>
@@ -69,7 +67,7 @@
 <label><input id="networkSend" type="checkbox" checked> Send lighting changes</label>
 <label><input id="networkReceive" type="checkbox" checked> Receive lighting changes</label>
 <label>Sync port <input id="networkPort" type="number" min="1024" max="65535" value="21324"></label>
-<label>Sync groups</label><div id="networkGroups" style="display:flex;flex-wrap:wrap;gap:12px"></div>
+<label>Sync groups</label><div id="networkGroups" style="display:flex;flex-wrap:wrap;gap:0.75rem"></div>
 <label>Additional peer IPv4 addresses (comma separated) <input id="networkPeers" placeholder="192.168.1.25, 192.168.1.26"></label>
 <button id="saveNetwork">Save discovery &amp; sync</button>
 <p>Changes apply immediately. Automatic sync excludes devices enrolled in another control mode. During shows this runtime ignores incoming sync and sends none; it never forces native devices out of realtime mode. Other devices must enable receiving/sending in their own WLED Sync settings.</p>
@@ -77,16 +75,16 @@
 <pre id="networkStatus" role="status">Loading network settings...</pre>
 <button id="discover">Refresh discovered devices</button><div id="discovered">Discovery results appear here.</div></section>
 <section><h2>Native WLED device commands</h2><p>For individual/group preset commands or FPP pixel streaming, enroll an IPv4 address in Configuration and choose effect, sync, or fpp-stream mode. Automatic sync needs no manual enrollment.</p>
-<label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:70px" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
+<label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:4.375rem" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
 <p>Effect-mode devices retain ambient lighting checkpoints and retry recovery after realtime input ends. Saved native playlists restart from the beginning. Unsaved playlists and active nightlights cannot yet be restored. Recovery details appear in device status above.</p>
 <section id="custom-palettes"><h2>Custom palettes</h2>
 <p>Import a native palette file or edit its JSON. Slot 0 is palette ID 200; subsequent slots count downward. Use 2–18 ordered stops from 0 to 255. Palette colors are RGB; a white component in hex input is ignored as in WLED.</p>
 <label>Palette slot <input id="paletteSlot" type="number" min="0" max="128" value="0"></label>
 <label>Palette file <input id="paletteFile" type="file" accept=".json,application/json"></label>
-<label>Palette JSON<textarea id="paletteJson" spellcheck="false" style="min-height:110px">{"palette":[0,"FF0000",128,"00FF00",255,"0000FF"]}</textarea></label>
+<label>Palette JSON<textarea id="paletteJson" spellcheck="false" style="min-height:6.875rem">{"palette":[0,"FF0000",128,"00FF00",255,"0000FF"]}</textarea></label>
 <button id="loadPalette">Load slot</button> <button id="savePalette">Save palette</button> <button id="deletePalette">Delete palette</button>
 <p><a id="downloadPalette" href="palette0.json" download="palette0.json">Download saved slot</a></p>
-<div id="palettePreview" role="img" aria-label="Saved palette preview" style="height:32px;border:1px solid #536075;border-radius:5px"></div>
+<div id="palettePreview" role="img" aria-label="Saved palette preview"></div>
 <pre id="paletteStatus" role="status">Loading palette slots…</pre>
 <p>Reload the WLED page after saving to refresh its palette list. Deletion is blocked while a palette is referenced. Editing the active palette is blocked during show ownership or suspended ambient.</p>
 </section>
@@ -157,4 +155,4 @@ el('sendDevice').onclick=()=>{try{post('/api/devices/command',{target:el('target
 wledFetch('/api/config').then(r=>r.json()).then(c=>el('config').value=JSON.stringify(c,null,2));
 async function refresh(){try{const s=await(await wledFetch('/api/status')).json();el('compat').textContent='Unavailable: '+s.unsupported.join(', ')+'\nUnavailable effect IDs: '+s.unsupported_effect_ids.join(', ');delete s.unsupported;delete s.unsupported_effect_ids;el('status').textContent=JSON.stringify(s,null,2);}catch{el('status').textContent='Runtime unavailable';}}
 refresh();setInterval(refresh,1000);
-</script><script src="access.js"></script><script src="schedules.js"></script><script src="network.js"></script></html>
+</script><script src="access.js"></script><script src="schedules.js"></script><script src="network.js"></script></body></html>

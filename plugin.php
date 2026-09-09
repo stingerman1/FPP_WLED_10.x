@@ -4,22 +4,27 @@
 <p>Check <a href="/api/file/logs/fpp_plugin_manager.log" target="_blank" rel="noopener">the plugin installation log</a> for the build failure. Back up FPP configuration before planning an OS migration.</p>
 <?php return; endif; ?>
 <p>Ambient lighting yields to FPP shows. Direct-to-device shows need explicit Show Start and Show End hooks.</p>
-<p><a href="/fpp-wled/" target="_blank" rel="noopener">Open WLED runtime</a> · <a href="/fpp-wled/settings" target="_blank" rel="noopener">Setup and compatibility</a></p>
+<p><a href="/fpp-wled/" target="_blank" rel="noopener">Open WLED runtime</a> · <a href="plugin.php?plugin=FPP_WLED_10.x&amp;page=settings.php" target="_blank" rel="noopener">Setup and compatibility</a></p>
 <p>This alpha requires Raspberry Pi 4/5 hardware acceptance. FPP's built-in WLED interface remains separate.</p>
 <p id="wled-web-status" role="status">Checking WLED web access...</p>
 <section aria-labelledby="wled-token-heading">
 <h3 id="wled-token-heading">Runtime access</h3>
 <p id="wled-saved-access" role="status">Checking saved access...</p>
 <p>The runtime token authorizes lighting, preset and configuration changes. The button below retrieves the existing token; it does not replace it. Anyone with access to this FPP page can retrieve it, so keep FPP access limited to trusted users.</p>
-<button type="button" id="wled-get-token">Get runtime token</button>
+<button class="btn btn-outline-primary my-1" type="button" id="wled-get-token">Get runtime token</button>
 <div id="wled-token-result" hidden>
     <p><label>API token <input id="wled-token-value" type="password" readonly autocomplete="off" spellcheck="false" size="44" style="max-width:100%;box-sizing:border-box"></label></p>
-    <button type="button" id="wled-show-token">Show token</button>
-    <button type="button" id="wled-copy-token">Copy token</button>
-    <button type="button" id="wled-token-login">Save runtime access</button>
-    <button type="button" id="wled-clear-token">Clear from page</button>
+    <button class="btn btn-outline-primary my-1" type="button" id="wled-show-token">Show token</button>
+    <button class="btn btn-outline-primary my-1" type="button" id="wled-copy-token">Copy token</button>
+    <button class="btn btn-outline-primary my-1" type="button" id="wled-token-login">Save runtime access</button>
+    <button class="btn btn-outline-primary my-1" type="button" id="wled-clear-token">Clear from page</button>
 </div>
 <p id="wled-token-status" role="status" aria-live="polite"></p>
+</section>
+<section class="border rounded p-3 my-3">
+<h3>Removal preference</h3>
+<p>Normally, removing this plugin keeps your token, presets and show locks for a later reinstall. Enable the option below only if you want those files permanently deleted when you uninstall.</p>
+<?php if (function_exists('PrintSettingCheckbox')) PrintSettingCheckbox('Delete saved data when uninstalling', 'deleteDataOnUninstall', 0, 0, '1', '0', 'FPP_WLED_10.x'); ?>
 </section>
 <script src="plugin.php?plugin=FPP_WLED_10.x&amp;file=web/token-access.js&amp;nopage=1"></script>
 <script>

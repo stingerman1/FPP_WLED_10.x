@@ -27,7 +27,8 @@ jobs:
           sudo apt-get install -y libjsoncpp-dev
           git clone --no-checkout https://github.com/FalconChristmas/fpp.git .upstream/fpp
           git -C .upstream/fpp checkout $(python -c 'import json; print(json.load(open("upstream.lock.json"))["fpp"]["reference_commit"])')
-          g++ -std=c++20 -O2 -fPIC -shared -pthread -I.upstream/fpp/src plugin/plugin.cpp -o build/libFPP_WLED_10.x.so
+          make SRCDIR=.upstream/fpp/src LINK_FPP=0 build/libFPP_WLED_10.x.so
+          test -z "$(nm -D build/libFPP_WLED_10.x.so | awk '$2==\"u\"')"
       - run: python scripts/benchmark.py --output build/benchmark.json
       - uses: actions/upload-artifact@v4
         with:

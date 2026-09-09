@@ -1,0 +1,25 @@
+/* FPP pages inherit Bootstrap's semantic variables; standalone access uses
+   browser system colors so it follows the selected color scheme too. */
+.fpp-wled { color:var(--bs-body-color,CanvasText); background:var(--bs-body-bg,Canvas); overflow-wrap:anywhere; max-width:100%; }
+body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width:60rem; }
+.fpp-wled [hidden] { display:none!important; }
+.fpp-wled a { color:var(--bs-link-color,CanvasText); text-decoration:underline; }
+.fpp-wled section { margin-block:1.5rem; padding:1.25rem; border:1px solid var(--bs-border-color,ButtonBorder); border-radius:.5rem; }
+.fpp-wled label { display:block; margin-block:.5rem; }
+.fpp-wled button,.fpp-wled input,.fpp-wled select,.fpp-wled textarea { font:inherit; max-width:100%; box-sizing:border-box; }
+.fpp-wled button { padding:.65rem 1rem; margin:.25rem; min-height:2.75rem; cursor:pointer; }
+.fpp-wled input:not([type=checkbox]),.fpp-wled select { padding:.5rem; }
+.fpp-wled textarea { width:100%; min-height:12rem; padding:.75rem; }
+.fpp-wled pre { white-space:pre-wrap; overflow-wrap:anywhere; color:inherit; }
+.fpp-wled fieldset { min-width:0; border:0; margin:0; padding:0; }
+.fpp-wled legend { font-size:1.1rem; font-weight:600; margin-bottom:.75rem; }
+.fpp-wled .lighting-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.5rem; }
+.fpp-wled .lighting-note { color:var(--bs-secondary-color,CanvasText); font-size:.9rem; }
+.fpp-wled input[type=range],.fpp-wled progress { width:100%; accent-color:var(--bs-primary,Highlight); }
+.fpp-wled input[type=color] { width:5rem; height:2.75rem; }
+.fpp-wled input[type=number] { width:8rem; }
+.fpp-wled button:disabled { opacity:.5; cursor:not-allowed; }
+.fpp-wled canvas { display:block; width:100%; max-width:100%; height:12rem; image-rendering:pixelated; background:var(--bs-tertiary-bg,Canvas); }
+.fpp-wled #palettePreview { height:2rem; border:1px solid var(--bs-border-color,ButtonBorder); border-radius:.3rem; }
+.fpp-wled #result,.fpp-wled #lightingStatus { color:var(--bs-warning-text-emphasis,CanvasText); }
+@media(max-width:36rem) { .fpp-wled .lighting-grid { grid-template-columns:1fr; } .fpp-wled section { padding:.75rem; } }

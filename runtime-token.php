@@ -18,7 +18,10 @@ if (!isset($_GET['nopage']) || ($_SERVER['HTTP_X_FPP_WLED_ACTION'] ?? '') !== 'r
     echo json_encode(['error' => 'Request the token from this FPP plugin page.']);
     exit;
 }
-$path = '/home/fpp/media/config/plugin.FPP_WLED_10.x/auth.json';
+$media = $settings['mediaDirectory'] ?? getenv('MEDIADIR') ?: '/home/fpp/media';
+$path = $media . '/plugindata/FPP_WLED_10.x/auth.json';
+// The page may load before the first upgrade has migrated existing data.
+if (!is_readable($path)) $path = $media . '/config/plugin.FPP_WLED_10.x/auth.json';
 $auth = is_readable($path) ? json_decode(file_get_contents($path), true) : null;
 if (!is_array($auth) || !is_string($auth['token'] ?? null) || strlen($auth['token']) < 32) {
     http_response_code(503);

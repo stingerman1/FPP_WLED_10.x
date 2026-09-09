@@ -1,0 +1,12 @@
+/* Override upstream chrome, not lighting/palette colors. System colors follow
+   FPP's themeOverride via theme.js even on standalone runtime pages. */
+:root {
+ --c-1:Canvas!important; --c-f:CanvasText!important; --c-2:ButtonFace!important;
+ --c-3:color-mix(in srgb,CanvasText 8%,Canvas)!important; --c-4:ButtonBorder!important;
+ --c-5:ButtonBorder!important; --c-6:GrayText!important; --c-8:GrayText!important; --c-b:CanvasText!important;
+ --c-c:CanvasText!important; --c-d:CanvasText!important; --c-e:CanvasText!important;
+ --c-r:Mark!important; --c-g:Highlight!important; --c-l:LinkText!important; --c-y:Mark!important;
+ --c-o:Canvas!important; --c-tb:ButtonFace!important; --c-tba:ButtonFace!important; --c-tbh:ButtonFace!important;
+}
+#linux-status-notice { background:Canvas; color:CanvasText; }
+#linux-status-notice a { color:CanvasText; text-decoration:underline; }

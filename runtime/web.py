@@ -127,13 +127,13 @@ class Handler(BaseHTTPRequestHandler):
             if asset in ASSETS:
                 data = (self.server.assets / asset).read_bytes()
                 if asset == 'index.htm':
-                    data = data.replace(b'</body>', b'<script src="base.js"></script><script src="linux-ui.js"></script></body>')
+                    data = data.replace(b'</body>', b'<link rel="stylesheet" href="wled-theme.css"><script src="theme.js"></script><script src="base.js"></script><script src="linux-ui.js"></script></body>')
                 return self.reply(200, data, mimetypes.guess_type(asset)[0] or 'application/octet-stream')
-            if path in ('/settings', '/login', '/linux-ui.js', '/schedules.js', '/base.js', '/access.js', '/network.js'):
+            if path in ('/settings', '/login', '/linux-ui.js', '/schedules.js', '/base.js', '/access.js', '/network.js', '/settings.css', '/theme.js', '/wled-theme.css'):
                 from .service import ROOT
-                filename = path[1:] if path.endswith('.js') else 'settings.html'
+                filename = path[1:] if path.endswith(('.js', '.css')) else 'settings.html'
                 return self.reply(200, (ROOT / 'web' / filename).read_bytes(),
-                                  'text/javascript' if filename.endswith('.js') else 'text/html; charset=utf-8')
+                                  'text/javascript' if filename.endswith('.js') else 'text/css' if filename.endswith('.css') else 'text/html; charset=utf-8')
             self.reply(404, {'error': 'unsupported endpoint', 'compatibility': '/api/status'})
         except (KeyError, FileNotFoundError):
             self.reply(404, {'error': 'resource not available'})

@@ -94,7 +94,7 @@ class WebProxyTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'node required')
     def test_browser_urls_preserve_origin_and_direct_access(self):
         source = (ROOT / 'web/base.js').read_text()
-        script = "const assert = require('node:assert/strict');\n" + source + """
+        script = "const assert = require('node:assert/strict'); global.document = {getElementById: () => null};\n" + source + """
 for (const origin of ['http://fpp:8080', 'https://fpp:8443']) {
   global.window = {location: new URL(origin + '/fpp-wled/settings'), fetch: (path) => new URL(path, origin).href};
   assert.equal(wledFetch('/json/si'), origin + '/fpp-wled/json/si');
@@ -102,5 +102,7 @@ for (const origin of ['http://fpp:8080', 'https://fpp:8443']) {
 }
 global.window = {location: new URL('http://fpp:8787/settings')};
 assert.equal(wledURL('/api/status'), '/api/status');
+global.document.getElementById = () => ({});
+assert.equal(wledURL('/api/status'), '/fpp-wled/api/status');
 """
         subprocess.run(['node', '-e', script], check=True)

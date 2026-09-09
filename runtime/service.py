@@ -2,6 +2,7 @@ import argparse
 from copy import deepcopy
 import json
 import logging
+import os
 from pathlib import Path
 import signal
 import socket
@@ -292,7 +293,7 @@ class Controller:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--state-dir', type=Path, default=Path('/home/fpp/media/config/plugin.FPP_WLED_10.x'))
+    parser.add_argument('--state-dir', type=Path, default=Path(os.environ.get('MEDIADIR', '/home/fpp/media')) / 'plugindata/FPP_WLED_10.x')
     parser.add_argument('--run-dir', type=Path, default=Path('/run/fpp-wled'))
     parser.add_argument('--library', type=Path, default=ROOT / 'build/libwled_linux.so')
     parser.add_argument('--validate', action='store_true')
@@ -352,5 +353,5 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     main()

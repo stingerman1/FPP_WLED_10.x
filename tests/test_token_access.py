@@ -1,5 +1,6 @@
 import http.client
 import json
+import os
 from pathlib import Path
 import shutil
 import socket
@@ -17,16 +18,16 @@ class TokenAccessTests(unittest.TestCase):
     def test_explicit_retrieval_only_and_missing_token(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)
-            auth = path / 'auth.json'
+            auth = path / 'plugindata/FPP_WLED_10.x/auth.json'
+            auth.parent.mkdir(parents=True)
             auth.write_text(json.dumps({'token': TOKEN}))
-            source = (ROOT / 'runtime-token.php').read_text().replace(
-                '/home/fpp/media/config/plugin.FPP_WLED_10.x/auth.json', str(auth))
+            source = (ROOT / 'runtime-token.php').read_text()
             (path / 'token.php').write_text(source)
             with socket.socket() as sock:
                 sock.bind(('127.0.0.1', 0))
                 port = sock.getsockname()[1]
             process = subprocess.Popen(['php', '-S', f'127.0.0.1:{port}', '-t', str(path)],
-                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env={**os.environ, 'MEDIADIR': str(path)})
             def request(method, headers=None, query='?nopage=1'):
                 conn = http.client.HTTPConnection('127.0.0.1', port, timeout=2)
                 conn.request(method, '/token.php' + query, headers=headers or {})

@@ -2,14 +2,18 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 plugin_dir="$(pwd -P)"
-state_dir=/home/fpp/media/config/plugin.FPP_WLED_10.x
-fpp_src=/opt/fpp/src
+. scripts/fpp-paths.sh
+state_dir="$PLUGIN_STATE"
+legacy_dir="${MEDIADIR}/config/plugin.FPP_WLED_10.x"
+if [[ -d "$legacy_dir" ]]; then state_dir="$legacy_dir"; fi
+fpp_src="${FPPDIR}/src"
+export FPP_SRC="$fpp_src"
 if [[ $EUID -ne 0 ]]; then echo 'Run this installer as root through FPP or sudo.' >&2; exit 1; fi
 if [[ $(uname -m) != aarch64 ]]; then echo 'Installation requires Raspberry Pi 4/5 with 64-bit FPP.' >&2; exit 1; fi
 model="$(tr -d '\0' </proc/device-tree/model)"
 case "$model" in 'Raspberry Pi 4 '*|'Raspberry Pi 5 '*) ;; *) echo "Unsupported hardware: $model" >&2; exit 1;; esac
-if [[ "$plugin_dir" != /home/fpp/media/plugins/FPP_WLED_10.x ]]; then
-  echo 'Clone this repository into /home/fpp/media/plugins/FPP_WLED_10.x first.' >&2; exit 1
+if [[ "$plugin_dir" != "${PLUGINDIR}/${PLUGIN_NAME}" ]]; then
+  echo "Install this repository into ${PLUGINDIR}/${PLUGIN_NAME} first." >&2; exit 1
 fi
 for tool in git g++ objdump python3 systemctl apache2ctl a2enconf a2disconf; do command -v "$tool" >/dev/null; done
 test -f "$fpp_src/Plugin.h"
@@ -17,6 +21,10 @@ python3 scripts/check-platform.py "$fpp_src"
 # Do not install guessed FPP headers or modify stock FPP. Dependency installation
 # remains an explicit administrator action if their image lacks the compiler.
 install -d -o fpp -g fpp -m 0750 "$state_dir"
+install -d -o fpp -g fpp -m 0755 "$LOGDIR"
+touch "$PLUGIN_LOG"
+chown fpp:fpp "$PLUGIN_LOG"
+chmod 0640 "$PLUGIN_LOG"
 install -d -o fpp -g fpp -m 0770 /run/fpp-wled
 # Repair a socket made by an older adapter already loaded in FPP. New adapters
 # set these permissions themselves on every bind, including after a reboot.
@@ -31,6 +39,7 @@ fi
 bash scripts/build-renderer.sh
 bash scripts/build-plugin.sh
 python3 scripts/verify-abi.py "$fpp_src" build/libFPP_WLED_10.x.so >build/abi.json
+python3 -m pip install --break-system-packages --disable-pip-version-check --no-deps -r requirements.txt
 runuser -u fpp -- python3 -m runtime.service --state-dir "$state_dir" --validate
 # Immutable release trees keep running Python code and dlopened libraries intact
 # while a new version builds. A single symlink selects the next runtime release.
@@ -40,19 +49,24 @@ cp -a runtime web "build/$release/"
 cp -a build/ui "build/$release/build/"
 cp build/libwled_linux.so "build/$release/build/"
 cp build/libFPP_WLED_10.x.so "build/$release/"
-python3 -m venv "build/$release/.venv"
-"build/$release/.venv/bin/pip" install --disable-pip-version-check --no-deps -r requirements.txt
+python3 scripts/render-service.py "$plugin_dir" "$PLUGIN_STATE" "$LOGDIR" "$PLUGIN_LOG" build/fpp-wled.service
 if [[ -L build/current ]]; then
   ln -s "$(readlink build/current)" build/previous.new
   mv -Tf build/previous.new build/previous
 fi
 systemctl stop fpp-wled.service 2>/dev/null || true
+if ! python3 scripts/migrate-data.py "$MEDIADIR"; then
+  systemctl start fpp-wled.service 2>/dev/null || true
+  exit 1
+fi
+state_dir="$PLUGIN_STATE"
+chown fpp:fpp "$state_dir"
 ln -s "$release" build/current.new
 mv -Tf build/current.new build/current
 ln -s build/current/libFPP_WLED_10.x.so libFPP_WLED_10.x.so.new
 mv -Tf libFPP_WLED_10.x.so.new libFPP_WLED_10.x.so
 chmod 0755 callbacks.sh scripts/*.sh scripts/wledctl.py
-install -m 0644 systemd/fpp-wled.service /etc/systemd/system/fpp-wled.service
+install -m 0644 build/fpp-wled.service /etc/systemd/system/fpp-wled.service
 systemctl daemon-reload
 systemctl enable fpp-wled.service
 if ! { systemctl restart fpp-wled.service && python3 scripts/check-health.py && bash scripts/configure-web.sh; }; then
@@ -64,5 +78,7 @@ if ! { systemctl restart fpp-wled.service && python3 scripts/check-health.py && 
   echo 'Activation failed; restored previous release when available.' >&2
   exit 1
 fi
-echo 'Installed alpha. Restart FPP from its UI to load/rebuild the adapter. Ambient starts disabled.'
+php scripts/register-settings.php
+setSetting restartFlag 1
+echo 'Installed alpha. FPP restart requested through its restart flag to load the rebuilt adapter.'
 echo 'User state and show locks are preserved. A missing Show End must be cleared by its source ID.'

@@ -9,5 +9,9 @@
   "documentation": "https://github.com/stingerman1/FPP_WLED_10.x/blob/main/docs/INSTALL.md",
   "minMemoryMB": 1024,
   "minCpuCores": 4,
+  "dependencies": {
+    "packages": ["g++", "make", "binutils", "libjsoncpp-dev", "python3-pip"],
+    "python": ["paho-mqtt==2.1.0", "zeroconf==0.148.0", "ifaddr==0.2.0", "async-timeout==5.0.1", "astral==3.2"]
+  },
   "versions": [{"minFPPVersion": "10.0", "maxFPPVersion": "10.99", "branch": "main", "sha": "", "allowUpdates": 1, "platforms": ["Raspberry Pi"]}]
 }

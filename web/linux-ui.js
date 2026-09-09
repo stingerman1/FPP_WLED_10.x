@@ -2,6 +2,12 @@
 (() => {
   // ESP firmware reporting/upload paths do not apply to this Linux runtime.
   checkVersionUpgrade = () => {};
+  // FPP/OS owns the theme. Do not offer a competing upstream fixed palette.
+  tglTheme = () => {
+    const theme = document.documentElement.dataset.bsTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.bsTheme = theme;
+    document.documentElement.style.colorScheme = theme;
+  };
   // Upstream assumes each WS message is state/info. Handle the Linux API's
   // explicit rejection response before it reaches that state parser.
   function hookErrors() {
@@ -39,17 +45,17 @@
   disableBootOverride();
   const nightlightButton = document.getElementById('buttonNl');
   if (nightlightButton) {
-    nightlightButton.onclick = () => { location.href = wledURL('/settings#ambient-lighting'); };
+    nightlightButton.onclick = () => { location.href = wledSettingsURL('#ambient-lighting'); };
     nightlightButton.title = 'Nightlight and lighting controls';
   }
   const peek = document.getElementById('buttonSr');
   if (peek) {
-    peek.onclick = () => { location.href = wledURL('/settings#ambient-lighting'); };
+    peek.onclick = () => { location.href = wledSettingsURL('#ambient-lighting'); };
     peek.title = 'Open ambient pixel preview';
   }
   const sync = document.getElementById('buttonSync');
   if (sync) {
-    sync.onclick = () => { location.href = wledURL('/settings#network'); };
+    sync.onclick = () => { location.href = wledSettingsURL('#network'); };
     sync.title = 'Discovery and synchronization settings';
   }
   // Render network-supplied names as text; use advertised paths and avoid the
@@ -66,12 +72,16 @@
       link.href = node.url; link.style.display = 'block'; panel.append(link);
     }
     const setup = document.createElement('a');
-    setup.href = wledURL('/settings#network'); setup.textContent = 'Discovery and sync settings';
+    setup.href = wledSettingsURL('#network'); setup.textContent = 'Discovery and sync settings';
     panel.append(setup);
   };
   for (const button of document.querySelectorAll('button')) {
+    if ((button.getAttribute('onclick') || '').includes("getURL('/settings')")) {
+      button.onclick = () => { location.href = wledSettingsURL(); };
+      continue;
+    }
     if (/\/cpal/.test(button.getAttribute('onclick') || '')) {
-      button.onclick = () => { location.href = wledURL('/settings#custom-palettes'); };
+      button.onclick = () => { location.href = wledSettingsURL('#custom-palettes'); };
       continue;
     }
     if (['updBt', 'resetbtn'].includes(button.id) ||
@@ -94,14 +104,14 @@
   }
   const notice = document.createElement('div');
   notice.id = 'linux-status-notice';
-  notice.style.cssText = 'position:fixed;bottom:var(--bh,0px);left:0;right:0;z-index:9999;background:#222;color:#eee;padding:8px;text-align:center;font:14px sans-serif;pointer-events:none';
+  notice.style.cssText = 'position:fixed;bottom:var(--bh,0px);left:0;right:0;z-index:9999;background:Canvas;color:CanvasText;padding:8px;text-align:center;font:14px sans-serif;pointer-events:none';
   document.body.append(notice);
   async function refresh() {
     try {
       const status = await (await wledFetch('/api/status')).json();
       notice.replaceChildren(document.createTextNode(status.allowed ? 'Linux alpha · Ambient active · ' : 'Linux alpha · Ambient suspended: ' + (status.sources.join(', ') || (!status.enabled ? 'disabled' : 'waiting for FPP / quiet period')) + ' · '));
       const link = document.createElement('a');
-      link.href = wledURL('/settings'); link.textContent = 'Setup, login & compatibility'; link.style.cssText = 'color:#9ddcff;pointer-events:auto';
+      link.href = wledSettingsURL(); link.textContent = 'Setup, login & compatibility'; link.style.cssText = 'color:CanvasText;pointer-events:auto';
       notice.append(link);
     } catch { notice.textContent = 'Runtime unavailable'; }
   }
