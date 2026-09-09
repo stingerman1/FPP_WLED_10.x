@@ -168,3 +168,8 @@ Expanded THIRD_PARTY_NOTICES.md, added dependency license copies and font credit
 ## Access and navigation follow-up (2026-09-09)
 
 Main WLED and Settings now offer one-step Enable lighting controls: same-origin FPP token retrieval followed by persistent cookie login. Purpose is explained inline; advanced API token retrieval remains on the plugin page. No token is put into DOM or local storage by the normal flow. File-editor shortcut opens preset import/backup; update shortcut opens plugin help, with visibility preserved despite upstream ESP capability flags. Settings has section navigation and actionable authorization errors. See docs/ROUTE_AUDIT.md for route coverage and remaining JSON configuration/device enrollment, restart-action and inline-feedback recommendations. Local 128 tests passed. Installed FPP at 10.0.0.124 timed out on a read-only status check; these changes have not been deployed or checked on that device.
+
+
+## Guided setup / slim light borders (2026-09-09)
+
+Added web/config-editor.js and guided geometry/channel/device forms, active-versus-saved config status, authenticated supervised restart with show/uncertainty guards, per-section action feedback and 1 px light-mode control borders. Runtime exits 75 after orderly shutdown; existing systemd Restart=on-failure relaunches it. Launcher exports FPP_WLED_SUPERVISED=1. Local actual-process restart/relaunch passed; suite 130 tests; browser invalid/save/reload/mobile checks passed. Fixed mDNS loopback/non-peer filtering after a read-only check found self-advertisement. Three real native WLED 16.0.1 devices answered JSON info; this is discovery/reachability validation only. Hardware effects/sync/show/load, destructive lifecycle acceptance and unresolved artwork provenance remain.

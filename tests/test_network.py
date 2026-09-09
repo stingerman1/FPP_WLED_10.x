@@ -45,6 +45,12 @@ class DiscoverySyncTests(unittest.TestCase):
         with patch('runtime.discovery.time.monotonic', return_value=time.monotonic() + 181):
             self.assertEqual(discovery.public(), [])
 
+    def test_mdns_rejects_loopback_and_non_peer_addresses(self):
+        discovery = self.discovery()
+        info = SimpleNamespace(parsed_addresses=lambda: ['127.0.0.1', '0.0.0.0', '224.0.0.1', '::1', '192.0.2.1'], port=80, properties={})
+        discovery.add_service(SimpleNamespace(get_service_info=lambda *a, **k: info), '_wled._tcp.local.', 'Self._wled._tcp.local.')
+        self.assertEqual(discovery.public(), [])
+
     def test_bidirectional_wire_sync_filters_groups_show_and_control_modes(self):
         state = {'on': True, 'bri': 64, 'transition': 7, 'seg': [default_segment(100, 1)]}
         changes = []

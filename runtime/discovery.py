@@ -95,7 +95,8 @@ class Discovery:
         if not info:
             return
         for address in info.parsed_addresses():
-            if ipaddress.ip_address(address).version != 4 or address in {a for a, _ in self.local}:
+            ip = ipaddress.ip_address(address)
+            if ip.version != 4 or ip.is_loopback or ip.is_multicast or ip.is_unspecified or address in {a for a, _ in self.local}:
                 continue
             path = info.properties.get(b'path', b'/').decode('utf-8', 'replace')
             if path not in ('/', '/fpp-wled/'):

@@ -43,6 +43,8 @@ class Controller:
         from .network import Network
         self.network = Network(self)
         self.link = None
+        self.restart_requested_at = None
+        self.supervised = False
 
     def info(self):
         owned = self.ownership.status()['show_owned']
@@ -123,6 +125,10 @@ class Controller:
                 return deepcopy(self.state.presets)
             if path == '/api/status':
                 return self.status()
+            if path == '/api/config/status':
+                saved = read_json(self.directory / 'config.json', self.config)
+                return {'saved': saved, 'restart_required': saved != self.config,
+                        'restart_available': self.supervised, 'started': self.started}
             if path == '/api/config':
                 return deepcopy(self.config)
             if path == '/api/devices':
@@ -172,6 +178,16 @@ class Controller:
                 return import_presets(self.state, payload)
             elif path == '/api/schedules':
                 return schedules.update(self, payload)
+            elif path == '/api/runtime/restart':
+                if payload != {}:
+                    raise ValueError('restart accepts an empty object')
+                if not self.supervised:
+                    raise ValueError('Runtime restart requires the FPP supervised service')
+                if self.ownership.status()['show_owned']:
+                    raise PermissionError('Cannot restart during a show or while FPP ownership is uncertain')
+                validate(read_json(self.directory / 'config.json', self.config))
+                self.restart_requested_at = time.monotonic()
+                return {'restarting': True}
             elif path == '/api/config':
                 validate(payload)
                 save_json(self.directory / 'config.json', payload)
@@ -315,6 +331,7 @@ def main():
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     link = Link(args.run_dir)
     controller.link = link
+    controller.supervised = os.environ.get('FPP_WLED_SUPERVISED') == '1'
     servers = start_servers(controller, args.run_dir, args.state_dir)
     from .integrations import MQTT
     if config.get('mqtt', {}).get('enabled', False):
@@ -327,6 +344,8 @@ def main():
     previous = time.monotonic()
     try:
         while not stopping.is_set():
+            if controller.restart_requested_at is not None and time.monotonic() - controller.restart_requested_at >= 0.5:
+                break
             started = time.monotonic()
             with controller.lock:
                 link.poll(ownership)
@@ -350,6 +369,8 @@ def main():
             server.server_close()
         link.close()
         lock.close()
+    if controller.restart_requested_at is not None:
+        raise SystemExit(75) # systemd Restart=on-failure starts the saved configuration
 
 
 if __name__ == '__main__':

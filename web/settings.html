@@ -61,7 +61,16 @@
 <button id="previewSchedules">Preview upcoming events</button> <button id="saveSchedules" disabled>Save schedules</button> <button id="reloadSchedules">Reload saved schedules</button>
 <pre id="scheduleReport" role="status">Loading schedules…</pre><p class="lighting-note">Offsets use the sunrise/sunset date's weekdays, even if they cross midnight. Polar days with no sunrise or sunset are skipped. Keep the Pi clock synchronized.</p>
 </section>
-<section id="configuration"><h2>Configuration</h2><p>FPP channel numbers start at 1; virtual pixel indexes start at 0. Each native device must have one control mode. Saved changes take effect after restarting the runtime service.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate & save</button></section>
+<section id="configuration"><h2>Outputs &amp; devices</h2>
+<p>Configure virtual pixels, map them to FPP channels, and enroll native WLED devices. FPP manages physical outputs and pixel streaming.</p>
+<div class="lighting-grid"><label>Pixel count <input id="cfgCount" type="number" min="1" max="16000"></label><label>Color channels <select id="cfgChannels"><option value="3">RGB</option><option value="4">RGBW</option></select></label><label>Matrix width <input id="cfgWidth" type="number" min="1"></label><label>Matrix height <input id="cfgHeight" type="number" min="1" max="255"></label><label>Frames per second <input id="cfgFps" type="number" min="1" max="60"></label></div>
+<p>For a strip, width equals pixel count and height is 1. For a matrix, width times height must equal pixel count.</p>
+<h3>FPP channel mappings</h3><p>Virtual pixels start at 0; FPP channels start at 1. Channel ranges must not overlap.</p><div id="mappingRows"></div><button id="addMapping">Add channel mapping</button>
+<h3>Native WLED devices</h3><p>Use one mode per device. Effect mode sends effects/presets; sync shares lighting changes; FPP stream means you configure DDP/E1.31/Art-Net in FPP. Automatic discovery sync needs no enrollment.</p><div id="deviceRows"></div><button id="addDevice">Enroll device</button>
+<p><button id="saveGuided">Validate &amp; save setup</button> <button id="reloadConfig">Reload saved setup</button></p>
+<p id="configFeedback" role="status"></p><p id="configPending" role="status">Checking saved configuration...</p>
+<button id="restartRuntime" disabled>Apply saved setup: restart WLED runtime</button><p>Ambient lighting pauses briefly. Show locks and saved settings are retained. Restart is blocked during shows or uncertain FPP ownership.</p>
+<details><summary>Advanced configuration JSON</summary><p>Use this for MQTT, custom pixel maps and other advanced options. Saving replaces the complete saved configuration.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate &amp; save JSON</button></details></section>
 <section id="network"><h2>Discovery &amp; synchronization</h2>
 <p>Find WLED instances automatically and let them find this FPP runtime. Sync shares supported colors, brightness and effects; pixel geometry stays local. All participants must use matching sync ports and groups.</p>
 <label>Instance name <input id="networkName" maxlength="32" value="WLED for FPP"></label>
@@ -80,7 +89,7 @@
 <p>Discovery stays on the local network; allow UDP 5353, 65506 and your sync port. Native WLED Nodes links open FPP because the node protocol has no web-path field. Use this page's links for the full plugin address.</p>
 <pre id="networkStatus" role="status">Loading network settings...</pre>
 <button id="discover">Refresh discovered devices</button><div id="discovered">Discovery results appear here.</div></section>
-<section><h2>Native WLED device commands</h2><p>For individual/group preset commands or FPP pixel streaming, enroll an IPv4 address in Configuration and choose effect, sync, or fpp-stream mode. Automatic sync needs no manual enrollment.</p>
+<section><h2>Native WLED device commands</h2><p>For individual/group preset commands or FPP pixel streaming, enroll an IPv4 address in Outputs &amp; devices and choose effect, sync, or fpp-stream mode. Automatic sync needs no manual enrollment.</p>
 <label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:4.375rem" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
 <p>Effect-mode devices retain ambient lighting checkpoints and retry recovery after realtime input ends. Saved native playlists restart from the beginning. Unsaved playlists and active nightlights cannot yet be restored. Recovery details appear in device status above.</p>
 <section id="custom-palettes"><h2>Custom palettes</h2>
@@ -153,12 +162,12 @@ async function runImport(preview){
 }
 el('previewImport').onclick=()=>runImport(true);
 el('commitImport').onclick=()=>runImport(false);
-async function post(path,body,token){const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await wledFetch(path,{method:'POST',headers,body:JSON.stringify(body)});const data=await r.json();el('result').textContent=JSON.stringify(data);if(!r.ok){const message=r.status===401?'Enable lighting controls in Runtime access before making changes.':(data.error||'Request failed');el('result').textContent=message;el('result').scrollIntoView({block:'center'});if(r.status===401){el('runtime-access').scrollIntoView({block:'start'});el('accessStatus').textContent=message;}throw Error(message);}return data;}
+async function post(path,body,token){const section=document.activeElement?.closest('section');let feedback=section?.querySelector('.action-feedback');if(section&&!feedback){feedback=document.createElement('p');feedback.className='action-feedback';feedback.setAttribute('role','status');section.append(feedback);}if(feedback)feedback.textContent='Working...';const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await wledFetch(path,{method:'POST',headers,body:JSON.stringify(body)});const data=await r.json();el('result').textContent=JSON.stringify(data);if(feedback)feedback.textContent=r.ok?'Completed.':(data.error||'Request failed');if(!r.ok){const message=r.status===401?'Enable lighting controls in Runtime access before making changes.':(data.error||'Request failed');el('result').textContent=message;if(feedback)feedback.textContent=message;if(r.status===401){el('runtime-access').scrollIntoView({block:'start'});el('accessStatus').textContent=message;}throw Error(message);}return data;}
 
 document.querySelectorAll('[data-op]').forEach(button=>button.onclick=()=>post('/api/command',{operation:button.dataset.op,source:el('source').value}).catch(()=>{}));
-el('save').onclick=()=>{try{post('/api/config',JSON.parse(el('config').value)).catch(()=>{});}catch(e){el('result').textContent=e.message;}};
+
 el('sendDevice').onclick=()=>{try{post('/api/devices/command',{target:el('target').value,state:JSON.parse(el('deviceState').value)}).catch(()=>{});}catch(e){el('result').textContent=e.message;}};
-wledFetch('/api/config').then(r=>r.json()).then(c=>el('config').value=JSON.stringify(c,null,2));
+
 async function refresh(){try{const s=await(await wledFetch('/api/status')).json();el('compat').textContent='Unavailable: '+s.unsupported.join(', ')+'\nUnavailable effect IDs: '+s.unsupported_effect_ids.join(', ');delete s.unsupported;delete s.unsupported_effect_ids;el('status').textContent=JSON.stringify(s,null,2);}catch{el('status').textContent='Runtime unavailable';}}
 refresh();setInterval(refresh,1000);
-</script><script src="access.js"></script><script src="schedules.js"></script><script src="network.js"></script></body></html>
+</script><script src="config-editor.js"></script><script src="access.js"></script><script src="schedules.js"></script><script src="network.js"></script></body></html>

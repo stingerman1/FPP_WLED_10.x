@@ -10,3 +10,9 @@
 }
 #linux-status-notice { background:Canvas; color:CanvasText; }
 #linux-status-notice a { color:CanvasText; text-decoration:underline; }
+
+/* Subtle edges distinguish controls from light surfaces. */
+:root[data-bs-theme="light"] button,
+:root[data-bs-theme="light"] .btn,
+:root[data-bs-theme="light"] input[type=button],
+:root[data-bs-theme="light"] input[type=submit] { border:1px solid #aeb4bc!important; }

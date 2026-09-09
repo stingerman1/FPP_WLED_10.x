@@ -29,7 +29,7 @@ class RuntimeTests(unittest.TestCase):
             response = conn.getresponse(); data = response.read(); conn.close()
             self.assertEqual(response.status, expected, (method, route, data[:200]))
             return json.loads(data) if response.getheader('Content-Type', '').startswith('application/json') else data
-        for route in ('/', '/settings', '/login', '/index.js', '/index.css', '/common.js', '/iro.js',
+        for route in ('/', '/settings', '/login', '/config-editor.js', '/api/config/status', '/index.js', '/index.css', '/common.js', '/iro.js',
                       '/rangetouch.js', '/base.js', '/access.js', '/linux-ui.js', '/schedules.js', '/network.js', '/skin.css', '/settings.css', '/theme.js', '/wled-theme.css',
                       '/json', '/json/si', '/json/state', '/json/info', '/json/effects', '/json/fxdata',
                       '/json/palettes', '/json/nodes', '/json/palx?page=0', '/presets.json', '/api/auth',
@@ -58,6 +58,27 @@ class RuntimeTests(unittest.TestCase):
         self.idle(2200)
         request('POST', '/api/command', {'operation': 'ambient-enable'})
         request('POST', '/api/logout', {})
+
+    def test_pending_config_and_guarded_restart(self):
+        self.enable()
+        saved = deepcopy(self.control.config)
+        saved['fps'] = 30
+        self.control.post('/api/config', saved)
+        status = self.control.get('/api/config/status')
+        self.assertTrue(status['restart_required'])
+        self.assertEqual(status['saved']['fps'], 30)
+        self.assertNotEqual(self.control.config.get('fps'), 30)
+        with self.assertRaises(ValueError):
+            self.control.post('/api/runtime/restart', {})
+        self.control.supervised = True
+        self.control.post('/api/command', {'operation': 'show-start', 'source': 'test:show'})
+        with self.assertRaises(PermissionError):
+            self.control.post('/api/runtime/restart', {})
+        self.assertIsNone(self.control.restart_requested_at)
+        self.control.post('/api/command', {'operation': 'show-end', 'source': 'test:show'})
+        self.idle(2200)
+        self.assertTrue(self.control.post('/api/runtime/restart', {})['restarting'])
+        self.assertIsNotNone(self.control.restart_requested_at)
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

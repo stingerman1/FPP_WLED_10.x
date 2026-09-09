@@ -69,3 +69,5 @@ Install resolves media and log paths through FPP common. Existing directory-base
 The root Makefile includes FPP shared setup and rebuilds the adapter during FPP core upgrades. Installation and rollback request an FPP restart through its flag, never restart fppd directly. Until that restart, a loaded adapter may remain the previous version.
 
 Uninstall removes service, Apache and temporary runtime artifacts. Saved data is retained by default. On the plugin page, enable **Delete saved data when uninstalling** before uninstalling only if you want permanent removal of tokens, presets and ownership locks. This preference is off by default. The FPP-managed diagnostic log is retained for support.
+
+Use **Outputs & devices** for guided pixel layout, channel mappings and device enrollment. Save, then use **Apply saved setup: restart WLED runtime** when FPP ownership is clear. The pending indicator distinguishes saved changes from active settings. The supervised restart pauses ambient output briefly and preserves saved state; it does not restart FPP.
