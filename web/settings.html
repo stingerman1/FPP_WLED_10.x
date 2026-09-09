@@ -5,10 +5,16 @@
 <link rel="stylesheet" href="settings.css"><script src="theme.js"></script><body class="fpp-wled"><h1>WLED for FPP <small>Linux alpha</small></h1>
 
 <p><a href="./">Open WLED</a> · <a href="https://github.com/stingerman1/FPP_WLED_10.x">Documentation</a></p>
+<nav aria-label="Setup sections"><a href="#runtime-access">Access</a> &middot; <a href="#ambient-lighting">Lighting</a> &middot; <a href="#schedules">Timers</a> &middot; <a href="#configuration">Outputs</a> &middot; <a href="#network">Discovery &amp; sync</a> &middot; <a href="#custom-palettes">Palettes</a> &middot; <a href="#preset-import">Import presets</a> &middot; <a href="#compatibility">Compatibility</a></nav>
 <p>FPP owns physical outputs. Ambient waits while shows run, then resumes after two quiet seconds. This alpha supports a subset of WLED; unavailable capabilities are listed below.</p>
 <section id="runtime-access"><h2>Runtime access</h2>
 <p id="accessStatus" role="status">Checking saved access...</p>
-<div id="loginFields"><label>API token <input id="token" type="password" autocomplete="off"></label><button id="login">Save access on this browser</button></div>
+<div id="loginFields">
+<p>Enable controls to change lighting, presets and configuration. FPP supplies its existing runtime token and remembers access on this browser; you do not need to copy a code.</p>
+<button id="connectRuntime">Enable lighting controls</button>
+<p id="directAccessHelp" hidden>Automatic setup is available when opening WLED through FPP. For direct runtime access, enter the token below.</p>
+<details><summary>Advanced: use an API token</summary><p>For direct runtime access or API clients. Keep this token private: it permits lighting and configuration changes.</p><label>API token <input id="token" type="password" autocomplete="off"></label><button id="login">Save API token</button></details>
+</div>
 <button id="logout" hidden>Forget access on this browser</button>
 <p>Access is remembered for one year and renewed when this page checks it. Clearing browser data, forgetting access, or changing the runtime token requires login again. Other browsers and FPP addresses need their own login.</p>
 </section>
@@ -55,7 +61,7 @@
 <button id="previewSchedules">Preview upcoming events</button> <button id="saveSchedules" disabled>Save schedules</button> <button id="reloadSchedules">Reload saved schedules</button>
 <pre id="scheduleReport" role="status">Loading schedules…</pre><p class="lighting-note">Offsets use the sunrise/sunset date's weekdays, even if they cross midnight. Polar days with no sunrise or sunset are skipped. Keep the Pi clock synchronized.</p>
 </section>
-<section><h2>Configuration</h2><p>FPP channel numbers start at 1; virtual pixel indexes start at 0. Each native device must have one control mode. Saved changes take effect after restarting the runtime service.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate & save</button></section>
+<section id="configuration"><h2>Configuration</h2><p>FPP channel numbers start at 1; virtual pixel indexes start at 0. Each native device must have one control mode. Saved changes take effect after restarting the runtime service.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate & save</button></section>
 <section id="network"><h2>Discovery &amp; synchronization</h2>
 <p>Find WLED instances automatically and let them find this FPP runtime. Sync shares supported colors, brightness and effects; pixel geometry stays local. All participants must use matching sync ports and groups.</p>
 <label>Instance name <input id="networkName" maxlength="32" value="WLED for FPP"></label>
@@ -88,7 +94,7 @@
 <pre id="paletteStatus" role="status">Loading palette slots…</pre>
 <p>Reload the WLED page after saving to refresh its palette list. Deletion is blocked while a palette is referenced. Editing the active palette is blocked during show ownership or suspended ambient.</p>
 </section>
-<section><h2>Import WLED presets</h2>
+<section id="preset-import"><h2>Import WLED presets</h2>
 <p>Merge a WLED presets.json file into this runtime. Matching IDs will be overwritten; other presets remain. Preview checks the current pixel layout and reports translations. Unsupported entries block the whole import. Lighting and show locks remain active.</p>
 <p><a href="presets.json" download="presets.json">Download existing presets before importing</a></p>
 <label>Preset file <input id="presetFile" type="file" accept=".json,application/json"></label>
@@ -96,7 +102,7 @@
 <button id="previewImport">Preview import</button> <button id="commitImport" disabled>Save imported presets</button>
 <pre id="importReport" role="status">Choose a file or paste JSON, then preview. Request limit: 256 KiB.</pre>
 </section>
-<section><h2>Compatibility</h2><pre id="compat"></pre></section><p id="result" role="status"></p>
+<section id="compatibility"><h2>Compatibility</h2><pre id="compat"></pre></section><p id="result" role="status"></p>
 <script src="base.js"></script><script>
 const el=id=>document.getElementById(id);
 let lightingInitialized=false;
@@ -147,7 +153,7 @@ async function runImport(preview){
 }
 el('previewImport').onclick=()=>runImport(true);
 el('commitImport').onclick=()=>runImport(false);
-async function post(path,body,token){const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await wledFetch(path,{method:'POST',headers,body:JSON.stringify(body)});const data=await r.json();el('result').textContent=JSON.stringify(data);if(!r.ok)throw Error(data.error);return data;}
+async function post(path,body,token){const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await wledFetch(path,{method:'POST',headers,body:JSON.stringify(body)});const data=await r.json();el('result').textContent=JSON.stringify(data);if(!r.ok){const message=r.status===401?'Enable lighting controls in Runtime access before making changes.':(data.error||'Request failed');el('result').textContent=message;el('result').scrollIntoView({block:'center'});if(r.status===401){el('runtime-access').scrollIntoView({block:'start'});el('accessStatus').textContent=message;}throw Error(message);}return data;}
 
 document.querySelectorAll('[data-op]').forEach(button=>button.onclick=()=>post('/api/command',{operation:button.dataset.op,source:el('source').value}).catch(()=>{}));
 el('save').onclick=()=>{try{post('/api/config',JSON.parse(el('config').value)).catch(()=>{});}catch(e){el('result').textContent=e.message;}};

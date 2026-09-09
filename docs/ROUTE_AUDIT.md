@@ -33,3 +33,27 @@ Automated suite at this audit: 120 passing tests. Route tests are in `tests/test
 - Discovery and sync now have live settings controls and automatic peers; the Sync shortcut opens them. See [discovery and sync](DISCOVERY_SYNC.md). Manual effect-mode enrollment and output mapping still use JSON/FPP.
 - ESP flashing, Wi-Fi provisioning, GPIO, audio input, usermods, Hue, PixelForge and arbitrary filesystem editing remain unsupported. Their upstream controls are disabled where exposed; unsupported APIs may return 404/422 intentionally.
 - Native-device handoff, physical output, show timing under load, and Pi performance acceptance require the hardware checklist in the project documentation. HTTP success does not establish those guarantees.
+
+
+## September 9 navigation and access follow-up
+
+The installer creates the token in `plugindata/FPP_WLED_10.x/auth.json`. The FPP-only POST helper reads it; the runtime login endpoint saves an HttpOnly cookie. WLED and Settings now offer a single **Enable lighting controls** action with its purpose stated inline. The raw token stays out of markup/local storage. Advanced manual token use remains available; direct runtime addresses cannot use the FPP helper and show that distinction.
+
+| Entry point | Destination / result |
+|---|---|
+| Main WLED access prompt | Retrieve token from FPP, log in, reload so WebSocket uses saved access |
+| Settings access | Same operation without leaving Settings; logout restores read-only state |
+| Config / bottom Settings & access | FPP-wrapped Settings on FPP; standalone Settings on a direct runtime address |
+| Timer / Peek | Settings ambient-lighting section and pixel preview |
+| Sync / Nodes setup link | Discovery and synchronization settings |
+| Custom palettes | Custom palette editor; empty slots have no download link |
+| Former File editor | Preset import and backup section |
+| Former Update WLED | Plugin updates/help on FPP; compatibility on direct access |
+| Credits | Offline credits with return link to plugin |
+| Settings section links | Access, lighting, timers, outputs, sync, palettes, import, compatibility anchors |
+| Unauthorized settings mutation | Explicit enable-controls message and scroll to access section |
+| PixelForge / reboot | Still disabled; no unsupported action is sent |
+
+Verification: 128 automated tests pass, including the actual HTTP GET/POST route inventory and authorization/ownership tests. Chromium fixture checks cover one-click access on both pages, logout/reconnect, reload persistence, Config/Timer/Peek/Sync navigation and all Settings section anchors. The preset-import shortcut, plugin-help shortcut, credits return path and direct-runtime fallback were also followed in Chromium. Mobile Settings inspected at 320 px. The PHP fixture does not forward WebSocket upgrades; its handshake errors are a fixture limitation, not evidence of a working Apache WebSocket route. Protocol tests cover WebSocket separately. These are local checks, not a new installed-device or physical-output acceptance claim.
+
+Recommended next workflow changes: replace output mappings and device enrollment JSON with validated forms; add a supervised runtime restart action with a clear saved-versus-active configuration indicator; show command/save feedback beside each initiating form (some success and non-authorization errors still use the shared result area). Keep unsupported ESP-only capabilities explicitly labeled instead of adding routes that imply support.

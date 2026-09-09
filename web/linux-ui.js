@@ -80,11 +80,13 @@
       button.onclick = () => { location.href = wledSettingsURL(); };
       continue;
     }
+    if (/\/edit/.test(button.getAttribute('onclick') || '')) { button.title = 'Import and back up presets'; button.onclick = () => { location.href = wledSettingsURL('#preset-import'); }; continue; }
     if (/\/cpal/.test(button.getAttribute('onclick') || '')) {
       button.onclick = () => { location.href = wledSettingsURL('#custom-palettes'); };
       continue;
     }
-    if (['updBt', 'resetbtn'].includes(button.id) ||
+    if (button.id === 'updBt') { button.textContent = 'Plugin updates & help'; button.onclick = () => { location.href = wledOnFPP() ? '/plugin.php?plugin=FPP_WLED_10.x&page=plugin.php' : wledSettingsURL('#compatibility'); }; continue; }
+    if (['resetbtn'].includes(button.id) ||
         /\/(edit|pixelforge|palette|cpal)/.test(button.getAttribute('onclick') || '')) {
       button.disabled = true;
       button.title = 'Unavailable in the Linux alpha; see Setup and compatibility';
@@ -92,7 +94,7 @@
     }
   }
   const style = document.createElement('style');
-  style.textContent = '#rover button, #roverstar, #bsp {display:none!important}';
+  style.textContent = '#rover button, #roverstar, #bsp {display:none!important} #updBt {display:inline-block!important}';
   document.head.append(style);
   const overlay = document.getElementById('rover');
   if (overlay) {
@@ -102,6 +104,34 @@
     message.textContent = 'A show owns the managed outputs.';
     overlay.append(message, document.createTextNode('Ambient lighting resumes after all show sources end and the quiet period expires.'));
   }
+  const access = document.createElement('section');
+  access.id = 'linux-access-notice';
+  access.style.cssText = 'position:fixed;bottom:calc(var(--bh,0px) + 36px);left:0;right:0;z-index:10000;background:Canvas;color:CanvasText;padding:12px;text-align:center;border-top:1px solid GrayText';
+  const accessText = document.createElement('p');
+  accessText.textContent = 'Read-only access. Enable controls to change lighting, presets and configuration. Access is remembered on this browser.';
+  const connect = document.createElement('button');
+  connect.className = 'btn'; connect.textContent = 'Enable lighting controls';
+  const accessLink = document.createElement('a');
+  accessLink.href = wledSettingsURL('#runtime-access'); accessLink.textContent = 'Access settings';
+  access.append(accessText, connect, document.createTextNode(' '), accessLink);
+  document.body.prepend(access);
+  connect.hidden = !wledOnFPP();
+  async function refreshAccess() {
+    try {
+      const response = await wledFetch('/api/auth');
+      if (!response.ok) throw Error();
+      const auth = await response.json();
+      access.hidden = auth.authenticated;
+    } catch { access.hidden = false; accessText.textContent = 'Runtime access unavailable. Check the service, then retry.'; }
+  }
+  connect.onclick = async () => {
+    connect.disabled = true;
+    try { await wledEnableControls(); location.reload(); }
+    catch (error) { accessText.textContent = error.message; connect.disabled = false; }
+  };
+  refreshAccess();
+  window.addEventListener('focus', refreshAccess);
+  setInterval(() => { if (!document.hidden) refreshAccess(); }, 15000);
   const notice = document.createElement('div');
   notice.id = 'linux-status-notice';
   notice.style.cssText = 'position:fixed;bottom:var(--bh,0px);left:0;right:0;z-index:9999;background:Canvas;color:CanvasText;padding:8px;text-align:center;font:14px sans-serif;pointer-events:none';
@@ -111,7 +141,7 @@
       const status = await (await wledFetch('/api/status')).json();
       notice.replaceChildren(document.createTextNode(status.allowed ? 'Linux alpha · Ambient active · ' : 'Linux alpha · Ambient suspended: ' + (status.sources.join(', ') || (!status.enabled ? 'disabled' : 'waiting for FPP / quiet period')) + ' · '));
       const link = document.createElement('a');
-      link.href = wledSettingsURL(); link.textContent = 'Setup, login & compatibility'; link.style.cssText = 'color:CanvasText;pointer-events:auto';
+      link.href = wledSettingsURL(); link.textContent = 'Settings & access'; link.style.cssText = 'color:CanvasText;pointer-events:auto';
       notice.append(link);
     } catch { notice.textContent = 'Runtime unavailable'; }
   }

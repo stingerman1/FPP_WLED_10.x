@@ -10,7 +10,7 @@
       byId('logout').hidden = !auth.authenticated;
       byId('accessStatus').textContent = auth.authenticated
         ? 'Access saved on this browser. You do not need to enter a token again. It survives browser and runtime restarts.'
-        : 'Not connected. Enter a token or get one from the FPP plugin page.';
+        : 'Read-only access. Enable lighting controls to make changes.';
       window.wledAuthenticated = auth.authenticated;
     } catch {
       byId('accessStatus').textContent = 'Cannot check access: runtime unavailable.';
@@ -28,6 +28,15 @@
   byId('logout').onclick = async () => {
     try { await post('/api/logout', {}); await refresh(); }
     catch { /* post displays the server error */ }
+  };
+  byId('connectRuntime').hidden = !wledOnFPP();
+  byId('directAccessHelp').hidden = wledOnFPP();
+  byId('connectRuntime').onclick = async () => {
+    byId('connectRuntime').disabled = true;
+    byId('accessStatus').textContent = 'Enabling lighting controls...';
+    try { await wledEnableControls(); await refresh(); }
+    catch (error) { byId('accessStatus').textContent = error.message; }
+    finally { byId('connectRuntime').disabled = false; }
   };
   refresh();
   window.addEventListener('focus', refresh);
