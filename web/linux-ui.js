@@ -34,6 +34,29 @@
   const originalMakeWS = makeWS;
   makeWS = function () { originalMakeWS(); hookErrors(); };
   hookErrors();
+  // Linux status includes changing uptime/output counters. Upstream rebuilds
+  // segments on every state/info message and resets the new-segment form.
+  // Keep its actual DOM (including focus and drafts) through background updates.
+  let updatingSegments = false;
+  const originalPopulateSegments = populateSegments;
+  const originalResetUtil = resetUtil;
+  resetUtil = function (...args) {
+    if (updatingSegments && document.querySelector('#segutil input.ptxt')) return;
+    return originalResetUtil.apply(this, args);
+  };
+  populateSegments = function (state) {
+    const draft = document.querySelector('#segutil input.ptxt');
+    const draftId = draft ? Number(draft.id.match(/^seg(\d+)t$/)[1]) : null;
+    // Another client may have used the same slot. Do not leave duplicate IDs
+    // in the page or let this draft overwrite that client's new segment.
+    if (draft && (state.seg || []).some(segment => segment.id === draftId)) {
+      originalResetUtil();
+      showToast('The segment list changed on another controller. Please add your segment again.', true);
+    }
+    updatingSegments = true;
+    try { return originalPopulateSegments.call(this, state); }
+    finally { updatingSegments = false; }
+  };
   function disableBootOverride() {
     document.querySelectorAll('input[id$="bps"]').forEach(input => {
       input.checked = false;
