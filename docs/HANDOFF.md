@@ -188,3 +188,8 @@ Added matched foreground/background pairs for normal/hover/selected/disabled con
 ## Menu registration repair (2026-09-10)
 
 The earlier template audit checked the menuEntries array but missed the required rendering loop. FPP captures emitted HTML, so an array alone produces no menu links. menu.inc now renders one Status/Control entry (WLED for FPP, plugin.php) and one Input/Output Setup entry (WLED Setup, settings.php). Added a PHP execution regression for matching and nonmatching menu sections.
+
+
+## Settings explanations (2026-09-10)
+
+Added inline explanations for every configuration section: browser access versus ambient enablement, show ownership and source locks, segments/effects/palettes, nightlights versus schedules, geometry/channel mapping examples, device modes/groups, discovery versus sync, advanced commands, palette slots, preset import and compatibility. Ownership now has a live plain-language summary and expandable technical details. Checked inline JS syntax and PHP wrapper syntax; no control protocol changes.

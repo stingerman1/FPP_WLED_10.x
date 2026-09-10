@@ -7,9 +7,9 @@
 
 <p><a href="./">Open WLED</a> · <a href="https://github.com/stingerman1/FPP_WLED_10.x">Documentation</a></p>
 <p><label>Appearance <select data-wled-theme><option value="fpp">Follow FPP / system</option><option value="light">Normal: light center, dark frame</option><option value="dark">Dark mode</option></select></label></p>
-<nav aria-label="Setup sections"><a href="#runtime-access">Access</a> &middot; <a href="#ambient-lighting">Lighting</a> &middot; <a href="#schedules">Timers</a> &middot; <a href="#configuration">Outputs</a> &middot; <a href="#network">Discovery &amp; sync</a> &middot; <a href="#custom-palettes">Palettes</a> &middot; <a href="#preset-import">Import presets</a> &middot; <a href="#compatibility">Compatibility</a></nav>
+<nav aria-label="Setup sections"><a href="#runtime-access">Access</a> &middot; <a href="#ownership">Who controls the lights?</a> &middot; <a href="#ambient-lighting">Lighting</a> &middot; <a href="#schedules">Timers</a> &middot; <a href="#configuration">Outputs</a> &middot; <a href="#network">Discovery &amp; sync</a> &middot; <a href="#custom-palettes">Palettes</a> &middot; <a href="#preset-import">Import presets</a> &middot; <a href="#compatibility">Compatibility</a></nav>
 <p>FPP owns physical outputs. Ambient waits while shows run, then resumes after two quiet seconds. This alpha supports a subset of WLED; unavailable capabilities are listed below.</p>
-<section id="runtime-access"><h2>Runtime access</h2>
+<section id="runtime-access"><h2>Runtime access</h2><p>This connects your browser to the WLED lighting service running on this FPP player. Enable controls once to change settings and lighting. This permission is separate from turning ambient lighting on or off.</p>
 <p id="accessStatus" role="status">Checking saved access...</p>
 <div id="loginFields">
 <p>Enable controls to change lighting, presets and configuration. FPP supplies its existing runtime token and remembers access on this browser; you do not need to copy a code.</p>
@@ -20,15 +20,18 @@
 <button id="logout" hidden>Forget access on this browser</button>
 <p>Access is remembered for one year and renewed when this page checks it. Clearing browser data, forgetting access, or changing the runtime token requires login again. Other browsers and FPP addresses need their own login.</p>
 </section>
-<section><h2>Ambient ownership</h2><button data-op="ambient-enable">Enable ambient</button> <button data-op="ambient-disable">Disable ambient</button>
-<label>Show source <input id="source" placeholder="xschedule:main"></label><button data-op="show-start">Show Start</button> <button data-op="show-end">Show End / clear this lock</button>
-<p>Clear only the source you intend to release. Other sources keep ownership.</p><pre id="status">Loading status…</pre></section>
+<section id="ownership"><h2>Who controls the lights? <small>Ambient ownership</small></h2>
+<p><strong>Ambient lighting</strong> is the background look WLED runs between shows. <strong>Ownership</strong> decides whether WLED or a show may control the managed lights. A show takes priority; after every show source ends and two quiet seconds pass, the previous ambient lighting can resume.</p>
+<p><strong>Enable ambient</strong> allows background lighting when no show is in control. <strong>Disable ambient</strong> stops this plugin's background output without stopping FPP playback. Enabling ambient does not override a show.</p>
+<p id="ownershipSummary" role="status">Checking who controls the lights...</p><button data-op="ambient-enable">Enable ambient</button> <button data-op="ambient-disable">Disable ambient</button>
+<p><strong>Show Start / Show End</strong> are manual controls for an external show lock. Normal FPP playback is detected automatically. Use these hooks for shows sent directly to devices, such as from xSchedule.</p><label>Show source <input id="source" placeholder="xschedule:main"></label><button data-op="show-start">Show Start</button> <button data-op="show-end">Show End / clear this lock</button>
+<p>A <strong>source</strong> is a unique label for a show controller, such as <code>xschedule:main</code>. Use exactly the same label for Start and End. Each source keeps its own lock, including across restarts. Only end a source after its show has stopped; a missing End keeps ambient paused. Other sources still retain control.</p><details><summary>Technical ownership and device status</summary><pre id="status">Loading status...</pre></details></section>
 <section id="ambient-lighting" class="lighting-panel" aria-labelledby="lightingTitle"><h2 id="lightingTitle">Ambient lighting</h2>
-<p class="lighting-note">Shape the light, then set how it winds down. Controls apply to selected segments in WLED.</p>
+<p>A <strong>segment</strong> is a section of virtual pixels selected in the main WLED screen. An <strong>effect</strong> is its animation; a <strong>palette</strong> is the set of colors the animation uses. These controls change the current look, not a saved preset.</p><p class="lighting-note">Shape the light, then set how it winds down. Controls apply to selected segments in WLED.</p>
 <label><input id="previewEnabled" type="checkbox" checked> Live pixel preview</label>
 <canvas id="pixelPreview" width="768" height="240" role="img" aria-label="Runtime ambient pixel preview"></canvas>
 <p id="previewStatus" class="lighting-note">Waiting for the renderer…</p>
-<div class="lighting-grid"><fieldset><legend>Light &amp; color</legend>
+<div class="lighting-grid"><fieldset><legend>Light &amp; color</legend><p>Brightness controls intensity (0 is off, 255 is maximum). Effects may use primary and secondary colors differently. White sliders appear for RGBW pixels. Transition is how long a supported change takes to fade in; press Apply lighting to send your choices.</p>
 <label>Brightness <input id="lightBrightness" type="range" min="0" max="255" value="128"></label>
 <label>Effect <select id="lightEffect"><option value="0">Solid</option></select></label>
 <label>Primary color <input id="lightPrimary" type="color" value="#ffa000"></label>
@@ -37,7 +40,7 @@
 <label id="secondaryWhiteLabel" hidden>Secondary white channel <input id="lightWhite2" type="range" min="0" max="255" value="0"></label>
 <label>Transition seconds <input id="lightTransition" type="number" min="0" max="65.5" step="0.1" value="0.7"></label>
 <button id="applyLighting" disabled>Apply lighting</button> <button id="lightOff" disabled>Turn off</button>
-</fieldset><fieldset><legend>Nightlight</legend>
+</fieldset><fieldset><legend>Nightlight</legend><p>A one-time timed fade or sunrise/sunset animation. Choose its duration and final brightness, then Start. This does not create a repeating schedule.</p>
 <label>Mode <select id="nightMode"><option value="0">Wait, then change brightness</option><option value="1" selected>Fade brightness</option><option value="2">Fade brightness &amp; color</option><option value="3">Sunrise / sunset animation</option></select></label>
 <label>Duration in minutes <input id="nightMinutes" type="number" min="1" max="255" value="30"></label>
 <label id="nightTargetLabel">Target brightness <input id="nightTarget" type="number" min="0" max="255" value="0"></label>
@@ -46,7 +49,7 @@
 <p id="nightStatus" role="status">No nightlight running.</p><progress id="nightProgress" max="1" value="0" aria-label="Nightlight progress"></progress>
 <p class="lighting-note">Color fade moves each selected segment toward its secondary color. Show ownership pauses the countdown. Applying new lighting cancels it. Runtime restarts leave it stopped.</p>
 </fieldset></div><p id="lightingStatus" role="status"></p></section>
-<section id="schedules" class="lighting-panel" aria-labelledby="scheduleTitle"><h2 id="scheduleTitle">Follow the daylight</h2>
+<section id="schedules" class="lighting-panel" aria-labelledby="scheduleTitle"><h2 id="scheduleTitle">Schedules &amp; daylight</h2><p>A <strong>preset</strong> is a saved lighting look created in the main WLED screen. A timer recalls one preset at a clock time or relative to sunrise/sunset on the days you choose. Use Preview to see upcoming events before saving. Add timer edits your draft; Save schedules activates it.</p>
 <p class="lighting-note">Recall a saved preset at a clock time, sunrise, or sunset. Schedules apply immediately when saved. Events during shows or suspended ambient are skipped, never replayed.</p>
 <label><input id="scheduleLocation" type="checkbox"> Use a location and timezone (required for solar timers)</label>
 <div id="scheduleCoordinates" class="lighting-grid" hidden><div><label>Latitude <input id="scheduleLatitude" type="number" min="-90" max="90" step="any" placeholder="41.88"></label><label>Longitude <input id="scheduleLongitude" type="number" min="-180" max="180" step="any" placeholder="-87.63"></label></div><label>Timezone <input id="scheduleZone" placeholder="America/Chicago" autocomplete="off"></label></div>
@@ -64,16 +67,16 @@
 <pre id="scheduleReport" role="status">Loading schedules…</pre><p class="lighting-note">Offsets use the sunrise/sunset date's weekdays, even if they cross midnight. Polar days with no sunrise or sunset are skipped. Keep the Pi clock synchronized.</p>
 </section>
 <section id="configuration"><h2>Outputs &amp; devices</h2>
-<p>Configure virtual pixels, map them to FPP channels, and enroll native WLED devices. FPP manages physical outputs and pixel streaming.</p>
+<p><strong>Virtual pixels</strong> are the pixels WLED renders in memory. They reach real lights through the channel mappings below. RGB uses three channels per pixel; RGBW adds a dedicated white channel. Frames per second is the animation update rate; higher rates require more processing.</p><p>Configure virtual pixels, map them to FPP channels, and enroll native WLED devices. FPP manages physical outputs and pixel streaming.</p>
 <div class="lighting-grid"><label>Pixel count <input id="cfgCount" type="number" min="1" max="16000"></label><label>Color channels <select id="cfgChannels"><option value="3">RGB</option><option value="4">RGBW</option></select></label><label>Matrix width <input id="cfgWidth" type="number" min="1"></label><label>Matrix height <input id="cfgHeight" type="number" min="1" max="255"></label><label>Frames per second <input id="cfgFps" type="number" min="1" max="60"></label></div>
 <p>For a strip, width equals pixel count and height is 1. For a matrix, width times height must equal pixel count.</p>
-<h3>FPP channel mappings</h3><p>Virtual pixels start at 0; FPP channels start at 1. Channel ranges must not overlap.</p><div id="mappingRows"></div><button id="addMapping">Add channel mapping</button>
-<h3>Native WLED devices</h3><p>Use one mode per device. Effect mode sends effects/presets; sync shares lighting changes; FPP stream means you configure DDP/E1.31/Art-Net in FPP. Automatic discovery sync needs no enrollment.</p><div id="deviceRows"></div><button id="addDevice">Enroll device</button>
+<h3>FPP channel mappings</h3><p>A mapping copies a range of WLED pixels into FPP output channels. For example, first pixel 0, count 100, first channel 1 sends 100 RGB pixels into FPP channels 1&ndash;300 (1&ndash;400 for RGBW). Match the starting channel to your FPP model/output configuration. Adding or removing a row only changes the draft until you save.</p><p>Virtual pixels start at 0; FPP channels start at 1. Channel ranges must not overlap.</p><div id="mappingRows"></div><button id="addMapping">Add channel mapping</button>
+<h3>Native WLED devices</h3><p>These are separate WLED controllers on your network. Device ID is your local nickname (for example, porch); IPv4 address is the controller address. Groups are optional labels such as outside, used to command several enrolled devices together.</p><p>Use one mode per device. Effect mode sends effects/presets; sync shares lighting changes; FPP stream means you configure DDP/E1.31/Art-Net in FPP. Automatic discovery sync needs no enrollment.</p><div id="deviceRows"></div><button id="addDevice">Enroll device</button>
 <p><button id="saveGuided">Validate &amp; save setup</button> <button id="reloadConfig">Reload saved setup</button></p>
 <p id="configFeedback" role="status"></p><p id="configPending" role="status">Checking saved configuration...</p>
 <button id="restartRuntime" disabled>Apply saved setup: restart WLED runtime</button><p>Ambient lighting pauses briefly. Show locks and saved settings are retained. Restart is blocked during shows or uncertain FPP ownership.</p>
 <details><summary>Advanced configuration JSON</summary><p>Use this for MQTT, custom pixel maps and other advanced options. Saving replaces the complete saved configuration.</p><label>Configuration JSON<textarea id="config" spellcheck="false"></textarea></label><button id="save">Validate &amp; save JSON</button></details></section>
-<section id="network"><h2>Discovery &amp; synchronization</h2>
+<section id="network"><h2>Discovery &amp; synchronization</h2><p><strong>Discovery</strong> finds nearby WLED instances. <strong>Make this instance discoverable</strong> advertises this player. <strong>Sync</strong> shares lighting changes; discovering a device alone does not synchronize it or assign FPP output channels.</p><p>Send broadcasts your supported changes; Receive accepts changes from peers. Sync groups select which instances participate (at least one group must match). Sync port is the UDP port all participants share. FPP web port is the address port advertised for opening this player, usually 80. Additional peers are optional IPv4 addresses when automatic discovery is insufficient.</p>
 <p>Find WLED instances automatically and let them find this FPP runtime. Sync shares supported colors, brightness and effects; pixel geometry stays local. All participants must use matching sync ports and groups.</p>
 <label>Instance name <input id="networkName" maxlength="32" value="WLED for FPP"></label>
 <label><input id="networkDiscovery" type="checkbox"> Discover WLED instances</label>
@@ -91,10 +94,10 @@
 <p>Discovery stays on the local network; allow UDP 5353, 65506 and your sync port. Native WLED Nodes links open FPP because the node protocol has no web-path field. Use this page's links for the full plugin address.</p>
 <pre id="networkStatus" role="status">Loading network settings...</pre>
 <button id="discover">Refresh discovered devices</button><div id="discovered">Discovery results appear here.</div></section>
-<section><h2>Native WLED device commands</h2><p>For individual/group preset commands or FPP pixel streaming, enroll an IPv4 address in Outputs &amp; devices and choose effect, sync, or fpp-stream mode. Automatic sync needs no manual enrollment.</p>
+<section><h2>Native WLED device commands <small>Advanced</small></h2><p>Send a one-off ambient command to an enrolled device ID or to <code>group:outside</code>. For example, <code>{"ps":1}</code> recalls preset 1 saved on the target controller, not preset 1 on this FPP runtime. This does not change how the device is enrolled.</p><p>For individual/group preset commands or FPP pixel streaming, enroll an IPv4 address in Outputs &amp; devices and choose effect, sync, or fpp-stream mode. Automatic sync needs no manual enrollment.</p>
 <label>Device ID or group:name <input id="target" placeholder="porch or group:outside"></label><label>Effect / preset command JSON<textarea id="deviceState" style="min-height:4.375rem" spellcheck="false">{"ps":1}</textarea></label><button id="sendDevice">Send ambient command</button><p>Show ownership blocks these commands. Sync mode accepts effect settings; preset IDs require effect mode. Device results appear in status above.</p></section>
 <p>Effect-mode devices retain ambient lighting checkpoints and retry recovery after realtime input ends. Saved native playlists restart from the beginning. Unsaved playlists and active nightlights cannot yet be restored. Recovery details appear in device status above.</p>
-<section id="custom-palettes"><h2>Custom palettes</h2>
+<section id="custom-palettes"><h2>Custom palettes</h2><p>A palette is a sequence of colors used by compatible effects. A slot stores one custom palette; its stops specify colors at positions along a 0&ndash;255 gradient. Save a palette here, then select it in the main WLED screen. Load slot reads an existing saved palette; it does not apply it to the lights.</p>
 <p>Import a native palette file or edit its JSON. Slot 0 is palette ID 200; subsequent slots count downward. Use 2–18 ordered stops from 0 to 255. Palette colors are RGB; a white component in hex input is ignored as in WLED.</p>
 <label>Palette slot <input id="paletteSlot" type="number" min="0" max="128" value="0"></label>
 <label>Palette file <input id="paletteFile" type="file" accept=".json,application/json"></label>
@@ -105,7 +108,7 @@
 <pre id="paletteStatus" role="status">Loading palette slots…</pre>
 <p>Reload the WLED page after saving to refresh its palette list. Deletion is blocked while a palette is referenced. Editing the active palette is blocked during show ownership or suspended ambient.</p>
 </section>
-<section id="preset-import"><h2>Import WLED presets</h2>
+<section id="preset-import"><h2>Import WLED presets</h2><p>Bring saved lighting looks from another WLED controller into this runtime. This copies preset definitions, not the source controller's network settings or wiring. Download a backup first, then preview the file to check compatibility before saving.</p>
 <p>Merge a WLED presets.json file into this runtime. Matching IDs will be overwritten; other presets remain. Preview checks the current pixel layout and reports translations. Unsupported entries block the whole import. Lighting and show locks remain active.</p>
 <p><a href="presets.json" download="presets.json">Download existing presets before importing</a></p>
 <label>Preset file <input id="presetFile" type="file" accept=".json,application/json"></label>
@@ -113,7 +116,7 @@
 <button id="previewImport">Preview import</button> <button id="commitImport" disabled>Save imported presets</button>
 <pre id="importReport" role="status">Choose a file or paste JSON, then preview. Request limit: 256 KiB.</pre>
 </section>
-<section id="compatibility"><h2>Compatibility</h2><pre id="compat"></pre></section><p id="result" role="status"></p>
+<section id="compatibility"><h2>Compatibility</h2><p>This lists features and effect IDs the Linux runtime cannot currently use. These are capability limits, not faults with your lights. Some effects require a suitable 2D layout; ESP hardware features do not apply to an FPP player.</p><pre id="compat"></pre></section><p id="result" role="status"></p>
 <script src="base.js"></script><script>
 const el=id=>document.getElementById(id);
 let lightingInitialized=false;
@@ -170,6 +173,6 @@ document.querySelectorAll('[data-op]').forEach(button=>button.onclick=()=>post('
 
 el('sendDevice').onclick=()=>{try{post('/api/devices/command',{target:el('target').value,state:JSON.parse(el('deviceState').value)}).catch(()=>{});}catch(e){el('result').textContent=e.message;}};
 
-async function refresh(){try{const s=await(await wledFetch('/api/status')).json();el('compat').textContent='Unavailable: '+s.unsupported.join(', ')+'\nUnavailable effect IDs: '+s.unsupported_effect_ids.join(', ');delete s.unsupported;delete s.unsupported_effect_ids;el('status').textContent=JSON.stringify(s,null,2);}catch{el('status').textContent='Runtime unavailable';}}
+async function refresh(){try{const s=await(await wledFetch('/api/status')).json();el('compat').textContent='Unavailable: '+s.unsupported.join(', ')+'\nUnavailable effect IDs: '+s.unsupported_effect_ids.join(', ');el('ownershipSummary').textContent=s.show_owned?'Ambient is paused: '+(s.sources.length?'show sources '+s.sources.join(', '):'FPP ownership is uncertain; check FPP and the runtime status below')+'.':!s.enabled?'Ambient is disabled. Enable it when you want background lighting.':!s.quiet?'Waiting for the quiet period before ambient resumes.':'WLED may control the lights; no show owns them.';delete s.unsupported;delete s.unsupported_effect_ids;el('status').textContent=JSON.stringify(s,null,2);}catch{el('status').textContent='Runtime unavailable';el('ownershipSummary').textContent='Runtime unavailable; cannot determine who controls the lights.';}}
 refresh();setInterval(refresh,1000);
 </script><script src="config-editor.js"></script><script src="access.js"></script><script src="schedules.js"></script><script src="network.js"></script></body></html>
