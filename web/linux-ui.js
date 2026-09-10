@@ -38,6 +38,12 @@
   // segments on every state/info message and resets the new-segment form.
   // Keep its actual DOM (including focus and drafts) through background updates.
   let updatingSegments = false;
+  let lastSegmentView = null;
+  const segmentEdits = new Map();
+  document.addEventListener('input', event => {
+    const input = event.target;
+    if (input.matches('#segcont input.ptxt, #segcont input.segn')) segmentEdits.set(input.id, input.value);
+  });
   const originalPopulateSegments = populateSegments;
   const originalResetUtil = resetUtil;
   resetUtil = function (...args) {
@@ -45,6 +51,12 @@
     return originalResetUtil.apply(this, args);
   };
   populateSegments = function (state) {
+    // Uptime/ownership notifications must not recreate unchanged input fields.
+    const view = JSON.stringify([state.seg, state.ledmap, isM, mw, mh, ledCount, maxSeg, cfg.comp, simplifiedUI, lastinfo.maps]);
+    if (view === lastSegmentView) return;
+    const focus = document.activeElement;
+    const focusedId = focus?.id;
+    const selection = focus?.type === 'text' ? [focus.selectionStart, focus.selectionEnd] : null;
     const draft = document.querySelector('#segutil input.ptxt');
     const draftId = draft ? Number(draft.id.match(/^seg(\d+)t$/)[1]) : null;
     // Another client may have used the same slot. Do not leave duplicate IDs
@@ -54,8 +66,53 @@
       showToast('The segment list changed on another controller. Please add your segment again.', true);
     }
     updatingSegments = true;
-    try { return originalPopulateSegments.call(this, state); }
+    try {
+      const result = originalPopulateSegments.call(this, state);
+      lastSegmentView = view;
+      for (const [id, value] of segmentEdits) {
+        const input = document.getElementById(id);
+        if (input) {
+          input.value = value;
+          if (input.classList.contains('ptxt')) input.classList.add('show');
+        }
+        else segmentEdits.delete(id); // a segment removed by another client
+      }
+      const replacement = document.getElementById(focusedId);
+      if (replacement && replacement !== focus && segmentEdits.has(focusedId)) {
+        replacement.focus({preventScroll:true});
+        if (selection) replacement.setSelectionRange(...selection);
+      }
+      return result;
+    }
     finally { updatingSegments = false; }
+  };
+  const originalSetSeg = setSeg;
+  setSeg = function (id) {
+    const input = suffix => document.getElementById(`seg${id}${suffix}`);
+    // Validate only when applying, allowing empty/partial numbers while typing.
+    const fields = [['s','Start pixel',0, isM ? mw-1 : ledCount-1],
+      ['e',cfg.comp.seglen ? 'Pixel count' : 'End pixel',1,isM ? mw : ledCount],
+      ['grp','Grouping',1,255],['spc','Spacing',0,255],['of','Offset',0,65535]];
+    if (isM) fields.push(['sY','Start Y',0,mh-1], ['eY',cfg.comp.seglen ? 'Height' : 'End Y',1,mh]);
+    for (const [suffix, label, min, max] of fields) {
+      const field = input(suffix);
+      if (!field) continue;
+      const value = Number(field.value);
+      if (field.value === '' || !Number.isInteger(value) || value < min || value > max) {
+        showToast(`${label}: enter a whole number from ${min} to ${max}.`, true);
+        field.focus(); return;
+      }
+    }
+    for (const [start, end, limit] of [['s','e',isM ? mw : ledCount], ...(isM ? [['sY','eY',mh]] : [])]) {
+      const first = Number(input(start).value);
+      const stop = Number(input(end).value) + (cfg.comp.seglen ? first : 0);
+      if (stop <= first || stop > limit) {
+        showToast(`Choose an end after the start and no higher than ${limit}. The end is not included.`, true);
+        input(end).focus(); return;
+      }
+    }
+    for (const key of segmentEdits.keys()) if (key.match(/^seg(\d+)/)?.[1] === String(id)) segmentEdits.delete(key);
+    return originalSetSeg.call(this, id);
   };
   function disableBootOverride() {
     document.querySelectorAll('input[id$="bps"]').forEach(input => {

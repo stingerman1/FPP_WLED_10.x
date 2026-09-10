@@ -1,5 +1,6 @@
 """Local development only: simulated FPP observer for browser verification."""
 import json
+import os
 from pathlib import Path
 import socket
 import subprocess
@@ -16,6 +17,9 @@ with tempfile.TemporaryDirectory(prefix='wled-ui-') as directory:
     config = {'version': 1, 'bind': '127.0.0.1', 'port': 18787,
               'pixels': {'count': 1000, 'channels': 3},
               'mappings': [{'pixel': 0, 'count': 1000, 'channel': 1}], 'devices': []}
+    if os.environ.get('WLED_TEST_MATRIX') == '1':
+        config['port'] = 18788
+        config['pixels'].update(width=40, height=25)
     (path / 'config.json').write_text(json.dumps(config))
     (path / 'ownership.json').write_text(json.dumps({'version': 1, 'enabled': True, 'locks': []}))
     (path / 'auth.json').write_text(json.dumps({'token': 'local-browser-test-token-not-for-deployment'}))
@@ -23,7 +27,7 @@ with tempfile.TemporaryDirectory(prefix='wled-ui-') as directory:
     listener.bind(str(path / 'frames.sock'))
     listener.settimeout(0.02)
     process = subprocess.Popen([sys.executable, '-m', 'runtime.service', '--state-dir', str(path), '--run-dir', str(path)], cwd=ROOT)
-    print('Simulated FPP UI fixture: http://localhost:18787', flush=True)
+    print(f"Simulated FPP UI fixture: http://localhost:{config['port']}", flush=True)
     serial, allowed = 0, False
     try:
         while process.poll() is None:
