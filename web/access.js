@@ -9,11 +9,11 @@
       byId('loginFields').hidden = auth.authenticated;
       byId('logout').hidden = !auth.authenticated;
       byId('accessStatus').textContent = auth.authenticated
-        ? 'Access saved on this browser. You do not need to enter a token again. It survives browser and runtime restarts.'
-        : 'Read-only access. Enable lighting controls to make changes.';
+        ? 'Ready. This browser can change your lights and settings. Your access is saved.'
+        : 'You can look at settings now. Click Enable lighting controls to change them.';
       window.wledAuthenticated = auth.authenticated;
     } catch {
-      byId('accessStatus').textContent = 'Cannot check access: runtime unavailable.';
+      byId('accessStatus').textContent = 'Cannot reach WLED. Check the plugin status in FPP, then reload this page.';
       window.wledAuthenticated = false;
     }
   }

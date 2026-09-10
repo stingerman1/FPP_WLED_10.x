@@ -13,7 +13,7 @@
     refreshing = true;
     refreshButton.disabled = true;
     refreshButton.textContent = 'Checking discovered devices…';
-    feedback.textContent = 'Checking background discovery results…';
+    feedback.textContent = 'Checking the latest device list…';
     const abort = new AbortController();
     const timeout = setTimeout(() => abort.abort(), 10000);
     try {
@@ -40,14 +40,14 @@
       list.replaceChildren();
       if (!nodes.length) list.textContent = status.discovery_active
         ? 'No devices found yet. Leave discovery running for at least a minute. Devices must be reachable on this network; multicast or broadcast filtering can prevent discovery.'
-        : 'No discovered devices. Enable Discovery above and click Save discovery & sync. If it is already enabled, check the network status for an error.';
+        : 'No discovered devices. Check Find other WLED devices above and click Save discovery & sync. If it is already enabled, check the network status for an error.';
       for (const node of nodes) {
         const row = document.createElement('p'), link = document.createElement('a');
         link.textContent = node.name || node.address; link.href = node.url;
         row.append(link, document.createTextNode(` — ${node.address}${node.enrolled ? ' (enrolled: ' + node.mode + ')' : ''}`)); list.append(row);
       }
       feedback.textContent = `Checked ${new Date().toLocaleTimeString()}: ${nodes.length} device${nodes.length === 1 ? '' : 's'} found${unchanged ? ' — no changes' : ''}.`
-        + (status.discovery_active ? '' : ' Discovery is off; any listed results may be outdated.');
+        + (status.discovery_active ? '' : ' Device search is off; the list may be out of date.');
     } catch (error) {
       feedback.textContent = 'Refresh failed: ' + (error.name === 'AbortError' ? 'runtime did not respond within 10 seconds.' : error.message)
         + ' Previous results, if any, have been kept. Try again.';

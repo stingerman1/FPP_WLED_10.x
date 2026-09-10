@@ -30,11 +30,11 @@
     if (!items.length) container.textContent = 'None configured.';
   }
   function renderRows() {
-    rows('mappingRows', mappings, [['pixel','First virtual pixel'],['count','Pixel count'],['channel','First FPP channel']]);
-    rows('deviceRows', devices, [['id','Device ID'],['address','IPv4 address'],['mode','Control mode', [['effect','Effects / presets'],['sync','UDP sync'],['fpp-stream','FPP pixel streaming']]],['groups','Groups (comma separated)']]);
+    rows('mappingRows', mappings, [['pixel','First WLED pixel (starts at 0)'],['count','Pixel count'],['channel','First FPP channel']]);
+    rows('deviceRows', devices, [['id','Nickname'],['address','Network address'],['mode','Control mode', [['effect','Effects / presets'],['sync','Sync'],['fpp-stream','FPP pixel streaming']]],['groups','Groups (comma separated)']]);
   }
   function pending(status) {
-    $('configPending').textContent = status.restart_required ? 'Saved changes are waiting for a runtime restart.' : 'Saved configuration is active.';
+    $('configPending').textContent = status.restart_required ? 'Saved. Click 2. Apply setup and restart WLED to use these changes.' : 'Your saved setup is in use. No restart needed.';
     $('restartRuntime').disabled = restarting || !status.restart_available || !status.restart_required;
     if (!status.restart_available) $('configPending').textContent += ' Restart is available only under the updated FPP service.';
   }
@@ -66,12 +66,12 @@
       await post('/api/runtime/restart', {}); report('Restart requested. Waiting for WLED to return...');
       for (let i = 0; i < 30; i++) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        try { if ((await state()).started !== before) { await load(); report('Runtime restarted. Saved setup is active.'); return; } } catch { /* reconnect during restart */ }
+        try { if ((await state()).started !== before) { await load(); report('WLED restarted. Your saved setup is now in use.'); return; } } catch { /* reconnect during restart */ }
       }
       report('Runtime has not returned yet. Check the WLED service log in FPP, then reload this page.');
     } catch (error) { report(error.message); }
     finally { restarting = false; try { pending(await state()); } catch { /* leave restart disabled */ } }
   };
   load().catch(error => report(error.message));
-  setInterval(async () => { if (!document.hidden && !restarting) { try { pending(await state()); } catch { $('configPending').textContent = 'Runtime unavailable; saved/active status unknown.'; $('restartRuntime').disabled = true; } } }, 5000);
+  setInterval(async () => { if (!document.hidden && !restarting) { try { pending(await state()); } catch { $('configPending').textContent = 'Cannot reach WLED to check whether your setup is in use.'; $('restartRuntime').disabled = true; } } }, 5000);
 })();
