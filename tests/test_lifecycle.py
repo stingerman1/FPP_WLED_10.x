@@ -17,6 +17,18 @@ def script(name):
 
 
 class LifecycleTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('php'), 'PHP required for FPP menu rendering')
+    def test_menu_renders_links_for_fpp_sections(self):
+        for section, page in [('status', 'plugin.php'), ('output', 'settings.php'), ('content', None), ('help', None)]:
+            code = "$plugin = 'FPP_WLED_10.x'; $menu = '" + section + "'; include 'menu.inc';"
+            result = subprocess.run(['php', '-r', code], cwd=ROOT, capture_output=True, text=True, check=True)
+            self.assertEqual(result.stderr, '')
+            if page:
+                self.assertEqual(result.stdout.count('<a '), 1)
+                self.assertIn('plugin=FPP_WLED_10.x&amp;page=' + page, result.stdout)
+            else:
+                self.assertEqual(result.stdout.strip(), '')
+
     def test_uninstall_twice_with_isolated_service_manager_and_system_paths(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

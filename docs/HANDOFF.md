@@ -183,3 +183,8 @@ Restored borderless WLED top/bottom navigation, moved slim outlines to effect/pa
 ## Control contrast and device-name clearance (2026-09-09)
 
 Added matched foreground/background pairs for normal/hover/selected/disabled controls in both modes, with inherited icon colors and readable input placeholders. Color-slot labels choose black/white from swatch luminance. A ResizeObserver measures the main status strip so the device label sits above it when wrapping. Browser checks measured at least 4.5:1 for sampled selected effect/palette, hover, settings and disabled text pairs in both modes and RGB/white/black slot samples. Verified device-name clearance at widths 320/768/1280. These checks are targeted coverage, not a claim of a complete accessibility audit.
+
+
+## Menu registration repair (2026-09-10)
+
+The earlier template audit checked the menuEntries array but missed the required rendering loop. FPP captures emitted HTML, so an array alone produces no menu links. menu.inc now renders one Status/Control entry (WLED for FPP, plugin.php) and one Input/Output Setup entry (WLED Setup, settings.php). Added a PHP execution regression for matching and nonmatching menu sections.

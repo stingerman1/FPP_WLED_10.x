@@ -15,7 +15,7 @@ The implementation gaps identified in the first audit have been addressed. This 
 | Dependencies | System Python with declared dependencies and pip --break-system-packages. No newly created private virtual environments or alternate package managers. Exact versions match the tested reproducible runtime requirements. Previous release directories remain available for rollback. |
 | Removal | Uninstall removes the service, tmpfiles declaration, Apache include/enabled link and named runtime sockets. Isolated cleanup tests run twice. User data is preserved by default as requested; an explicit FPP settings checkbox opts into permanent data removal at uninstall. Purge tests confirm idempotence and confinement. FPP retains its managed support log. |
 | UI | Settings is a fragment in FPP's normal wrapper, with Bootstrap controls and semantic theme variables. Direct runtime access follows FPP/OS color scheme. Upstream WLED chrome uses semantic system colors; lighting swatches remain actual color data. Chromium checks cover light/dark themes and 320px width without horizontal scrolling. |
-| Menu | One standard menuEntries Output entry. |
+| Menu | One Status/Control entry and one Input/Output Setup entry, with the template rendering loop. Regression checks execute menu.inc for each FPP section. |
 | Host boundaries | Plugin APIs/channel hooks, no edits to core channel configuration, no direct FPP internal HTTP port, no piped remote execution. Privilege dropping uses runuser during validation. |
 | License/links | Root license/notices retained. Generated UI and plugin-owned source reviewed for donation/monetization/analytics links; no such integration is enabled. No tunnel or advertising dependency. |
 
