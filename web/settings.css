@@ -59,7 +59,6 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 .fpp-wled button:disabled { opacity:1; color:var(--control-disabled)!important; cursor:not-allowed; }
 .fpp-wled button svg { fill:currentColor; }
 .fpp-wled button:focus-visible { outline:2px solid #4b8bd3; outline-offset:2px; }
-.fpp-wled .access-ready #startHeading { color:var(--control-disabled); }
 .fpp-wled .access-indicator { font-weight:600; }
 .fpp-wled .access-indicator::before {
  content:""; display:inline-block; width:.75rem; height:.75rem;
