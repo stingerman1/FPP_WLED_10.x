@@ -1,4 +1,13 @@
 // Keep plugin requests on FPP's origin, while retaining direct runtime access.
+// Collapse on a completed-state transition, not every background refresh.
+// Users can reopen a completed section without the poll closing it again.
+function wledSetupSection(id, complete) {
+  const section = document.getElementById(id);
+  if (!section) return;
+  const state = complete ? 'complete' : 'attention';
+  if (section.dataset.setupState !== state) section.open = !complete;
+  section.dataset.setupState = state;
+}
 function wledURL(path) {
   return (window.location.pathname.startsWith('/fpp-wled/') || document.getElementById('fpp-wled-settings') ? '/fpp-wled' : '') + path;
 }

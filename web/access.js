@@ -3,6 +3,8 @@
   const byId = id => document.getElementById(id);
   function showAccess(allowed) {
     const known = allowed !== null;
+    wledSetupSection('startDetails', allowed === true);
+    wledSetupSection('accessDetails', allowed === true);
     byId('gettingStarted').classList.toggle('access-ready', allowed === true);
     byId('startAccessStatus').classList.toggle('enabled', allowed === true);
     byId('accessStatus').classList.toggle('enabled', allowed === true);
@@ -24,7 +26,7 @@
       const auth = await response.json();
       showAccess(auth.authenticated);
       byId('accessStatus').textContent = auth.authenticated
-        ? 'Ready. This browser can change your lights and settings. Your access is saved.'
+        ? 'Enabled — access is saved on this browser.'
         : 'You can look at settings now. Click Enable lighting controls to change them.';
       window.wledAuthenticated = auth.authenticated;
     } catch {

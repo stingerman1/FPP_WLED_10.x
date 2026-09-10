@@ -67,3 +67,8 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
  border:1px solid currentColor;
 }
 .fpp-wled .access-indicator.enabled::before { background:#249348; }
+.fpp-wled .setup-disclosure > summary { cursor:pointer; padding:.35rem 0; }
+.fpp-wled .setup-disclosure > summary .setup-title { font-size:1.25rem; font-weight:700; }
+.fpp-wled .setup-disclosure > summary .access-indicator { display:block; margin:.5rem 0 0 1.25rem; }
+.fpp-wled .setup-disclosure[open] > summary { margin-bottom:1rem; }
+.fpp-wled .setup-disclosure > summary:focus-visible { outline:2px solid #4b8bd3; outline-offset:4px; }
