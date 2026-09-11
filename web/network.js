@@ -62,6 +62,7 @@
     const button = document.getElementById('saveNetwork'); button.disabled = true;
     try {
       const groups = [...id('Groups').querySelectorAll('input:checked')].reduce((mask, input) => mask | Number(input.value), 0);
+      const draftBefore = document.getElementById('config').value;
       await post('/api/network', {name: id('Name').value, discovery: id('Discovery').checked,
         discoverable: id('Advertise').checked, discovery_http_port: Number(id('HttpPort').value),
         udp: {enabled: id('Sync').checked, auto_peers: id('Auto').checked,
@@ -69,9 +70,19 @@
           peers: id('Peers').value.split(',').map(s => s.trim()).filter(Boolean)}});
       loaded = false;
       await refresh();
-      const config = await (await wledFetch('/api/config')).json();
-      document.getElementById('config').value = JSON.stringify(config, null, 2);
-    } catch (error) { id('Status').textContent = error.message; }
+      id('Feedback').textContent = 'Saved. Discovery and sync settings are in use now.';
+      // Keep unrelated and unfinished advanced-configuration edits intact.
+      try {
+        const draft = JSON.parse(draftBefore);
+        const response = await wledFetch('/api/config');
+        if (!response.ok) throw Error();
+        const config = await response.json();
+        if (draft && !Array.isArray(draft) && typeof draft === 'object' && document.getElementById('config').value === draftBefore) {
+          for (const key of ['name','discovery','discoverable','discovery_http_port','udp']) draft[key] = config[key];
+          document.getElementById('config').value = JSON.stringify(draft, null, 2);
+        }
+      } catch { /* A saved network change does not depend on the JSON editor. */ }
+    } catch (error) { id('Feedback').textContent = error.message; }
     finally { button.disabled = false; }
   };
   document.getElementById('discover').onclick = refresh;

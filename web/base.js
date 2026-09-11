@@ -5,9 +5,16 @@ function wledSetupSection(id, complete) {
   const section = document.getElementById(id);
   if (!section) return;
   const state = complete ? 'complete' : 'attention';
-  if (section.dataset.setupState !== state) section.open = !complete;
+  const linkedOnLoad = !section.dataset.setupState && location.hash === '#' + section.parentElement.id;
+  if (section.dataset.setupState !== state) section.open = !complete || linkedOnLoad;
   section.dataset.setupState = state;
 }
+document.addEventListener('click', event => {
+  const link = event.target.closest('a[href^="#"]');
+  const target = link && document.getElementById(link.getAttribute('href').slice(1));
+  const details = target?.querySelector(':scope > details.setup-disclosure');
+  if (details) details.open = true;
+});
 function wledURL(path) {
   return (window.location.pathname.startsWith('/fpp-wled/') || document.getElementById('fpp-wled-settings') ? '/fpp-wled' : '') + path;
 }

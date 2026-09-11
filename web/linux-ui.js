@@ -115,6 +115,17 @@
     return originalSetSeg.call(this, id);
   };
   function disableBootOverride() {
+    // These upstream selectors are visible even though only their default
+    // values are supported by the Linux port. Do not offer failing choices.
+    document.querySelectorAll('#segcont select[id$="bm"], #segcont select[id$="si"]').forEach(input => {
+      input.disabled = true;
+      input.title = 'Not available in WLED for FPP yet. The default setting is used.';
+    });
+    document.querySelectorAll('#segcont [onclick^="setGrp("]').forEach(item => {
+      item.removeAttribute('onclick');
+      item.setAttribute('aria-disabled', 'true');
+      item.title = 'Segment sets are not available in WLED for FPP yet.';
+    });
     document.querySelectorAll('input[id$="bps"]').forEach(input => {
       input.checked = false;
       input.disabled = true;
@@ -176,7 +187,13 @@
       button.onclick = () => { location.href = wledSettingsURL(); };
       continue;
     }
-    if (/\/edit/.test(button.getAttribute('onclick') || '')) { button.title = 'Import and back up presets'; button.onclick = () => { location.href = wledSettingsURL('#preset-import'); }; continue; }
+    if (/\/edit/.test(button.getAttribute('onclick') || '')) {
+      button.title = 'Import and back up presets';
+      button.setAttribute('aria-label', button.title);
+      const label = button.parentElement.querySelector('.iconlabel');
+      if (label) label.textContent = 'Presets';
+      button.onclick = () => { location.href = wledSettingsURL('#preset-import'); }; continue;
+    }
     if (/\/cpal/.test(button.getAttribute('onclick') || '')) {
       button.onclick = () => { location.href = wledSettingsURL('#custom-palettes'); };
       continue;

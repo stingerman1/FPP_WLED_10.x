@@ -1,7 +1,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   let mappings = [], devices = [], saved = null, restarting = false;
-  const number = id => Number($(id).value);
+  const number = id => { const input = $(id); if (input.value === '' || !input.checkValidity()) throw Error('Check ' + input.parentElement.firstChild.textContent.trim() + '.'); return Number(input.value); };
   const report = message => { $('configFeedback').textContent = message; };
   async function state() {
     const response = await wledFetch('/api/config/status');
@@ -13,7 +13,7 @@
     const input = document.createElement(options ? 'select' : 'input');
     if (options) for (const [value, text] of options) input.add(new Option(text, value));
     else input.type = typeof value === 'number' ? 'number' : 'text';
-    input.value = value; input.oninput = () => change(input.type === 'number' ? Number(input.value) : input.value);
+    input.value = value; input.oninput = () => change(input.type === 'number' ? (input.value === '' ? NaN : Number(input.value)) : input.value);
     wrap.append(input); row.append(wrap);
   }
   function rows(id, items, fields) {
@@ -48,16 +48,20 @@
   $('addDevice').onclick = () => { devices.push({id:'',address:'',mode:'effect',groups:[]}); renderRows(); };
   $('reloadConfig').onclick = () => load().then(() => report('Saved setup loaded.')).catch(error => report(error.message));
   $('saveGuided').onclick = async () => {
+    $('saveGuided').disabled = true;
     try {
       if (!saved) throw Error('Load the saved setup first.');
       const latest = (await state()).saved; // Retain live network/timer changes made in other sections.
       const candidate = {...latest, pixels:{...latest.pixels,count:number('cfgCount'),channels:number('cfgChannels'),width:number('cfgWidth'),height:number('cfgHeight')},fps:number('cfgFps'),mappings,devices};
-      await post('/api/config', candidate); await load(); report('Setup saved. Apply it with the restart button below.');
+      await post('/api/config', candidate); await load(); report('');
     } catch (error) { report(error.message); }
+    finally { $('saveGuided').disabled = false; }
   };
   $('save').onclick = async () => {
-    try { await post('/api/config', JSON.parse($('config').value)); await load(); report('JSON saved. Review the pending-change status below.'); }
+    $('save').disabled = true;
+    try { await post('/api/config', JSON.parse($('config').value)); await load(); report(''); }
     catch (error) { report(error.message); }
+    finally { $('save').disabled = false; }
   };
   $('restartRuntime').onclick = async () => {
     restarting = true; $('restartRuntime').disabled = true;

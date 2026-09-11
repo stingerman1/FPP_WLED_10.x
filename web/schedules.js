@@ -114,7 +114,6 @@
       revision = result.revision;
       report(result.preview, result.saved ? 'Saved. These schedules are active now.' : 'Preview only. Save to apply these schedules.');
       byId('saveSchedules').disabled = !preview;
-      byId('result').textContent = result.saved ? 'Schedules saved.' : 'Schedule preview ready.';
       if (result.saved) {
         // Keep unrelated edits in the raw configuration editor intact.
         try {
@@ -126,7 +125,10 @@
           }
         } catch { /* Leave an unfinished JSON draft untouched. */ }
       }
-    } catch (e) { byId('scheduleReport').textContent = e.message; }
+    } catch (e) {
+      byId('scheduleReport').textContent = e.message;
+      if (version === generation && !preview) byId('saveSchedules').disabled = false;
+    }
   }
   days.forEach((day, i) => {
     const label = document.createElement('label'), input = document.createElement('input');

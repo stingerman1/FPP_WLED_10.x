@@ -138,6 +138,12 @@ def main():
     js = (ui / 'index.js').read_text()
     js = js.replace('window.location.hostname+"/ws"', 'window.location.host+"/ws"')
     js = js.replace('checkVersionUpgrade(i);', '/* Linux releases are managed by the FPP plugin installer. */')
+    # readState runs on every Linux status notification. Upstream starts this
+    # interval inside readState; without a guard an open tab accumulates timers.
+    interval = 'setInterval(setSelectedEffectPosition,750);'
+    if js.count(interval) != 1:
+        raise SystemExit('Review upstream selected-effect timer before preparing UI')
+    js = js.replace(interval, 'window.linuxEffectPositionTimer ||= setInterval(setSelectedEffectPosition,750);')
     # Palette edits can retain the same slot count. Include the content revision
     # in the upstream browser cache key so reloading shows the updated gradient.
     js = js.replace('d.pcount == lastinfo.palcount', 'd.pcount == lastinfo.palcount && d.palrev == lastinfo.palrev')
