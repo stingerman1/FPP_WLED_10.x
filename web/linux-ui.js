@@ -252,8 +252,8 @@
   slotContrast();
   const nightlightButton = document.getElementById('buttonNl');
   if (nightlightButton) {
-    nightlightButton.onclick = () => { wledNavigate(wledSettingsURL('#ambient-lighting')); };
-    nightlightButton.title = 'Nightlight and lighting controls';
+    nightlightButton.onclick = () => { wledNavigate(wledSettingsURL('#nightlight')); };
+    nightlightButton.title = 'Nightlight timer';
   }
   const peek = document.getElementById('buttonSr');
   if (peek) {

@@ -1,5 +1,5 @@
 <?php require __DIR__ . '/navigation.php'; ?>
-<h2>WLED for FPP &middot; Linux alpha</h2>
+<h2>WLED for FPP 10 &middot; 0.1.0-alpha.2</h2>
 <?php if (PHP_INT_SIZE !== 8): ?>
 <p role="alert"><strong>This FPP web environment is 32-bit.</strong> This plugin requires a fully 64-bit FPP installation. A 64-bit Pi or kernel alone is not sufficient. The runtime cannot be installed on this environment; changing ports or reinstalling the plugin will not resolve it.</p>
 <p>Check <a href="/api/file/logs/fpp_plugin_manager.log" target="_blank" rel="noopener">the plugin installation log</a> for the build failure. Back up FPP configuration before planning an OS migration.</p>

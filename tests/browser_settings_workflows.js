@@ -5,16 +5,11 @@ async (page) => {
  const schedule=await(await page.request.get(base+'/api/schedules')).json();
  await page.request.post(base+'/api/schedules',{data:{revision:schedule.revision,preview:false,timers:[],location:null}});
  await page.request.post(base+'/json/state',{data:{psave:1,n:'QA warm'}});
- await page.reload();
+ await page.goto(base+'/settings');
  await page.waitForFunction(()=>document.getElementById('accessDetails').dataset.setupState==='complete');
  for(const link of await page.locator('a[href^="#"]').all()) if(await page.locator(await link.getAttribute('href')).count()!==1) throw Error('Broken section link');
- await page.locator('#applyLighting').click();
- await page.waitForFunction(()=>document.getElementById('lightingStatus').textContent==='Lighting updated.');
- if(await page.locator('.action-feedback').count() || await page.locator('#result').textContent()) throw Error('Duplicate confirmation');
- await page.locator('#lightOff').click();
- await page.waitForFunction(()=>document.getElementById('lightingStatus').textContent==='Lighting updated.');
- if((await(await page.request.get(base+'/json/state')).json()).on) throw Error('Off failed');
- await page.locator('#applyLighting').click();
+ await page.locator('#nightlight > summary').click();
+ await page.waitForFunction(()=>!document.getElementById('startNightlight').disabled);
  await page.locator('#startNightlight').click();
  await page.waitForFunction(()=>document.getElementById('nightStatus').textContent.includes('Running'));
  await page.locator('#startNightlight').click();
@@ -77,9 +72,9 @@ async (page) => {
  await page.locator('#source').fill('qa:local');
  await page.locator('[data-op="show-start"]').click();
  await page.waitForFunction(()=>document.getElementById('ownershipSummary').textContent.includes('qa:local'));
- await page.waitForFunction(()=>document.getElementById('applyLighting').disabled);
+ await page.waitForFunction(()=>document.getElementById('startNightlight').disabled);
  await page.locator('[data-op="show-end"]').click();
- await page.waitForFunction(()=>!document.getElementById('applyLighting').disabled);
+ await page.waitForFunction(()=>!document.getElementById('startNightlight').disabled);
  if(await page.locator('#result').textContent() || await page.locator('.action-feedback').count()) throw Error('Duplicate or raw result');
  if(errors.length) throw Error(errors.join('; '));
 }

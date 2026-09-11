@@ -25,3 +25,20 @@ information visible rather than redirecting to a broken page.
 Tooltips use viewport coordinates, move below controls near the top edge and
 stay inside the left/right edges. Browser checks cover first-use routing,
 configured-device routing, both navigation directions and 390/1280px tooltips.
+
+Config shows a read-only lighting summary. Use WLED for power, brightness,
+effects, palettes and color selection. The live pixel preview starts off on every
+page load. Its single Enable/Disable button affects this browser's preview only,
+not lighting output. While off it makes no preview requests and does not draw
+frames. While enabled it requests the next frame 500 ms after the previous
+request completes; hidden tabs pause preview requests. Disabling aborts any
+pending request and discards late replies. The lighter status summary remains
+available, polling every two seconds while visible. The one-time nightlight
+timer remains in a collapsed section, opened directly by WLED's Timer button.
+
+Plugin Manager and plugin headings identify the release as `0.1.0-alpha.2`
+instead of the unnumbered “experimental alpha” label. Use numbered `-alpha.N`
+and `-beta.N` labels during those stages. Production titles use increasing major
+build numbers (`1`, `2`, …) with no prerelease label. Update the displayed label
+in `pluginInfo.json`, `plugin.php` and `web/settings.html` together when releasing;
+the upstream WLED engine version in the summary is a separate version.

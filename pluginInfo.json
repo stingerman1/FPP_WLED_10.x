@@ -1,6 +1,6 @@
 {
   "repoName": "FPP_WLED_10.x",
-  "name": "WLED for FPP 10 (experimental alpha)",
+  "name": "WLED for FPP 10 (0.1.0-alpha.2)",
   "author": "stingerman1",
   "description": "Isolated WLED 16.0.1 Linux renderer with show-aware FPP channel integration. Hardware acceptance pending.",
   "homeURL": "https://github.com/stingerman1/FPP_WLED_10.x",

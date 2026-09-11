@@ -11,10 +11,11 @@ async(page)=>{
  await page.waitForFunction(()=>document.getElementById('summaryPreset').textContent==='Evening glow');
  if(await page.locator('#summaryEffect').textContent()!=='Solid')throw Error('Effect name missing');
  for(const name of ['Red','Green','Blue'])if(!(await page.locator('#summaryColors').textContent()).includes(name))throw Error('Color missing '+name);
- await page.locator('#lightBrightness').fill('123');
+ await page.locator('#nightlight > summary').click();
+ await page.locator('#nightMinutes').fill('123');
  sample.info.fpp.show_owned=true;sample.info.fpp.allowed=false;sample.info.fpp.sources=['fpp:playlist'];
  await page.waitForFunction(()=>document.getElementById('summaryStatus').textContent.includes('FPP controls'));
- if(await page.locator('#lightBrightness').inputValue()!=='123')throw Error('Summary changed draft');
+ if(await page.locator('#nightMinutes').inputValue()!=='123')throw Error('Summary changed draft');
  sample.info.fpp.observer_healthy=false;
  await page.waitForFunction(()=>document.getElementById('summaryStatus').textContent.includes('FPP status unknown'));
  Object.assign(sample.info.fpp,{observer_healthy:true,show_owned:false,sources:[],enabled:false});

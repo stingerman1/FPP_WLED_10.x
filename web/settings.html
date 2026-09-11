@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/png" href="icon.png">
-<title>WLED for FPP · Setup</title>
+<title>WLED for FPP 10 (0.1.0-alpha.2) · Config</title>
 
-<link rel="stylesheet" href="settings.css"><script src="theme.js"></script><body class="fpp-wled"><h1>WLED for FPP <small>Linux alpha</small></h1>
+<link rel="stylesheet" href="settings.css"><script src="theme.js"></script><body class="fpp-wled"><h1>WLED for FPP <small>0.1.0-alpha.2</small></h1>
 <aside id="lightingSummary" aria-label="Current lighting summary">
 <p id="summaryStatus" role="status" data-state="waiting">Checking WLED...</p>
 <p id="summaryDetail">Waiting for the runtime to report its status.</p>
@@ -13,11 +13,11 @@
 
 <p><a href="./">Open WLED</a> · <a href="https://github.com/stingerman1/FPP_WLED_10.x">Documentation</a></p>
 <p><label>Appearance <select data-wled-theme><option value="fpp">Follow FPP / system</option><option value="light">Normal: light center, dark frame</option><option value="dark">Dark mode</option></select></label></p>
-<nav aria-label="Setup sections"><a href="#runtime-access">Access</a> &middot; <a href="#ownership">Between shows</a> &middot; <a href="#ambient-lighting">Lighting</a> &middot; <a href="#schedules">Timers</a> &middot; <a href="#configuration">Connect lights</a> &middot; <a href="#network">Find devices</a> &middot; <a href="#custom-palettes">Palettes</a> &middot; <a href="#preset-import">Import presets</a> &middot; <a href="#compatibility">Feature limits</a></nav>
+<nav aria-label="Setup sections"><a href="#runtime-access">Access</a> &middot; <a href="#ownership">Between shows</a> &middot; <a href="#ambient-lighting">Live preview</a> &middot; <a href="#schedules">Timers</a> &middot; <a href="#configuration">Connect lights</a> &middot; <a href="#network">Find devices</a> &middot; <a href="#custom-palettes">Palettes</a> &middot; <a href="#preset-import">Import presets</a> &middot; <a href="#compatibility">Feature limits</a></nav>
 <p>Use WLED to choose colors and moving light patterns between shows. FPP still runs your shows and sends the colors to your lights. This is an early test version; some WLED features are not available yet.</p>
 <section id="runtime-access"><details id="accessDetails" class="setup-disclosure" open><summary><span id="accessHeading" class="setup-title">Lighting controls</span><span id="accessStatus" class="access-indicator" role="status">Checking saved access...</span></summary><p id="accessIntro" hidden>Click <strong>Enable lighting controls</strong> once. You can then change colors, save lighting looks and edit setup from this browser. This button gives you permission to make changes; it does not turn the lights on.</p>
 
-<div id="startGuide" hidden><p>After enabling controls, <a href="#configuration">connect your lights</a> if needed, then <a href="#ambient-lighting">choose your background lighting</a>.</p></div>
+<div id="startGuide" hidden><p>After enabling controls, <a href="#configuration">connect your lights</a> if needed, then <a id="setupOpenWled" href="./?view=lights">open WLED to choose your background lighting</a>.</p></div>
 <div id="loginFields" hidden>
 <p>FPP takes care of the access code for you. There is nothing to copy or paste.</p>
 <button id="connectRuntime">Enable lighting controls</button>
@@ -33,26 +33,14 @@
 <p id="ownershipFeedback" role="status"></p><button id="ambientToggle" data-op="ambient-enable" disabled>Checking background lighting...</button>
 <details><summary>Advanced: shows that send directly to other controllers</summary><p>Most users can skip this. FPP shows are detected automatically. If a program such as xSchedule sends a show straight to a controller, it must tell this plugin when the show starts and ends. These buttons let you do that by hand.</p><label>Show program name <input id="source" placeholder="xschedule:main"></label><button data-op="show-start">Show Start</button> <button data-op="show-end">Show End</button>
 <p>Enter a name for the show program, such as <code>xschedule:main</code>. Click <strong>Show Start</strong> before its show and <strong>Show End</strong> after it stops, using exactly the same name. Until you click End, background lighting stays paused, even after a restart. Each show program needs its own name. For everyday use, set up your show program to send these commands automatically.</p></details><details><summary>Technical details: show control and devices</summary><pre id="status">Loading status...</pre></details></details></section>
-<section id="ambient-lighting" class="lighting-panel" aria-labelledby="lightingTitle"><h2 id="lightingTitle">Choose your background lighting</h2>
-<p>Choose an <strong>effect</strong> (a moving pattern) and its colors, then click <strong>Apply lighting</strong>. Your choices affect the sections of lights selected in the main WLED screen. WLED calls these sections <strong>segments</strong>. To keep a favorite look, save it as a <strong>preset</strong> in WLED.</p><p class="lighting-note">The picture below shows the colors WLED is creating. It cannot tell whether your real lights are connected or working.</p>
-<label><input id="previewEnabled" type="checkbox" checked> Live pixel preview</label>
-<canvas id="pixelPreview" width="768" height="240" role="img" aria-label="Runtime ambient pixel preview"></canvas>
-<p id="previewStatus" class="lighting-note">Waiting for the renderer…</p>
-<div class="lighting-grid"><fieldset><legend>Light &amp; color</legend><p>Move Brightness to the right for brighter lights. Primary color is the main color; some patterns also use the secondary color. Fade time controls how slowly a change appears. Separate white controls appear only for lights with a white LED (RGBW).</p>
-<label>Brightness <input id="lightBrightness" type="range" min="0" max="255" value="128"></label>
-<label>Effect <select id="lightEffect"><option value="0">Solid</option></select></label>
-<label>Palette <select id="lightPalette"><option value="0">Default</option></select></label>
-<p id="lightingSelection" class="lighting-note"></p>
-<label>Primary color <input id="lightPrimary" type="color" value="#ffa000"></label>
-<label>Secondary color <input id="lightSecondary" type="color" value="#000000"></label>
-<label>Third color <input id="lightThird" type="color" value="#000000"></label>
-<label id="primaryWhiteLabel" hidden>Primary white channel <input id="lightWhite" type="range" min="0" max="255" value="0"></label>
-<label id="secondaryWhiteLabel" hidden>Secondary white channel <input id="lightWhite2" type="range" min="0" max="255" value="0"></label>
-<label id="thirdWhiteLabel" hidden>Third white channel <input id="lightWhite3" type="range" min="0" max="255" value="0"></label>
-<label>Fade time (seconds) <input id="lightTransition" type="number" min="0" max="65.5" step="0.1" value="0.7"></label>
-<button id="applyLighting" disabled>Apply lighting</button> <button id="lightOff" disabled>Checking light power...</button>
-<button id="discardLighting" hidden>Discard lighting edits</button><p id="lightingDraft" class="lighting-note"></p>
-</fieldset><fieldset><legend>Nightlight</legend><p>A one-time timed fade or sunrise/sunset animation. Choose its duration and final brightness, then Start. This does not create a repeating schedule.</p>
+<section id="ambient-lighting" class="lighting-panel" aria-labelledby="lightingTitle"><h2 id="lightingTitle">Live lighting preview</h2>
+<p>Choose brightness, effects, palettes and colors in WLED using the WLED button above.</p>
+<p class="lighting-note">Preview is off by default to reduce browser and network work. Enabling it shows colors WLED is creating, not confirmation that physical lights are working.</p>
+<button id="previewEnabled" type="button" aria-pressed="false" aria-controls="pixelPreview" data-state="off">Enable live preview</button>
+<canvas id="pixelPreview" hidden width="768" height="240" role="img" aria-label="Runtime ambient pixel preview"></canvas>
+<p id="previewStatus" class="lighting-note" role="status">Preview is off. No preview frames are being requested.</p>
+<details id="nightlight"><summary>Nightlight timer</summary>
+<fieldset><legend>Nightlight</legend><p>A one-time timed fade or sunrise/sunset animation. Choose its duration and final brightness, then Start. This does not create a repeating schedule.</p>
 <label>Mode <select id="nightMode"><option value="0">Wait, then change brightness</option><option value="1" selected>Fade brightness</option><option value="2">Fade brightness &amp; color</option><option value="3">Sunrise / sunset animation</option></select></label>
 <label>Duration in minutes <input id="nightMinutes" type="number" min="1" max="255" value="30"></label>
 <label id="nightTargetLabel">Final brightness (0 = off, 255 = full) <input id="nightTarget" type="number" min="0" max="255" value="0"></label>
@@ -60,7 +48,7 @@
 <button id="startNightlight" disabled>Checking nightlight...</button>
 <p id="nightStatus" role="status">No nightlight running.</p><progress id="nightProgress" max="1" value="0" aria-label="Nightlight progress"></progress>
 <p class="lighting-note">Color fade changes the lights toward the secondary color. The countdown pauses during shows. Applying another look or restarting WLED stops this timer.</p>
-</fieldset></div><p id="lightingStatus" role="status"></p></section>
+</fieldset><button id="discardLighting" hidden>Discard timer edits</button><p id="lightingDraft" class="lighting-note"></p><p id="lightingStatus" role="status"></p></details></section>
 <section id="schedules" class="lighting-panel" aria-labelledby="scheduleTitle"><h2 id="scheduleTitle">Schedules &amp; daylight</h2><p>Want a favorite look to turn on at a set time? First save that look as a <strong>preset</strong> in WLED. Then choose its time, preset and days below. Click <strong>Add timer</strong>, then <strong>Preview upcoming events</strong>. Check the times and click <strong>Save schedules</strong>.</p>
 <p class="lighting-note">Timers start working as soon as you save. If a timer falls during a show, or while background lighting is stopped, it is skipped. It will not run late.</p>
 <label><input id="scheduleLocation" type="checkbox"> Set my location for sunrise and sunset times</label>
@@ -137,60 +125,84 @@
 <section id="compatibility"><h2>Features not yet available</h2><p>This early version cannot use every WLED feature. The list below shows what is missing; it does not mean your lights are broken. Some patterns also need a matrix (a grid of lights).</p><details><summary>Show the list of unavailable features and effects</summary><pre id="compat"></pre></details></section><p id="result" role="status"></p>
 <script src="base.js"></script><script src="summary.js"></script><script>
 const el=id=>document.getElementById(id);
-let lightingInitialized=false, lightingPending=false, ownershipPending=false;
-const lightButtons=['applyLighting','lightOff','startNightlight'];
+let lightingPending=false, ownershipPending=false;
+const lightButtons=['startNightlight'];
 function actionState(id,on,onLabel,offLabel,paused=false){const button=el(id);button.dataset.on=String(!!on);button.dataset.state=on?(paused?'paused':'on'):'off';button.textContent=on?offLabel:onLabel;button.title='Currently '+(on?(paused?'enabled, but paused':'on'):'off')+'. '+button.textContent+'.';}
-function lightingActions(s,allowed){actionState('lightOff',s.on,'Turn lights on','Turn lights off',!allowed);actionState('startNightlight',s.nl.on,'Start nightlight','Stop nightlight',!allowed);lightButtons.forEach(id=>el(id).disabled=lightingPending||!allowed||!window.wledAuthenticated);}
-function rgb(hex){return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));}
-function hexColor(c){return '#'+c.slice(0,3).map(n=>n.toString(16).padStart(2,'0')).join('');}
+function lightingActions(s,allowed){actionState('startNightlight',s.nl.on,'Start nightlight','Stop nightlight',!allowed);lightButtons.forEach(id=>el(id).disabled=lightingPending||!allowed||!window.wledAuthenticated);}
 function inputNumber(id,lo,hi){const input=el(id),value=Number(input.value);if(input.value===''||!input.checkValidity()||value<lo||value>hi)throw Error('Check '+input.parentElement.textContent.trim()+'.');return value;}
-const lightingFields=['lightEffect','lightPalette','lightBrightness','lightPrimary','lightSecondary','lightThird','lightTransition','lightWhite','lightWhite2','lightWhite3'];
 const nightFields=['nightMode','nightMinutes','nightTarget'];
-let latestLighting=null, lightingPaletteRevision=null;
-function draftNotice(){const dirty=[...lightingFields,...nightFields].some(id=>el(id).dataset.dirty==='true');el('discardLighting').hidden=!dirty;el('lightingDraft').textContent=dirty?'Your unfinished edits are kept here. Other fields follow WLED. Apply them or discard them to show all current values.':'';}
-for(const id of [...lightingFields,...nightFields])el(id).addEventListener('input',()=>{el(id).dataset.dirty='true';draftNotice();});
+let latestLighting=null;
+function draftNotice(){const dirty=nightFields.some(id=>el(id).dataset.dirty==='true');el('discardLighting').hidden=!dirty;el('lightingDraft').textContent=dirty?'Your unfinished edits are kept here. Other fields follow WLED. Start the timer to use your edits, or discard them to show the current values.':'';}
+for(const id of nightFields)el(id).addEventListener('input',()=>{el(id).dataset.dirty='true';draftNotice();});
 function syncLightingFields(data){
- latestLighting=data;const s=data.state,seg=s.seg.find(segment=>segment.id===s.mainseg&&segment.sel)||s.seg.find(segment=>segment.sel)||s.seg[0];
- if(!seg)return;
- const values={lightEffect:seg.fx,lightPalette:seg.pal,lightBrightness:s.bri,lightPrimary:hexColor(seg.col[0]),lightSecondary:hexColor(seg.col[1]),lightThird:hexColor(seg.col[2]),lightTransition:s.transition/10,lightWhite:seg.col[0][3]||0,lightWhite2:seg.col[1][3]||0,lightWhite3:seg.col[2][3]||0,nightMode:s.nl.mode,nightMinutes:s.nl.dur,nightTarget:s.nl.tbri};
+ latestLighting=data;const s=data.state;
+ const values={nightMode:s.nl.mode,nightMinutes:s.nl.dur,nightTarget:s.nl.tbri};
  for(const [id,value] of Object.entries(values))if(el(id).dataset.dirty!=='true'&&document.activeElement!==el(id))el(id).value=value;
- el('primaryWhiteLabel').hidden=el('secondaryWhiteLabel').hidden=el('thirdWhiteLabel').hidden=!data.info.leds.rgbw;
- el('lightingSelection').textContent='Controls show '+(seg.n||'segment '+seg.id)+'. Apply changes all selected segments. Palettes can produce colors beyond the three color controls.';
  el('nightMode').onchange();draftNotice();
 }
-el('discardLighting').onclick=()=>{for(const id of [...lightingFields,...nightFields])delete el(id).dataset.dirty;if(latestLighting)syncLightingFields(latestLighting);draftNotice();};
+el('discardLighting').onclick=()=>{for(const id of nightFields)delete el(id).dataset.dirty;if(latestLighting)syncLightingFields(latestLighting);draftNotice();};
 async function lightingPost(body,applied=[]){
  if(lightingPending)return;const submitted=Object.fromEntries(applied.map(id=>[id,el(id).value]));lightingPending=true;lightButtons.forEach(id=>el(id).disabled=true);
  try{await post('/json/state',body);const response=await wledFetch('/json/si',{signal:AbortSignal.timeout(8000)});if(!response.ok)throw Error('Change sent. Waiting for light status; check before retrying.');const data=await response.json();
   for(const [id,value] of Object.entries(submitted))if(el(id).value===value)delete el(id).dataset.dirty;
-  lightingPending=false;lightingActions(data.state,data.info.fpp.allowed);syncLightingFields(data);wledSummary(data);el('lightingStatus').textContent='Lighting updated.';
+  lightingPending=false;lightingActions(data.state,data.info.fpp.allowed);syncLightingFields(data);wledSummary(data);el('lightingStatus').textContent='Nightlight updated.';
  }catch(e){el('lightingStatus').textContent=e.message;}finally{lightingPending=false;}
 }
-el('applyLighting').onclick=()=>{try{lightingPost({on:true,bri:inputNumber('lightBrightness',0,255),transition:Math.round(inputNumber('lightTransition',0,65.5)*10),seg:{fx:Number(el('lightEffect').value),pal:Number(el('lightPalette').value),col:[[...rgb(el('lightPrimary').value),Number(el('lightWhite').value)],[...rgb(el('lightSecondary').value),Number(el('lightWhite2').value)],[...rgb(el('lightThird').value),Number(el('lightWhite3').value)]]}},lightingFields);}catch(e){el('lightingStatus').textContent=e.message;}};
-el('lightOff').onclick=()=>lightingPost({on:el('lightOff').dataset.on!=='true'});
 el('nightMode').onchange=()=>{const sun=el('nightMode').value==='3';el('nightTargetLabel').hidden=sun;el('sunriseHelp').hidden=!sun;el('nightMinutes').max=sun?'60':'255';};
 el('startNightlight').onclick=()=>{if(el('startNightlight').dataset.on==='true'){lightingPost({nl:{on:false}});return;}try{const mode=Number(el('nightMode').value);lightingPost({nl:{on:true,mode,dur:inputNumber('nightMinutes',1,mode===3?60:255),tbri:mode===3?0:inputNumber('nightTarget',0,255)}},nightFields);}catch(e){el('lightingStatus').textContent=e.message;}};
 function drawPixels(preview){const canvas=el('pixelPreview'),ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);if(!preview.allowed){el('previewStatus').textContent='Preview paused. Check Lights between shows above to see why.';return;}const columns=preview.height>1?preview.width:Math.min(32,preview.count),rows=preview.height>1?preview.height:Math.ceil(preview.count/columns);for(const [i,r,g,b,w=0] of preview.pixels){ctx.fillStyle=`rgb(${Math.min(255,r+w)},${Math.min(255,g+w)},${Math.min(255,b+w)})`;ctx.fillRect((i%columns)*canvas.width/columns,Math.floor(i/columns)*canvas.height/rows,Math.max(1,canvas.width/columns-1),Math.max(1,canvas.height/rows-1));}el('previewStatus').textContent=preview.count+' pixels in the preview'+(preview.stride>1?' · sampled every '+preview.stride+' pixels':'')+' · actual lights may differ';}
+let previewOn=false, previewTimer=null, previewRequest=null, previewGeneration=0;
+function stopPreviewRequests(){
+ previewGeneration++;clearTimeout(previewTimer);previewTimer=null;
+ if(previewRequest)previewRequest.abort();previewRequest=null;
+}
+function clearPreview(){const canvas=el('pixelPreview');canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);wledSummaryPreview(null);}
+async function refreshPreview(){
+ if(!previewOn||document.hidden)return;
+ const generation=previewGeneration, abort=new AbortController();previewRequest=abort;
+ const timeout=setTimeout(()=>abort.abort(),8000);
+ try{
+  const r=await wledFetch('/api/preview',{signal:abort.signal,cache:'no-store'});if(!r.ok)throw Error('Preview unavailable');
+  const preview=await r.json();
+  if(generation!==previewGeneration||!previewOn||document.hidden)return;
+  drawPixels(preview);wledSummaryPreview(preview);
+ }catch(error){
+  if(generation===previewGeneration&&previewOn&&!document.hidden){clearPreview();el('previewStatus').textContent='Preview unavailable. Check runtime status or disable the preview.';}
+ }finally{
+  clearTimeout(timeout);if(previewRequest===abort)previewRequest=null;
+  if(generation===previewGeneration&&previewOn&&!document.hidden)previewTimer=setTimeout(refreshPreview,500);
+ }
+}
+el('previewEnabled').onclick=()=>{
+ previewOn=!previewOn;stopPreviewRequests();
+ const button=el('previewEnabled');button.textContent=previewOn?'Disable live preview':'Enable live preview';button.dataset.state=previewOn?'on':'off';button.setAttribute('aria-pressed',String(previewOn));
+ el('pixelPreview').hidden=!previewOn;
+ if(previewOn){el('previewStatus').textContent='Loading preview...';refreshPreview();}
+ else{clearPreview();el('previewStatus').textContent='Preview is off. No preview frames are being requested.';}
+};
+document.addEventListener('visibilitychange',()=>{
+ stopPreviewRequests();
+ if(!previewOn)return;
+ if(document.hidden){clearPreview();el('previewStatus').textContent='Preview paused while this page is hidden.';}
+ else refreshPreview();
+});
+window.addEventListener('pagehide',stopPreviewRequests);
+window.addEventListener('pageshow',event=>{if(event.persisted&&previewOn){stopPreviewRequests();refreshPreview();}});
+wledSummaryPreview(null);
+function openNightlight(){if(location.hash==='#nightlight')el('nightlight').open=true;}
+openNightlight();window.addEventListener('hashchange',openNightlight);
+el('setupOpenWled').href=wledOnFPP()?'/plugin.php?plugin=FPP_WLED_10.x&page=lights.php':'/?view=lights';
 async function refreshLighting(){
- let stateReceived=false;
- try{if(!document.hidden){
-  const response=await wledFetch('/json/si',{signal:AbortSignal.timeout(8000)});if(!response.ok)throw Error('Lighting status unavailable');
-  const data=await response.json(),s=data.state,allowed=data.info.fpp.allowed;stateReceived=true;wledSummary(data);
-  if(!lightingInitialized||lightingPaletteRevision!==data.info.palrev){
-   const responses=await Promise.all([wledFetch('/json/effects'),wledFetch('/json/palettes'),wledFetch('/api/palettes')]);if(!responses.every(r=>r.ok))throw Error('Lighting choices unavailable');const [effects,palettes,custom]=await Promise.all(responses.map(r=>r.json()));
-   const effectDraft=el('lightEffect').value,paletteDraft=el('lightPalette').value;
-   el('lightEffect').replaceChildren(...effects.flatMap((name,i)=>data.info.fpp.unsupported_effect_ids.includes(i)?[]:[new Option(name,String(i))]));
-   el('lightPalette').replaceChildren(...palettes.map((name,i)=>new Option(name,String(i))),...Object.entries(custom.ids).map(([slot,id])=>new Option('Custom palette '+slot,String(id))));
-   for(const [id,value] of [['lightEffect',effectDraft],['lightPalette',paletteDraft]])if(el(id).dataset.dirty==='true'){if(![...el(id).options].some(option=>option.value===value))el(id).add(new Option('Unavailable selection '+value,value));el(id).value=value;}
-   lightingInitialized=true;lightingPaletteRevision=data.info.palrev;
-  }
+ try{
+  if(document.hidden)return;
+  const r=await wledFetch('/json/si',{signal:AbortSignal.timeout(8000)});if(!r.ok)throw Error('Runtime status unavailable');
+  const data=await r.json(),s=data.state,allowed=data.info.fpp.allowed;
+  wledSummary(data);
   if(!lightingPending){lightingActions(s,allowed);syncLightingFields(data);}
-  el('nightStatus').textContent=s.nl.on?(allowed?'Running':'Paused while background lighting is stopped')+' � '+Math.ceil(s.nl.rem/60)+' min remaining':'No nightlight running.';
+  el('nightStatus').textContent=s.nl.on?(allowed?'Running':'Paused while background lighting is stopped')+' · '+Math.ceil(s.nl.rem/60)+' min remaining':'No nightlight running.';
   el('nightProgress').value=s.nl.on?1-s.nl.rem/(s.nl.dur*60):0;
-  if(el('previewEnabled').checked){const p=await wledFetch('/api/preview',{signal:AbortSignal.timeout(8000)});if(!p.ok)throw Error('Preview unavailable');const preview=await p.json();drawPixels(preview);wledSummaryPreview(preview);}
-  else{el('pixelPreview').getContext('2d').clearRect(0,0,768,240);el('previewStatus').textContent='Preview off.';wledSummaryPreview(null);}
- }}catch(e){if(!stateReceived)wledSummaryUnavailable();wledSummaryPreview(null);lightButtons.forEach(id=>el(id).disabled=true);el('pixelPreview').getContext('2d').clearRect(0,0,768,240);el('previewStatus').textContent='Preview unavailable';el('lightingStatus').textContent=e.message;}
- finally{setTimeout(refreshLighting,500);}
+ }catch(e){wledSummaryUnavailable();lightButtons.forEach(id=>el(id).disabled=true);el('lightingStatus').textContent=e.message;}
+ finally{setTimeout(refreshLighting,2000);}
 }
 refreshLighting();
 let paletteCatalog=null;
