@@ -23,6 +23,7 @@
       const selected=button.dataset.wledMode===choice;
       button.setAttribute('aria-pressed',String(selected));
       button.classList.toggle('btn-primary',selected);button.classList.toggle('btn-outline-secondary',!selected);
+      button.style.color=selected?'var(--bs-btn-active-color,HighlightText)':'var(--bs-body-color,CanvasText)';
     });
   }
   function set(value){choice=normalize(value);try{localStorage.setItem(key,choice);}catch{}apply();}
