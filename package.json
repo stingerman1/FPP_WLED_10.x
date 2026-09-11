@@ -1,0 +1,1 @@
+{"private":true,"scripts":{"test:browser":"node scripts/browser-tests.mjs"},"devDependencies":{"playwright":"1.63.0"}}

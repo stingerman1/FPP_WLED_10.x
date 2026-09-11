@@ -30,6 +30,12 @@ class LifecycleTests(unittest.TestCase):
                 self.assertEqual(result.stdout.strip(), '')
 
     def test_uninstall_twice_with_isolated_service_manager_and_system_paths(self):
+        self.uninstall_fixture(0)
+
+    def test_apache_failure_does_not_skip_other_cleanup(self):
+        self.uninstall_fixture(1)
+
+    def uninstall_fixture(self, apache_exit):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             scripts = root / 'scripts'; scripts.mkdir()
@@ -47,7 +53,7 @@ class LifecycleTests(unittest.TestCase):
             source = source.replace('/etc/', str(etc) + '/').replace('/run/fpp-wled', str(run))
             (scripts / 'fpp_uninstall.sh').write_text(source)
             shutil.copy(ROOT / 'scripts/fpp-paths.sh', scripts)
-            (scripts / 'configure-web.sh').write_text('#!/bin/bash\nexit 0\n')
+            (scripts / 'configure-web.sh').write_text(f'#!/bin/bash\nexit {apache_exit}\n')
             fpp = root / 'fpp'; (fpp / 'scripts').mkdir(parents=True)
             (fpp / 'scripts/common').write_text(f'MEDIADIR="{media}"\nLOGDIR="$MEDIADIR/logs"\nsetSetting() {{ :; }}\n')
             binaries = root / 'bin'; binaries.mkdir()
@@ -55,7 +61,8 @@ class LifecycleTests(unittest.TestCase):
                 item = binaries / name; item.write_text('#!/bin/sh\n' + body + '\n'); item.chmod(0o755)
             env = {**os.environ, 'FPPDIR': str(fpp), 'PATH': str(binaries) + ':' + os.environ['PATH']}
             for _ in range(2):
-                subprocess.run(['bash', str(scripts / 'fpp_uninstall.sh')], env=env, check=True, capture_output=True)
+                result = subprocess.run(['bash', str(scripts / 'fpp_uninstall.sh')], env=env, capture_output=True)
+                self.assertEqual(result.returncode, apache_exit)
             self.assertFalse(run.exists())
             self.assertFalse((etc / 'systemd/system/fpp-wled.service').exists())
             self.assertFalse((etc / 'tmpfiles.d/fpp-wled.conf').exists())

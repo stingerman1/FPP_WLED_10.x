@@ -12,13 +12,13 @@ Clone to exactly `/home/fpp/media/plugins/FPP_WLED_10.x`, then run `sudo bash sc
 
 ABI verification reads the compiled constant fingerprints from the installed library and candidate with objdump, without loading daemon-dependent libraries into Python. Unrecognized code or mismatched fingerprints fail closed. FPP performs final symbol resolution and its ABI checks when it loads the adapter.
 
-The installer stages an immutable runtime release, validates state and the plugin ABI, installs a supervised `fpp-wled.service`, checks its local status endpoint, and switches `build/current`. It retains `build/previous` for rollback. It does not automatically restart FPP or interrupt playback. **Install or upgrade between shows, then restart FPP from its UI.** The adapter loaded into an existing FPP process is not hot-replaced.
+The installer stages an immutable release of PHP pages, web assets, runtime and adapter, validates state and the plugin ABI, installs a supervised `fpp-wled.service`, checks its local status endpoint, and switches `build/current`. It retains `build/previous` for rollback. It does not automatically restart FPP or interrupt playback. **Install or upgrade between shows, then restart FPP from its UI.** The adapter loaded into an existing FPP process is not hot-replaced.
 
 ## FPP web access
 
 The plugin opens `/fpp-wled/` and `/fpp-wled/settings` on FPP's existing browser origin, preserving its port and HTTP/HTTPS protocol. The installer enables a plugin-owned Apache configuration and gracefully reloads Apache after a configuration check. HTTP and WebSocket traffic use a separate authenticated Unix socket, `web.sock`; the trusted `control.sock` is never exposed. Stock FPP listeners and source files are unchanged. Removal disables this Apache configuration.
 
-Port 8787 remains an optional direct runtime listener, bound to loopback on new installs. Existing bind/port settings are preserved and do not affect the FPP proxy. Do not change the runtime port to FPP's port: the runtime and Apache cannot share a TCP listener. Updating an existing installation requires rerunning the installer to enable the proxy. A rollback to a runtime predating web.sock needs direct runtime access again.
+Port 8787 remains an optional direct runtime listener, bound to loopback on new installs. Existing bind/port settings are preserved and do not affect the FPP proxy. Do not change the runtime port to FPP's port: the runtime and Apache cannot share a TCP listener. Updating an existing installation requires rerunning the installer to enable the proxy. Rollback requires a complete release snapshot with versioned PHP pages; legacy snapshots are rejected before the running service is stopped.
 
 ## First setup
 
@@ -54,7 +54,9 @@ Add devices to `devices`, for example `{"id":"porch","address":"192.0.2.10","mod
 
 Stop scheduled activity before lifecycle work. Record your installed Git commit and back up the configuration directory. Pull/review the desired plugin revision and run the installer again. Old state, saved presets, desired native commands and explicit show locks are retained. If validation fails before activation, the active release remains selected. A failed health check restores the previous release when one exists. Source builds pin inputs but are not claimed byte-for-byte reproducible across toolchains.
 
-`sudo bash scripts/rollback.sh` checks the previous adapter's ABI, selects the previous immutable runtime and restarts the runtime service. Restart FPP afterward. Rollback does not roll back user settings; retain your backup for incompatible future schema changes.
+`sudo bash scripts/rollback.sh` checks the previous release, adapter ABI and settings compatibility before stopping the runtime. It switches PHP pages and runtime assets together, checks runtime health, and restores the original release if activation fails. Restart FPP afterward. Saved configuration and show locks are preserved. Snapshots from before versioned PHP pages are not eligible: complete another successful update first. Keep a settings backup for future incompatible schema changes.
+
+Updates retain the current and previous releases, plus releases referenced by live processes (including an adapter still mapped into FPP). Unused older snapshots are pruned. If process references cannot be inspected, pruning is deferred. The installer checks free space before building. Removal attempts independent cleanup even if Apache fails, reports incomplete steps, and preserves data by default.
 
 `sudo bash scripts/fpp_uninstall.sh` stops/disables the runtime and removes its service configuration. Remove the plugin through FPP, then restart FPP to unload the adapter. User configuration and persistent show locks are deliberately retained outside the plugin directory. Delete them separately only if you intend to erase saved state.
 

@@ -21,7 +21,7 @@ class TokenAccessTests(unittest.TestCase):
             auth = path / 'plugindata/FPP_WLED_10.x/auth.json'
             auth.parent.mkdir(parents=True)
             auth.write_text(json.dumps({'token': TOKEN}))
-            source = (ROOT / 'runtime-token.php').read_text()
+            source = (ROOT / 'pages/runtime-token.php').read_text()
             (path / 'token.php').write_text(source)
             with socket.socket() as sock:
                 sock.bind(('127.0.0.1', 0))

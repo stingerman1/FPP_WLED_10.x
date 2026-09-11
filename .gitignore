@@ -9,3 +9,5 @@ __pycache__/
 state/
 .playwright-cli/
 output/playwright/
+
+node_modules/

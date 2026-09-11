@@ -1,8 +1,9 @@
 ﻿# Code and FPP integration review — 2026-09-11
 
-**Verdict: useful alpha foundation, but not ready for a blanket best-practices or
-full FPP-conformance sign-off.** The findings below remain open; this was a review,
-not a repair pass. Fix the lifecycle and API findings before claiming beta readiness.
+**Verdict: the five identified API, lifecycle and CI findings are now repaired.**
+This remains an alpha, not a blanket best-practices or full FPP-conformance
+certification. The original evidence below is retained as review history; see
+the repair verification section for the current implementation.
 
 Reviewed plugin commit `2162034` and receiver fork commit `16ac3ee4` on
 `stingerman1/WLED:fpp-node-type-16.0.1`. Compared with the current
@@ -11,7 +12,17 @@ and metadata schema at `ef15069fc9322470397ab44afdf837a5e0d330a6`.
 This updates the scope of TEMPLATE_AUDIT.md; its older pass descriptions are not
 a current certification. No upstream catalog acceptance is implied.
 
-## Findings, in priority order
+## Repair verification
+
+- **Coherent rollback:** root PHP entry points now clear PHP path caches and dispatch into the selected immutable release. Installation snapshots PHP pages with runtime/web assets. Rollback validates the complete snapshot, ABI and settings before stopping the runtime, checks health after activation, and restores the original selection on failure. Legacy snapshots without PHP pages are rejected before stopping. A controlled browser test switches old heading-dependent and new heading-free pages with their corresponding scripts; shell tests inject rollback activation failure.
+- **API layout import:** models use `/api/models`, and strings use `/api/channel/output/co-pixelStrings`. Requests are bounded, loopback-only, without proxy/redirect following, and outside the render lock. Missing pixel configuration is accepted only for FPP's explicit file-not-found response. Invalid responses fail without saving a layout. Named-model/string and malformed-response tests pass; the browser preview leaves configuration unchanged.
+- **Resilient removal:** independent cleanup continues after Apache failure and reports a nonzero result. A service-stop failure retains the live service's files/data for retry. Failure injection and repeated-removal tests pass.
+- **Retention:** updates retain current, previous and process-referenced snapshots, including loaded adapter mappings. Unknown process access defers cleanup. Directory confinement, loaded-release protection, free-space preflight and compatibility checks have tests.
+- **Browser CI:** pinned Playwright now runs eight maintained workflows in Ubuntu CI, with fresh runtime state and browser contexts, loopback fixtures, traces and failure screenshots. See [browser checks](BROWSER_TESTS.md).
+
+Validation: the 161-test Python suite passed, followed by the additional rollback activation test and rerun release tests (162 tests total). Native frame sanitizers, shell syntax and PHP lint passed. Eight browser scenarios passed locally. Physical mixed-routing, Pi workload limits, and real receiver firmware acceptance remain separate gates. Failure injection used isolated fixtures, not the live FPP service.
+
+## Original findings, in priority order
 
 ### 1. High — rollback does not restore a coherent web/runtime release
 
@@ -138,6 +149,5 @@ No receiving ESP controller was flashed during this work.
   checked. No lighting commands or receiver flashing were performed for this check.
 - Controlled rollback UI simulation: reproduced the failure in finding 1.
 
-Suggested repair order: coherent rollback, API-backed FPP layout reads, resilient
-uninstall, release retention, then automated browser coverage. Re-run the audit
-and complete hardware acceptance before changing the release stage.
+The repair pass above addresses these five findings. Complete hardware acceptance
+and broader maintainability work before changing the release stage.

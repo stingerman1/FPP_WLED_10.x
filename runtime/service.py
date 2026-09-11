@@ -80,6 +80,8 @@ class Controller:
 
     def get(self, path):
         path = {'/json/eff':'/json/effects', '/json/pal':'/json/palettes'}.get(path, path)
+        if path == '/api/layout':
+            return layout.sources(self.config.get('discovery_http_port', 80))
         with self.lock:
             if path == '/api/backup':
                 return backup.export(self)
@@ -99,8 +101,6 @@ class Controller:
                         'observer_healthy':self.ownership.status()['observer_healthy'],
                         'acknowledged_frame':str(self.link.acknowledged) if self.link else None,
                         'scope':'Runtime render timing and FPP acknowledgement; does not verify physical lights.'}
-            if path == '/api/layout':
-                return layout.sources()
             if path == '/api/network':
                 return self.network.public()
             if path == '/api/schedules':
@@ -202,6 +202,7 @@ class Controller:
             with self.lock:
                 (self.directory/'restore-pending.json').unlink(missing_ok=True)
                 return {'cancelled':True}
+        source = layout.sources(self.config.get('discovery_http_port', 80)) if path == '/api/layout' else None
         drain = False
         revoked = None
         capture_epoch = None
@@ -227,7 +228,6 @@ class Controller:
                 save_json(self.directory / 'config.json', candidate)
                 return {'saved':True,'restart_required':True}
             elif path == '/api/layout':
-                source = layout.sources()
                 ids = payload.get('items', [])
                 if not isinstance(ids, list) or any(type(i) is not int for i in ids) or len(ids) != len(set(ids)):
                     raise ValueError('Choose distinct FPP items from the list.')

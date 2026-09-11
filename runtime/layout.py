@@ -6,16 +6,47 @@ are rejected explicitly until their layouts can be represented without guessing.
 from copy import deepcopy
 import hashlib
 import json
-import os
-from pathlib import Path
+from urllib.request import build_opener, ProxyHandler, HTTPRedirectHandler
+from urllib.error import HTTPError, URLError
 from .config import validate, integer
-from .storage import read_json
 
 
-def sources():
-    root = Path(os.environ.get('MEDIADIR', '/home/fpp/media')) / 'config'
-    models = read_json(root / 'model-overlays.json', {}).get('models', [])
-    strings = read_json(root / 'co-pixelStrings.json', {}).get('channelOutputs', [])
+class NoRedirects(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
+def fpp_json(path, port):
+    """Read the local supported API with bounded time/body and no proxy redirects."""
+    opener = build_opener(ProxyHandler({}), NoRedirects())
+    try:
+        with opener.open(f'http://127.0.0.1:{port}' + path, timeout=2) as response:
+            raw = response.read(2 * 1024 * 1024 + 1)
+        if len(raw) > 2 * 1024 * 1024:
+            raise ValueError('FPP layout response exceeds 2 MiB.')
+        return json.loads(raw)
+    except HTTPError as error:
+        if error.code == 404 and path == '/api/channel/output/co-pixelStrings':
+            try:
+                if json.loads(error.read(4096)).get('status') == 'ERROR: File not found':
+                    return {'channelOutputs': []}
+            except (ValueError, AttributeError):
+                pass
+        raise ValueError(f'Cannot read FPP lights: {path} returned HTTP {error.code}.') from error
+    except (URLError, TimeoutError, OSError, json.JSONDecodeError) as error:
+        raise ValueError('Cannot read FPP lights. Check that FPP and its web API are running.') from error
+
+
+def sources(port=80):
+    models = fpp_json('/api/models', port)
+    outputs = fpp_json('/api/channel/output/co-pixelStrings', port)
+    if not isinstance(models, list) or not all(isinstance(m, dict) for m in models):
+        raise ValueError('FPP returned an invalid model list.')
+    if not isinstance(outputs, dict) or outputs.get('status', 'OK') != 'OK':
+        raise ValueError('FPP returned an invalid pixel output response.')
+    strings = outputs.get('channelOutputs')
+    if not isinstance(strings, list) or not all(isinstance(o, dict) for o in strings):
+        raise ValueError('FPP returned an invalid pixel output list.')
     records, warnings = [], []
     for model in models:
         if model.get('Type') != 'Channel':
@@ -24,12 +55,18 @@ def sources():
     for output in strings:
         if not output.get('enabled', False):
             continue
-        for port in output.get('outputs', []):
+        ports = output.get('outputs', [])
+        if not isinstance(ports, list) or not all(isinstance(p, dict) for p in ports):
+            raise ValueError('FPP returned an invalid pixel port list.')
+        for port in ports:
             for key, values in port.items():
-                if not key.startswith('virtualStrings') or not isinstance(values, list):
+                if not key.startswith('virtualStrings'):
                     continue
+                if not isinstance(values, list) or not all(isinstance(v, dict) for v in values):
+                    raise ValueError('FPP returned an invalid virtual string list.')
                 for value in values:
-                    if value.get('pixelCount', 0) > 0:
+                    count = integer(value.get('pixelCount', 0), 0, 16000, 'FPP string pixel count')
+                    if count > 0:
                         records.append({'kind':'string', 'name':value.get('description') or f"Port {port.get('portNumber', '?')}", 'source':value})
     for index, record in enumerate(records):
         record['id'] = index

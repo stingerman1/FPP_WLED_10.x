@@ -36,6 +36,8 @@ printf 'd /run/fpp-wled 0770 fpp fpp -\n' >/etc/tmpfiles.d/fpp-wled.conf
 if [[ ! -f "$state_dir/config.json" ]]; then
   install -o fpp -g fpp -m 0600 config.example.json "$state_dir/config.json"
 fi
+python3 scripts/releases.py prune
+python3 scripts/releases.py preflight
 bash scripts/build-renderer.sh
 bash scripts/build-plugin.sh
 python3 scripts/verify-abi.py "$fpp_src" build/libFPP_WLED_10.x.so >build/abi.json
@@ -45,10 +47,12 @@ runuser -u fpp -- python3 -m runtime.service --state-dir "$state_dir" --validate
 # while a new version builds. A single symlink selects the next runtime release.
 release="releases/$(date -u +%Y%m%dT%H%M%S)-$$"
 mkdir -p "build/$release/build"
-cp -a runtime web licenses LICENSE THIRD_PARTY_NOTICES.md upstream.lock.json requirements.txt "build/$release/"
+cp -a runtime web pages licenses LICENSE THIRD_PARTY_NOTICES.md upstream.lock.json requirements.txt "build/$release/"
 cp -a build/ui "build/$release/build/"
 cp build/libwled_linux.so "build/$release/build/"
 cp build/libFPP_WLED_10.x.so "build/$release/"
+printf '{"format":1,"commit":"%s"}\n' "$(git rev-parse HEAD)" >"build/$release/release.json"
+python3 scripts/releases.py validate "build/$release"
 python3 scripts/render-service.py "$plugin_dir" "$PLUGIN_STATE" "$LOGDIR" "$PLUGIN_LOG" build/fpp-wled.service
 if [[ -L build/current ]]; then
   ln -s "$(readlink build/current)" build/previous.new
@@ -80,5 +84,6 @@ if ! { systemctl restart fpp-wled.service && python3 scripts/check-health.py && 
 fi
 php scripts/register-settings.php
 setSetting restartFlag 1
+python3 scripts/releases.py prune
 echo 'Installed alpha. FPP restart requested through its restart flag to load the rebuilt adapter.'
 echo 'User state and show locks are preserved. A missing Show End must be cleared by its source ID.'

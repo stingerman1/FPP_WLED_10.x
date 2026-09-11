@@ -1,6 +1,6 @@
 # FPP template conformance follow-up
 
-Current follow-up: [2026-09-11 code review](CODE_REVIEW_2026-09-11.md) identifies open API and lifecycle gaps. The historical findings below are not a full current conformance sign-off.
+Current follow-up: [2026-09-11 code review](CODE_REVIEW_2026-09-11.md) records the API/lifecycle findings and their subsequent repairs. The historical findings below are not a full current conformance sign-off.
 
 Reviewed against FalconChristmas/fpp-plugin-Template commit `5c0dc73545f5e032902135d8770b1599d489eabe` and its [guidelines](https://github.com/FalconChristmas/fpp-plugin-Template/blob/5c0dc73545f5e032902135d8770b1599d489eabe/PLUGIN_GUIDELINES.md) and metadata schema.
 

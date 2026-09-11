@@ -17,6 +17,22 @@ jobs:
       - name: Install Apache proxy test dependency
         run: sudo apt-get update && sudo apt-get install -y apache2-bin php-cli
       - run: bash scripts/verify.sh
+      - uses: actions/setup-node@v4
+        if: matrix.os == 'ubuntu-24.04'
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Browser workflow checks
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.os == 'ubuntu-24.04'
+        with:
+          name: browser-results
+          path: build/browser-results
       - name: Test root FPP socket access from an unprivileged runtime
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror tests/socket_permissions_test.cpp -o build/socket-permissions-test
