@@ -77,3 +77,14 @@ input::placeholder, textarea::placeholder { color:var(--control-disabled); opaci
  position:relative; top:auto; bottom:auto; z-index:auto; box-shadow:none;
 }
 #fxlist .lstI.selected { top:var(--sti); }
+
+/* Return to FPP belongs to WLED's dark top navigation, in both appearances. */
+#fpp-navigation { float:left; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; padding:var(--tbp); margin:0; color:#f3f4f6; text-decoration:none; box-sizing:border-box; font-size:12px; }
+#fpp-navigation img { object-fit:contain; }
+#fpp-navigation:hover { background:#383b49; color:#fff; }
+#fpp-navigation:focus-visible { outline:2px solid #4b8bd3; outline-offset:-2px; }
+@media(max-width:639px) {
+ #top .btnwrap { display:flex; }
+ #top .btnwrap > button, #fpp-navigation { flex:1; min-width:0; width:auto; padding:8px 0 4px; }
+ #top .btnwrap .tab-label, #fpp-navigation span { font-size:11px; white-space:nowrap; }
+}

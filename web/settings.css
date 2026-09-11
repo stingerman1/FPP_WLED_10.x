@@ -79,3 +79,7 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 .fpp-wled .setup-disclosure > summary .access-indicator { display:block; margin:.5rem 0 0 1.25rem; }
 .fpp-wled .setup-disclosure[open] > summary { margin-bottom:1rem; }
 .fpp-wled .setup-disclosure > summary:focus-visible { outline:2px solid #4b8bd3; outline-offset:4px; }
+.fpp-wled #fpp-navigation { display:inline-flex; align-items:center; gap:.5rem; margin-left:.75rem; padding:.4rem .65rem; border:1px solid var(--control-border); border-radius:.375rem; color:var(--control-fg); background:var(--control-bg); text-decoration:none; vertical-align:middle; }
+.fpp-wled #fpp-navigation img { object-fit:contain; background:#191a24; border-radius:.2rem; padding:3px; }
+.fpp-wled #fpp-navigation:hover { background:var(--control-hover); }
+.fpp-wled #fpp-navigation:focus-visible { outline:2px solid #4b8bd3; outline-offset:2px; }

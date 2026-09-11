@@ -28,6 +28,30 @@ function wledFetch(path, options) {
 function wledOnFPP() {
   return location.pathname.startsWith('/fpp-wled/') || !!document.getElementById('fpp-wled-settings');
 }
+// Standalone WLED pages need a way back to the player's own navigation.
+// Wrapped setup pages already have FPP's header and must not add a duplicate.
+function wledAddFPPNavigation() {
+  if (document.getElementById('fpp-wled-settings') || document.getElementById('fpp-navigation')) return;
+  const menu = document.querySelector('#top .btnwrap') || document.querySelector('nav[aria-label="Setup sections"]');
+  if (!menu) return;
+  const link = document.createElement('a'), icon = document.createElement('img'), label = document.createElement('span');
+  link.id = 'fpp-navigation'; link.title = 'Return to FPP'; link.setAttribute('aria-label', 'Return to FPP');
+  icon.alt = ''; icon.width = 32; icon.height = 28; label.textContent = 'FPP';
+  link.append(icon, label); menu.append(link);
+  const target = new URL('/index.php', location.href);
+  if (!wledOnFPP()) target.port = ''; // The renderer's port is not FPP's web port.
+  function update() {
+    link.href = target.href;
+    icon.src = new URL('/images/redesign/fpp-logo.svg', target).href;
+  }
+  update();
+  // Direct runtime access can use the advertised FPP HTTP port.
+  if (!wledOnFPP()) wledFetch('/api/network').then(r => r.ok ? r.json() : {}).then(data => {
+    const port = data.config?.discovery_http_port;
+    if (Number.isInteger(port) && port > 0 && port <= 65535) { target.port = String(port); update(); }
+  }).catch(() => {});
+}
+wledAddFPPNavigation();
 // Explicit user action authorizes the browser; never persist the raw token in JS storage.
 async function wledEnableControls() {
   if (!wledOnFPP()) throw Error('Open WLED through FPP to enable controls automatically, or enter your API token in Settings.');
