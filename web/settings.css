@@ -83,3 +83,21 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 .fpp-wled #fpp-navigation img { object-fit:contain; background:#191a24; border-radius:.2rem; padding:3px; }
 .fpp-wled #fpp-navigation:hover { background:var(--control-hover); }
 .fpp-wled #fpp-navigation:focus-visible { outline:2px solid #4b8bd3; outline-offset:2px; }
+.fpp-wled .wled-summary-header { display:flex; align-items:flex-start; gap:1.5rem; flex-wrap:wrap; }
+.fpp-wled .wled-summary-header h1 { flex:1 1 15rem; margin-top:.5rem; }
+.fpp-wled #lightingSummary { flex:3 1 32rem; min-width:0; padding:1rem 1.25rem; border:1px solid var(--control-border); border-radius:.5rem; background:var(--bs-tertiary-bg,Canvas); }
+.fpp-wled #lightingSummary p { margin:0 0 .65rem; }
+.fpp-wled #lightingSummary .lighting-note { margin-bottom:0; }
+.fpp-wled #summaryStatus { display:inline-block; padding:.3rem .65rem; border-radius:1rem; font-weight:600; background:var(--control-bg); color:var(--control-fg); }
+.fpp-wled #summaryStatus::before { content:''; display:inline-block; width:.65rem; height:.65rem; border-radius:50%; background:currentColor; margin-right:.5rem; }
+.fpp-wled #summaryStatus[data-state=on] { color:var(--control-on-fg); background:var(--control-on-bg); }
+.fpp-wled #summaryStatus[data-state=show] { color:var(--control-selected-fg); background:var(--control-selected); }
+.fpp-wled #summaryStatus[data-state=warning] { color:var(--control-paused-fg); background:var(--control-paused-bg); }
+.fpp-wled #summaryStatus[data-state=error] { color:#7e1825; background:#ffe1e5; }
+:root[data-bs-theme=dark] .fpp-wled #summaryStatus[data-state=error] { color:#ffd9df; background:#5b202a; }
+.fpp-wled #lightingSummary dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.6rem 1rem; margin:0 0 .75rem; }
+.fpp-wled #lightingSummary dt { font-size:.85rem; font-weight:600; }
+.fpp-wled #lightingSummary dd { margin:0; }
+.fpp-wled .summary-color { display:inline-flex; align-items:center; gap:.3rem; margin-right:.65rem; }
+.fpp-wled .summary-swatch { display:inline-block; width:.85rem; height:.85rem; border-radius:50%; border:1px solid var(--control-border); }
+@media(max-width:36rem) { .fpp-wled #lightingSummary dl { grid-template-columns:1fr; } .fpp-wled .wled-summary-header { gap:.5rem; } }

@@ -135,7 +135,7 @@ class Handler(BaseHTTPRequestHandler):
                 if asset == 'index.htm':
                     data = data.replace(b'</body>', b'<link rel="stylesheet" href="wled-theme.css"><script src="theme.js"></script><script src="base.js"></script><script src="linux-ui.js"></script></body>')
                 return self.reply(200, data, mimetypes.guess_type(asset)[0] or 'application/octet-stream')
-            if path in ('/settings', '/login', '/config-editor.js', '/linux-ui.js', '/schedules.js', '/base.js', '/access.js', '/network.js', '/device-controls.js', '/settings.css', '/theme.js', '/wled-theme.css'):
+            if path in ('/settings', '/login', '/config-editor.js', '/linux-ui.js', '/schedules.js', '/base.js', '/summary.js', '/access.js', '/network.js', '/device-controls.js', '/settings.css', '/theme.js', '/wled-theme.css'):
                 from .service import ROOT
                 filename = path[1:] if path.endswith(('.js', '.css')) else 'settings.html'
                 return self.reply(200, (ROOT / 'web' / filename).read_bytes(),
