@@ -1,55 +1,53 @@
-(() => {
-  // FPP owns the outer document's theme. Plugin preferences must never change it.
-  if (document.getElementById('fpp-wled-settings')) {
-    document.querySelectorAll('[data-wled-theme]').forEach(select => {
-      const note=document.createElement('p');note.className='text-body-secondary';
-      note.textContent='Appearance follows FPP. Use FPP settings to change the page theme.';
-      select.closest('p').replaceWith(note);
-    });
-    window.wledTheme={apply:()=>{},set:()=>{},toggle:()=>{}};
-    return;
-  }
-  if (window.parent !== window && new URLSearchParams(location.search).has('embedded')) {
-    document.documentElement.dataset.fppEmbedded='true';
-    function inherit() {
-      const root=parent.document.documentElement, style=parent.getComputedStyle(root);
-      document.documentElement.dataset.bsTheme=root.dataset.bsTheme||'light';
-      document.documentElement.style.colorScheme=root.dataset.bsTheme||'light';
-      for(const name of ['body-bg','body-color','secondary-bg','tertiary-bg','secondary-color','border-color','primary','primary-bg-subtle','primary-text-emphasis','success-bg-subtle','success-text-emphasis','success-border-subtle','warning-bg-subtle','warning-text-emphasis','warning-border-subtle','link-color'])
-        document.documentElement.style.setProperty('--bs-'+name,style.getPropertyValue('--bs-'+name));
+﻿(() => {
+  if(window.wledTheme)return;
+  const root=document.documentElement;
+  if(window.parent!==window&&new URLSearchParams(location.search).has('embedded')){
+    root.dataset.fppEmbedded='true';
+    function inherit(){
+      const host=parent.document.documentElement,style=parent.getComputedStyle(host);
+      root.dataset.bsTheme=host.dataset.bsTheme||'light';root.style.colorScheme=root.dataset.bsTheme;
+      for(const name of ['body-bg','body-color','secondary-bg','tertiary-bg','secondary-color','border-color','primary','primary-bg-subtle','primary-text-emphasis','success-bg-subtle','success-text-emphasis','success-border-subtle','warning-bg-subtle','warning-text-emphasis','warning-border-subtle','link-color'])root.style.setProperty('--bs-'+name,style.getPropertyValue('--bs-'+name));
     }
     inherit();new MutationObserver(inherit).observe(parent.document.documentElement,{attributes:true,attributeFilter:['data-bs-theme']});
-    window.wledTheme={apply:inherit,set:()=>{},toggle:()=>{}};
-    return;
+    window.wledTheme={apply:inherit,set:()=>{},toggle:()=>{},mount:()=>{}};return;
   }
-  const media = matchMedia('(prefers-color-scheme: dark)');
-  const key = 'fpp-wled-appearance';
-  let choice = 'dark', inherited = document.documentElement.dataset.bsTheme;
-  try { choice = localStorage.getItem(key) || 'dark'; } catch {}
-  function apply() {
-    const theme = ['light','dark'].includes(choice) ? choice : ['light','dark'].includes(inherited) ? inherited : media.matches ? 'dark' : 'light';
-    document.documentElement.dataset.bsTheme = theme;
-    document.documentElement.style.colorScheme = theme;
-    document.querySelectorAll('[data-wled-theme]').forEach(select => { select.value = choice; });
-    const button = document.getElementById('wled-theme-toggle');
-    if (button) {
-      const label = theme === 'dark' ? 'Switch to normal mode' : 'Switch to dark mode';
-      button.title = label; button.setAttribute('aria-label', label);
-      button.textContent = theme === 'dark' ? '\u2600' : '\u263e';
-      button.setAttribute('aria-pressed', String(theme === 'dark'));
+  const key='fpp-wled-appearance',media=matchMedia('(prefers-color-scheme: dark)');
+  const hosted=!!document.getElementById('fpp-wled-page-navigation');
+  let inherited=hosted?root.dataset.bsTheme:null,choice=hosted?'auto':'dark',lastApplied;
+  const normalize=value=>['light','dark'].includes(value)?value:'auto';
+  try{const saved=localStorage.getItem(key);if(saved)choice=normalize(saved);}catch{}
+  function apply(){
+    const theme=choice==='auto'?(['light','dark'].includes(inherited)?inherited:media.matches?'dark':'light'):choice;
+    lastApplied=theme;root.dataset.bsTheme=theme;root.style.colorScheme=theme;
+    document.querySelectorAll('[data-wled-mode]').forEach(button=>{
+      const selected=button.dataset.wledMode===choice;
+      button.setAttribute('aria-pressed',String(selected));
+      button.classList.toggle('btn-primary',selected);button.classList.toggle('btn-outline-secondary',!selected);
+    });
+  }
+  function set(value){choice=normalize(value);try{localStorage.setItem(key,choice);}catch{}apply();}
+  function mount(target){
+    if(!target||document.getElementById('wled-theme-modes'))return;
+    const group=document.createElement('div');group.id='wled-theme-modes';group.className='btn-group ms-auto';
+    group.setAttribute('role','group');group.setAttribute('aria-label','Appearance');
+    group.style.cssText='display:inline-flex;flex-shrink:0;gap:0;vertical-align:middle;';
+    for(const mode of ['light','dark','auto']){
+      const button=document.createElement('button');button.type='button';button.dataset.wledMode=mode;
+      button.className='btn btn-sm btn-outline-secondary';button.textContent=mode[0].toUpperCase()+mode.slice(1);
+      button.style.cssText='font:inherit;font-size:14px;line-height:1.4;min-height:40px;padding:6px 10px;margin:0;border:1px solid var(--bs-border-color,ButtonBorder);border-radius:0;cursor:pointer;';
+      if(mode==='light')button.style.borderRadius='.375rem 0 0 .375rem';
+      if(mode==='auto')button.style.borderRadius='0 .375rem .375rem 0';
+      button.onclick=()=>set(mode);group.append(button);
     }
+    target.append(group);apply();
   }
-  function set(value) {
-    choice = ['light','dark'].includes(value) ? value : 'fpp';
-    try { localStorage.setItem(key, choice); } catch {}
-    apply();
+  window.wledTheme={set,apply,mount,toggle:()=>set(['light','dark','auto'][(['light','dark','auto'].indexOf(choice)+1)%3])};
+  function bind(){
+    document.querySelectorAll('[data-wled-theme]').forEach(select=>select.closest('p').remove());
+    mount(document.getElementById('fpp-wled-page-navigation')||document.querySelector('.wled-app-nav'));apply();
   }
-  window.wledTheme = {set, apply, toggle:() => set(document.documentElement.dataset.bsTheme === 'dark' ? 'light' : 'dark')};
-  function bind() { document.querySelectorAll('[data-wled-theme]').forEach(select => { select.onchange = () => set(select.value); }); apply(); }
-  bind(); document.addEventListener('DOMContentLoaded', bind);
-  media.addEventListener('change', apply);
-  window.addEventListener('storage', event => { if(event.key === key || event.key === null) { choice = event.newValue || 'dark'; apply(); } });
-  if (location.pathname.startsWith('/fpp-wled/') || document.getElementById('fpp-wled-settings')) {
-    fetch('/api/settings/themeOverride').then(r => r.ok ? r.json() : {}).then(setting => { inherited = setting.value || ''; apply(); }).catch(() => {});
-  }
+  bind();document.addEventListener('DOMContentLoaded',bind);
+  media.addEventListener('change',apply);
+  window.addEventListener('storage',event=>{if(event.key===key||event.key===null){try{choice=normalize(localStorage.getItem(key));}catch{choice='auto';}apply();}});
+  if(hosted)new MutationObserver(()=>{if(root.dataset.bsTheme!==lastApplied){inherited=root.dataset.bsTheme;apply();}}).observe(root,{attributes:true,attributeFilter:['data-bs-theme']});
 })();

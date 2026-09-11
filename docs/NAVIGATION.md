@@ -13,10 +13,16 @@ same-origin frame, and `settings.php` contains the config fragment. FPP's header
 menus and footer remain in the outer page. Shared navigation displays the existing
 Pixel Monkey logo, also used on plugin details and credits.
 
-The host theme controls both wrapped pages. A saved standalone WLED appearance
-preference cannot override FPP. The frame observes host theme changes, uses its
-semantic color variables and hides its independent theme toggle. Links to Config
-from inside WLED navigate the outer page. Standalone access remains optional.
+The plugin header offers Light, Dark and Auto. The browser remembers one choice
+across Config, WLED and plugin details. Explicit Light/Dark choices apply to the
+whole wrapped page; Auto follows FPP's host theme. Standalone Auto follows the
+system color scheme. This preference does not write FPP's global settings.
+The embedded WLED frame inherits the outer page's semantic colors and hides its
+own appearance control. All three choices are visible buttons, with one selected.
+
+The status notice, access prompt and WLED bottom navigation share one fixed
+footer. A ResizeObserver reserves their combined height in the scrolling content,
+including wrapped messages, so controls remain above the footer.
 
 Plugin details and maintenance remain available from Config, or via the plugin
 entry URL with `&manage=1`. Runtime failures keep the entry page's troubleshooting

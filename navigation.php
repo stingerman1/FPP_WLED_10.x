@@ -9,3 +9,5 @@
   </a>
   <a class="btn btn-outline-secondary" href="plugin.php?plugin=FPP_WLED_10.x&amp;page=plugin.php&amp;manage=1">Plugin details</a>
 </nav>
+
+<script src="/fpp-wled/theme.js"></script>

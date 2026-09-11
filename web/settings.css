@@ -99,3 +99,4 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 .fpp-wled .wled-app-link:hover, .fpp-wled .wled-app-link[aria-current] { background:var(--bs-secondary-bg,ButtonFace); color:var(--bs-body-color,CanvasText); }
 .fpp-wled .wled-app-link:focus-visible { outline:2px solid var(--bs-primary,Highlight); }
 @media(max-width:36rem) { .fpp-wled #lightingSummary dl { grid-template-columns:1fr; } .fpp-wled .wled-summary-header { gap:.5rem; } }
+#wled-theme-modes button[aria-pressed="true"] { font-weight:600!important; }

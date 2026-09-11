@@ -66,7 +66,7 @@ button:focus-visible, .btn:focus-visible { outline:2px solid var(--bs-primary,Hi
 .tab button, .tab button p, .tab button .icons { color:var(--bs-body-color,CanvasText)!important; }
 .tab button.active, .tab button:hover { background:var(--bs-secondary-bg,ButtonFace)!important; color:var(--bs-body-color,CanvasText)!important; }
 
-#namelabel { bottom:calc(var(--bh) + var(--linux-status-height, 36px) + 6px); }
+#namelabel { bottom:calc(var(--linux-footer-height, var(--bh)) + 6px); }
 
 #namelabel { color:var(--control-fg)!important; text-shadow:none; }
 input[type=text], input[type=number], select, textarea {
@@ -109,3 +109,14 @@ input::placeholder, textarea::placeholder { color:var(--control-disabled); opaci
  #top .btnwrap > button, #fpp-navigation, #top .wled-app-link { flex:1; min-width:0; width:auto; padding:8px 0 4px; }
  #top .btnwrap .tab-label, #fpp-navigation span { font-size:11px; white-space:nowrap; }
 }
+/* Header appearance choices use the page's semantic colors. */
+#wled-theme-modes button { color:var(--bs-body-color,CanvasText); background:var(--bs-body-bg,Canvas); }
+#wled-theme-modes button[aria-pressed="true"] { color:var(--bs-primary-text-emphasis,HighlightText); background:var(--bs-primary-bg-subtle,Highlight); outline:1px solid var(--bs-primary,Highlight); outline-offset:-2px; font-weight:600!important; }
+
+/* Keep status, access and native navigation together; scrolling stops above them. */
+#linux-footer { position:fixed; bottom:0; left:0; right:0; z-index:9999; background:var(--bs-body-bg,Canvas); }
+#linux-footer .bot { position:relative; bottom:auto; display:flow-root; }
+.container { margin-top:var(--linux-header-height,var(--tp)); height:calc(100% - var(--linux-header-height,var(--tp)) - var(--linux-footer-height,var(--bh))); }
+#top #wled-theme-modes { float:right; margin:8px; width:auto; }
+#wled-theme-modes button { width:auto!important; min-width:44px; flex:0 0 auto; float:none!important; }
+#top #wled-theme-modes button[aria-pressed="true"] { color:var(--bs-primary-text-emphasis,HighlightText)!important; background:var(--bs-primary-bg-subtle,Highlight)!important; }

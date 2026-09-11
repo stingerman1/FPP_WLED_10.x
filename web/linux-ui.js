@@ -76,13 +76,15 @@
     button.title = label; button.setAttribute('aria-label', label);
     return result;
   };
-  // Use one persistent appearance preference across WLED and its settings.
+  // The outer FPP header owns appearance when embedded.
   tglTheme = () => window.wledTheme.toggle();
   const oldTheme = document.querySelector('[onclick="tglTheme()"]');
   if (oldTheme) {
-    const toggle = document.createElement('button');
-    toggle.id = 'wled-theme-toggle'; toggle.type = 'button';
-    toggle.onclick = tglTheme; oldTheme.replaceWith(toggle); window.wledTheme.apply();
+    oldTheme.remove();
+    if(window.parent===window){
+      const appearance=document.createElement('div');appearance.style.cssText='clear:both;display:flow-root;text-align:right';
+      document.querySelector('#top .btnwrap').after(appearance);window.wledTheme.mount(appearance);
+    }
   }
   // Upstream assumes each WS message is state/info. Handle the Linux API's
   // explicit rejection response before it reaches that state parser.
@@ -320,7 +322,7 @@
   }
   const access = document.createElement('section');
   access.id = 'linux-access-notice';
-  access.style.cssText = 'position:fixed;bottom:calc(var(--bh,0px) + 36px);left:0;right:0;z-index:10000;background:Canvas;color:CanvasText;padding:12px;text-align:center;border-top:1px solid GrayText';
+  access.style.cssText = 'position:relative;background:Canvas;color:CanvasText;padding:12px;text-align:center;border-top:1px solid GrayText';
   const accessText = document.createElement('p');
   accessText.textContent = 'Click Enable lighting controls to change colors and save your favorite looks. This browser will remember your access.';
   const connect = document.createElement('button');
@@ -348,12 +350,16 @@
   setInterval(() => { if (!document.hidden) refreshAccess(); }, 15000);
   const notice = document.createElement('div');
   notice.id = 'linux-status-notice';
-  notice.style.cssText = 'position:fixed;bottom:var(--bh,0px);left:0;right:0;z-index:9999;background:Canvas;color:CanvasText;padding:8px;text-align:center;font:14px sans-serif;pointer-events:none';
-  document.body.append(notice);
-  // The status strip can wrap; keep the device name above its measured height.
-  new ResizeObserver(() => {
-    document.documentElement.style.setProperty('--linux-status-height', notice.getBoundingClientRect().height + 'px');
-  }).observe(notice);
+  notice.style.cssText = 'position:relative;background:Canvas;color:CanvasText;padding:8px;text-align:center;font:14px sans-serif;pointer-events:none';
+  const footer=document.createElement('div');footer.id='linux-footer';
+  const bottom=document.getElementById('bot');
+  footer.append(access,notice);if(bottom)footer.append(bottom);document.body.append(footer);
+  // Reserve the entire footer, including wrapped notices and access prompts.
+  const measure=()=>{
+    document.documentElement.style.setProperty('--linux-footer-height',footer.getBoundingClientRect().height+'px');
+    document.documentElement.style.setProperty('--linux-header-height',document.getElementById('top').getBoundingClientRect().bottom+'px');
+  };
+  const sizeObserver=new ResizeObserver(measure);sizeObserver.observe(footer);sizeObserver.observe(document.getElementById('top'));measure();
   async function refresh() {
     try {
       const status = await (await wledFetch('/api/status')).json();

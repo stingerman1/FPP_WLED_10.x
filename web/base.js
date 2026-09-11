@@ -99,6 +99,7 @@ function wledAppNavigation() {
   }
 }
 wledAppNavigation();
+window.wledTheme?.mount(document.querySelector('.wled-app-nav'));
 // Explicit user action authorizes the browser; never persist the raw token in JS storage.
 async function wledEnableControls() {
   if (!wledOnFPP()) throw Error('Open WLED through FPP to enable controls automatically, or enter your API token in Settings.');
