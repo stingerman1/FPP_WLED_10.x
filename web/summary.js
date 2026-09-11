@@ -1,10 +1,12 @@
 // Read-only overview: share the settings page's state poll, never edit its drafts.
 (() => {
  const $ = id => document.getElementById(id);
- // Group only the heading and overview; settings.php still finds the first h1.
+ // Standalone keeps its heading; FPP's wrapper already supplies the page title.
  const header = document.createElement('div'); header.className = 'wled-summary-header';
  const summary = $('lightingSummary'), title = summary.previousElementSibling;
- title.before(header); header.append(title, summary);
+ summary.before(header);
+ if(title?.tagName==='H1')header.append(title);
+ header.append(summary);
  let effects = [], presets = {}, palettes=[], customPalettes={}, paletteStops={}, nextCatalog = 0, fetching = false, latest;
  const list=summary.querySelector('dl');
  for(const [title,id] of [['Palette','summaryPalette'],['Live WLED colors','summaryLiveColors']]){const item=document.createElement('div'),term=document.createElement('dt'),value=document.createElement('dd');term.textContent=title;value.id=id;value.textContent='Checking...';item.append(term,value);list.append(item);}
