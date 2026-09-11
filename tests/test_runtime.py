@@ -35,6 +35,10 @@ class RuntimeTests(unittest.TestCase):
                       '/json/palettes', '/json/nodes', '/json/palx?page=0', '/presets.json', '/api/auth',
                       '/api/status', '/api/config', '/api/devices', '/api/discovery', '/api/network', '/api/schedules', '/api/preview', '/api/palettes'):
             request('GET', route)
+        identity = request('GET', '/json/info')
+        self.assertEqual(identity['product'], 'FPP')
+        self.assertEqual(identity['device_type'], 'FPP')
+        self.assertEqual(identity['arch'], 'linux')
         # All advertised mutation routes operate only on this isolated fixture.
         request('POST', '/api/login', {})
         for route in ('/json', '/json/state', '/json/si'):

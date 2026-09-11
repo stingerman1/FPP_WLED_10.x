@@ -66,7 +66,7 @@ class Discovery:
         self.service = ServiceInfo('_wled._tcp.local.', f'FPP-WLED-{uid}._wled._tcp.local.',
             addresses=[socket.inet_aton(a) for a, _ in self.local],
             port=controller.config.get('discovery_http_port', 80),
-            properties={'mac': uid, 'path': '/fpp-wled/', 'product': 'FPP-WLED'},
+            properties={'mac': uid, 'path': '/fpp-wled/', 'product': 'FPP', 'device_type': 'FPP', 'arch': 'linux'},
             server=f'fpp-wled-{uid}.local.')
         # mDNS probing is asynchronous so FPP observation does not stall.
         self.advertiser = threading.Thread(target=self.advertise, daemon=True)
@@ -101,8 +101,10 @@ class Discovery:
             path = info.properties.get(b'path', b'/').decode('utf-8', 'replace')
             if path not in ('/', '/fpp-wled/'):
                 path = '/'
+            product = info.properties.get(b'product', b'').decode('utf-8', 'replace')
             self.record('mdns:' + name + ':' + address, {'name': name.removesuffix('._wled._tcp.local.'),
-                'address': address, 'port': info.port, 'path': path, 'type': 0, 'vid': 0, 'method': 'mdns'})
+                'address': address, 'port': info.port, 'path': path, 'type': 0, 'vid': 0, 'method': 'mdns',
+                'device_type': 'FPP' if product in ('FPP', 'FPP-WLED') else ''})
 
     def update_service(self, zeroconf, service_type, name):
         self.add_service(zeroconf, service_type, name)

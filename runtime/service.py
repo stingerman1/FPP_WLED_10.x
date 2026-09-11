@@ -56,7 +56,7 @@ class Controller:
         sync = self.sync_state()
         discovery = self.integrations.get('discovery')
         return {'ver': '16.0.1-linux-alpha.2', 'vid': 2609110, 'name': self.config.get('name', 'WLED for FPP'),
-                'arch': 'linux', 'brand': 'WLED', 'product': 'FPP Linux alpha',
+                'arch': 'linux', 'brand': 'WLED', 'product': 'FPP', 'device_type': 'FPP',
                 'live': owned, 'liveseg': -1, 'lm': 'FPP show', 'lip': '',
                 'leds': {'count': p['count'], 'rgbw': p['channels'] == 4, 'wv': p['channels'] == 4,
                          'cct': False, 'seglc': [3 if p['channels'] == 4 else 1] * len(self.state.value['seg']),

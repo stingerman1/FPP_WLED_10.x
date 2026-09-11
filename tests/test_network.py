@@ -37,10 +37,11 @@ class DiscoverySyncTests(unittest.TestCase):
         discovery.receive(packet, '192.0.2.2')
         self.assertEqual(discovery.public()[0]['name'], 'Porch')
         info = SimpleNamespace(parsed_addresses=lambda: ['192.0.2.2'], port=8080,
-                               properties={b'path': b'/fpp-wled/'})
+                               properties={b'path': b'/fpp-wled/', b'product': b'FPP'})
         discovery.add_service(SimpleNamespace(get_service_info=lambda *a, **k: info), '_wled._tcp.local.', 'Porch._wled._tcp.local.')
         self.assertEqual(len(discovery.public()), 1)
         self.assertEqual(discovery.public()[0]['url'], 'http://192.0.2.2:8080/fpp-wled/')
+        self.assertEqual(discovery.public()[0]['device_type'], 'FPP')
         discovery.remove_service(None, '', 'Porch._wled._tcp.local.')
         with patch('runtime.discovery.time.monotonic', return_value=time.monotonic() + 181):
             self.assertEqual(discovery.public(), [])
@@ -139,6 +140,9 @@ class DiscoverySyncTests(unittest.TestCase):
             service = zc.register_service.call_args.args[0]
             self.assertEqual(service.port, 8080)
             self.assertEqual(service.properties[b'path'], b'/fpp-wled/')
+            self.assertEqual(service.properties[b'product'], b'FPP')
+            self.assertEqual(service.properties[b'device_type'], b'FPP')
+            self.assertEqual(service.properties[b'arch'], b'linux')
             self.assertEqual(service.parsed_addresses(), ['192.0.2.1'])
             discovery.close()
             browser.return_value.cancel.assert_called_once()

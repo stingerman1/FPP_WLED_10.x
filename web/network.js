@@ -34,7 +34,7 @@
       if (!discoveryResponse.ok) throw Error(`Discovery results unavailable (HTTP ${discoveryResponse.status})`);
       const nodes = await discoveryResponse.json(), list = document.getElementById('discovered');
       if (!Array.isArray(nodes)) throw Error('Runtime returned invalid discovery results');
-      const signature = JSON.stringify(nodes.map(node => [node.address, node.name, node.url, node.enrolled, node.mode]).sort());
+      const signature = JSON.stringify(nodes.map(node => [node.address, node.name, node.url, node.enrolled, node.mode, node.device_type]).sort());
       const unchanged = signature === previousNodes;
       previousNodes = signature;
       list.replaceChildren();
@@ -44,7 +44,7 @@
       for (const node of nodes) {
         const row = document.createElement('p'), link = document.createElement('a');
         link.textContent = node.name || node.address; link.href = node.url;
-        row.append(link, document.createTextNode(` — ${node.address}${node.enrolled ? ' (enrolled: ' + node.mode + ')' : ''}`)); list.append(row);
+        row.append(link, document.createTextNode(` — ${node.address}${node.device_type === 'FPP' ? ' · FPP' : ''}${node.enrolled ? ' (enrolled: ' + node.mode + ')' : ''}`)); list.append(row);
         if (!node.enrolled) {
           const add = document.createElement('button'); add.textContent = 'Add this controller';
           add.onclick = () => window.wledEnrollDevice(node); row.append(add);

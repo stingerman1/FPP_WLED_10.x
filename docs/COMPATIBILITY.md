@@ -70,3 +70,15 @@ provided. Cross-port virtual segment composition is available through the guided
 up to 256 sampled RGB preview values, black while ambient is suspended.
 `/liveview` and common native settings links redirect to Linux setup sections.
 This does not supply full native `/json/cfg`, `/win`, or WebSocket parity.
+
+Device identity: `/json/info` and mDNS TXT records report `product: FPP` and
+`device_type: FPP`, with `arch: linux`. The configured player name (for example,
+FPP04) is preserved. This plugin's discovery list labels matching mDNS peers FPP,
+including older peers advertising `product: FPP-WLED`.
+
+Stock WLED's Nodes type column has a hard-coded numeric-to-ESP-name table,
+not a free-text device-type field. Its UDP hardware type remains 0 (unknown),
+with the power flag separate, so we do not impersonate an ESP or claim an
+unassigned protocol ID. Stock receivers show `?`; displaying `FPP` there requires
+support in the receiving firmware. See upstream
+[btype / populateNodes](https://github.com/wled/WLED/blob/main/wled00/data/index.js).
