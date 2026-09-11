@@ -1,5 +1,6 @@
 /* Override upstream chrome, not lighting/palette colors. System colors follow
    FPP's themeOverride via theme.js even on standalone runtime pages. */
+:root[data-fpp-embedded] #wled-theme-toggle { display:none; }
 :root {
  --c-1:Canvas!important; --c-f:CanvasText!important; --c-2:ButtonFace!important;
  --c-3:color-mix(in srgb,CanvasText 8%,Canvas)!important; --c-4:ButtonBorder!important;
@@ -12,34 +13,34 @@
 #linux-status-notice a { color:CanvasText; text-decoration:underline; }
 
 /* Keep FPP-style dark navigation around the lighter working area. */
-body, #top, .bot { background:#191a24!important; }
-#top, .bot { color:#f3f4f6; }
-#top p, .bot p, .tab button { color:#f3f4f6!important; }
+body, #top, .bot { background:var(--bs-tertiary-bg,Canvas)!important; }
+#top, .bot { color:var(--bs-body-color,CanvasText); }
+#top p, .bot p, .tab button { color:var(--bs-body-color,CanvasText)!important; }
 .tab button { border:0!important; }
-.tab button:hover, .tab button.active { background:#383b49!important; color:#fff!important; }
-:root[data-bs-theme="light"] .container { background:#f6f7f9; }
-:root[data-bs-theme="dark"] .container { background:#23252e; }
+.tab button:hover, .tab button.active { background:var(--bs-secondary-bg,ButtonFace)!important; color:var(--bs-body-color,CanvasText)!important; }
+:root[data-bs-theme="light"] .container { background:var(--bs-body-bg,Canvas); }
+:root[data-bs-theme="dark"] .container { background:var(--bs-body-bg,Canvas); }
 :root[data-bs-theme="light"] .lstI,
 :root[data-bs-theme="light"] .pres,
 :root[data-bs-theme="light"] .psts,
-:root[data-bs-theme="light"] #Colors .btn { box-shadow:inset 0 0 0 1px #aeb4bc; }
-:root[data-bs-theme="light"] .qcs { outline:1px solid #9da4ae; outline-offset:1px; }
-#linux-status-notice { background:#191a24!important; color:#f3f4f6!important; }
-#linux-status-notice a { color:#f3f4f6!important; }
+:root[data-bs-theme="light"] #Colors .btn { box-shadow:inset 0 0 0 1px var(--bs-border-color,ButtonBorder); }
+:root[data-bs-theme="light"] .qcs { outline:1px solid var(--bs-border-color,ButtonBorder); outline-offset:1px; }
+#linux-status-notice { background:var(--bs-tertiary-bg,Canvas)!important; color:var(--bs-body-color,CanvasText)!important; }
+#linux-status-notice a { color:var(--bs-body-color,CanvasText)!important; }
 #wled-theme-toggle { border:0; background:transparent; color:inherit; cursor:pointer; padding:0; font-size:22px; line-height:1; vertical-align:middle; float:none; min-width:24px; }
 
-#top { --c-f:#f3f4f6!important; --c-4:#626775!important; }
+#top { --c-f:var(--bs-body-color,CanvasText)!important; --c-4:var(--bs-border-color,ButtonBorder)!important; }
 
 /* Foreground/background pairs for readable control states in both appearances. */
 :root {
- --control-bg:#edf0f4; --control-fg:#202632; --control-hover:#d5dce6;
- --control-selected:#c9dcf2; --control-selected-fg:#142b45;
- --control-disabled:#536075; --control-border:#9ca7b5;
+ --control-bg:var(--bs-tertiary-bg,Canvas); --control-fg:var(--bs-body-color,CanvasText); --control-hover:var(--bs-secondary-bg,ButtonFace);
+ --control-selected:var(--bs-primary-bg-subtle,Highlight); --control-selected-fg:var(--bs-primary-text-emphasis,HighlightText);
+ --control-disabled:var(--bs-secondary-color,GrayText); --control-border:var(--bs-border-color,ButtonBorder);
 }
 :root[data-bs-theme="dark"] {
- --control-bg:#343b49; --control-fg:#f5f7fa; --control-hover:#475366;
- --control-selected:#385c82; --control-selected-fg:#ffffff;
- --control-disabled:#c0c7d2; --control-border:#8390a3;
+ --control-bg:var(--bs-tertiary-bg,Canvas); --control-fg:var(--bs-body-color,CanvasText); --control-hover:var(--bs-secondary-bg,ButtonFace);
+ --control-selected:var(--bs-primary-bg-subtle,Highlight); --control-selected-fg:var(--bs-body-color,CanvasText);
+ --control-disabled:var(--bs-secondary-color,GrayText); --control-border:var(--bs-border-color,ButtonBorder);
 }
 
 .btn:not(#csl button), .lstI, .pres {
@@ -60,10 +61,10 @@ button:disabled:not(#csl button) {
  cursor:not-allowed; border-color:var(--control-border)!important;
 }
 button:disabled .icons { color:inherit; }
-button:focus-visible, .btn:focus-visible { outline:2px solid #4b8bd3; outline-offset:2px; }
+button:focus-visible, .btn:focus-visible { outline:2px solid var(--bs-primary,Highlight); outline-offset:2px; }
 /* The dark menu frame uses its own matched colors in both modes. */
-.tab button, .tab button p, .tab button .icons { color:#f3f4f6!important; }
-.tab button.active, .tab button:hover { background:#383b49!important; color:#fff!important; }
+.tab button, .tab button p, .tab button .icons { color:var(--bs-body-color,CanvasText)!important; }
+.tab button.active, .tab button:hover { background:var(--bs-secondary-bg,ButtonFace)!important; color:var(--bs-body-color,CanvasText)!important; }
 
 #namelabel { bottom:calc(var(--bh) + var(--linux-status-height, 36px) + 6px); }
 
@@ -76,19 +77,33 @@ input::placeholder, textarea::placeholder { color:var(--control-disabled); opaci
 #fxlist .lstI.sticky:not(.selected) {
  position:relative; top:auto; bottom:auto; z-index:auto; box-shadow:none;
 }
+/* Inside FPP, use the host's semantic surfaces instead of standalone chrome. */
+:root[data-fpp-embedded][data-bs-theme] {
+ --control-bg:var(--bs-tertiary-bg); --control-fg:var(--bs-body-color); --control-hover:var(--bs-secondary-bg);
+ --control-selected:var(--bs-primary-bg-subtle); --control-selected-fg:var(--bs-primary-text-emphasis);
+ --control-border:var(--bs-border-color); --control-disabled:var(--bs-secondary-color);
+ --control-on-bg:var(--bs-success-bg-subtle); --control-on-fg:var(--bs-success-text-emphasis); --control-on-border:var(--bs-success-border-subtle);
+ --control-paused-bg:var(--bs-warning-bg-subtle); --control-paused-fg:var(--bs-warning-text-emphasis); --control-paused-border:var(--bs-warning-border-subtle);
+}
+:root[data-fpp-embedded] body, :root[data-fpp-embedded] #top, :root[data-fpp-embedded] .bot,
+:root[data-fpp-embedded] .container, :root[data-fpp-embedded] #linux-status-notice { background:var(--bs-body-bg)!important; color:var(--bs-body-color)!important; }
+:root[data-fpp-embedded] #top p, :root[data-fpp-embedded] .bot p, :root[data-fpp-embedded] .tab button,
+:root[data-fpp-embedded] .tab button p, :root[data-fpp-embedded] .tab button .icons,
+:root[data-fpp-embedded] #linux-status-notice a { color:var(--bs-body-color)!important; }
+:root[data-fpp-embedded] .tab button:hover, :root[data-fpp-embedded] .tab button.active { background:var(--bs-secondary-bg)!important; }
 #fxlist .lstI.selected { top:var(--sti); }
 
 /* Return to FPP belongs to WLED's dark top navigation, in both appearances. */
-#top .wled-app-link { float:left; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; padding:var(--tbp); color:#f3f4f6; text-decoration:none; box-sizing:border-box; font-size:12px; }
-#top .wled-app-link:hover, #top .wled-app-link[aria-current] { background:#383b49; }
-#top .wled-app-link:focus-visible { outline:2px solid #8cbaff; outline-offset:-2px; }
-.tooltip { position:fixed!important; max-width:calc(100vw - 16px); box-sizing:border-box; z-index:10000; background:#222!important; color:#fff!important; }
-.tooltip::after { border-color:#222 transparent transparent transparent; }
-.tooltip[data-below]::after { top:auto; bottom:100%; border-color:transparent transparent #222 transparent; }
-#fpp-navigation { float:left; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; padding:var(--tbp); margin:0; color:#f3f4f6; text-decoration:none; box-sizing:border-box; font-size:12px; }
+#top .wled-app-link { float:left; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; padding:var(--tbp); color:var(--bs-body-color,CanvasText); text-decoration:none; box-sizing:border-box; font-size:12px; }
+#top .wled-app-link:hover, #top .wled-app-link[aria-current] { background:var(--bs-secondary-bg,ButtonFace); }
+#top .wled-app-link:focus-visible { outline:2px solid var(--bs-primary,Highlight); outline-offset:-2px; }
+.tooltip { position:fixed!important; max-width:calc(100vw - 16px); box-sizing:border-box; z-index:10000; background:var(--bs-secondary-bg,ButtonFace)!important; color:var(--bs-body-color,CanvasText)!important; }
+.tooltip::after { border-color:var(--bs-secondary-bg,ButtonFace) transparent transparent transparent; }
+.tooltip[data-below]::after { top:auto; bottom:100%; border-color:transparent transparent var(--bs-secondary-bg,ButtonFace) transparent; }
+#fpp-navigation { float:left; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; padding:var(--tbp); margin:0; color:var(--bs-body-color,CanvasText); text-decoration:none; box-sizing:border-box; font-size:12px; }
 #fpp-navigation img { object-fit:contain; }
-#fpp-navigation:hover { background:#383b49; color:#fff; }
-#fpp-navigation:focus-visible { outline:2px solid #4b8bd3; outline-offset:-2px; }
+#fpp-navigation:hover { background:var(--bs-secondary-bg,ButtonFace); color:var(--bs-body-color,CanvasText); }
+#fpp-navigation:focus-visible { outline:2px solid var(--bs-primary,Highlight); outline-offset:-2px; }
 @media(max-width:639px) {
  #top .btnwrap { display:flex; }
  #top .btnwrap > button, #fpp-navigation, #top .wled-app-link { flex:1; min-width:0; width:auto; padding:8px 0 4px; }

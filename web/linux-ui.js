@@ -244,7 +244,7 @@
       const linear = rgb.slice(0,3).map(v => { const c = Number(v)/255; return c <= .04045 ? c/12.92 : ((c+.055)/1.055)**2.4; });
       const luminance = linear[0]*.2126 + linear[1]*.7152 + linear[2]*.0722;
       const color = luminance > .179 ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)';
-      if (button.style.color !== color) button.style.color = color;
+      if (button.style.color !== color || button.style.getPropertyPriority('color')!=='important') button.style.setProperty('color',color,'important');
     });
   }
   const slots = document.getElementById('csl');
@@ -252,17 +252,17 @@
   slotContrast();
   const nightlightButton = document.getElementById('buttonNl');
   if (nightlightButton) {
-    nightlightButton.onclick = () => { location.href = wledSettingsURL('#ambient-lighting'); };
+    nightlightButton.onclick = () => { wledNavigate(wledSettingsURL('#ambient-lighting')); };
     nightlightButton.title = 'Nightlight and lighting controls';
   }
   const peek = document.getElementById('buttonSr');
   if (peek) {
-    peek.onclick = () => { location.href = wledSettingsURL('#ambient-lighting'); };
+    peek.onclick = () => { wledNavigate(wledSettingsURL('#ambient-lighting')); };
     peek.title = 'Open ambient pixel preview';
   }
   const sync = document.getElementById('buttonSync');
   if (sync) {
-    sync.onclick = () => { location.href = wledSettingsURL('#network'); };
+    sync.onclick = () => { wledNavigate(wledSettingsURL('#network')); };
     sync.title = 'Discovery and synchronization settings';
   }
   // Render network-supplied names as text; use advertised paths and avoid the
@@ -284,7 +284,7 @@
   };
   for (const button of document.querySelectorAll('button')) {
     if ((button.getAttribute('onclick') || '').includes("getURL('/settings')")) {
-      button.onclick = () => { location.href = wledSettingsURL(); };
+      button.onclick = () => { wledNavigate(wledSettingsURL()); };
       continue;
     }
     if (/\/edit/.test(button.getAttribute('onclick') || '')) {
@@ -292,13 +292,13 @@
       button.setAttribute('aria-label', button.title);
       const label = button.parentElement.querySelector('.iconlabel');
       if (label) label.textContent = 'Presets';
-      button.onclick = () => { location.href = wledSettingsURL('#preset-import'); }; continue;
+      button.onclick = () => { wledNavigate(wledSettingsURL('#preset-import')); }; continue;
     }
     if (/\/cpal/.test(button.getAttribute('onclick') || '')) {
-      button.onclick = () => { location.href = wledSettingsURL('#custom-palettes'); };
+      button.onclick = () => { wledNavigate(wledSettingsURL('#custom-palettes')); };
       continue;
     }
-    if (button.id === 'updBt') { button.textContent = 'Plugin updates & help'; button.onclick = () => { location.href = wledOnFPP() ? '/plugin.php?plugin=FPP_WLED_10.x&page=plugin.php&manage=1' : wledSettingsURL('#compatibility'); }; continue; }
+    if (button.id === 'updBt') { button.textContent = 'Plugin updates & help'; button.onclick = () => { wledNavigate(wledOnFPP() ? '/plugin.php?plugin=FPP_WLED_10.x&page=plugin.php&manage=1' : wledSettingsURL('#compatibility')); }; continue; }
     if (['resetbtn'].includes(button.id) ||
         /\/(edit|pixelforge|palette|cpal)/.test(button.getAttribute('onclick') || '')) {
       button.disabled = true;

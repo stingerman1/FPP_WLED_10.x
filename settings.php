@@ -1,8 +1,10 @@
 <?php
+$wledCurrent = 'config'; require __DIR__ . '/navigation.php';
 // A fragment inside FPP's normal wrapper: retain its theme, Bootstrap and menu.
 $markup = file_get_contents(__DIR__ . '/web/settings.html');
 $markup = substr($markup, strpos($markup, '<h1>'));
 $markup = str_replace('</body></html>', '', $markup);
+$markup = preg_replace('/<a href="\.\/">Open WLED<\/a>\s*[^<]*\s*/', '', $markup);
 $markup = preg_replace('/<script src="([^":]+)"/', '<script src="/fpp-wled/$1"', $markup);
 $markup = str_replace(['href="./"', 'href="presets.json"'], ['href="/fpp-wled/"', 'href="/fpp-wled/presets.json"'], $markup);
 $markup = preg_replace('/<button(?![^>]*\bclass=)/', '<button class="btn btn-outline-primary"', $markup);

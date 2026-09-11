@@ -1,4 +1,27 @@
 (() => {
+  // FPP owns the outer document's theme. Plugin preferences must never change it.
+  if (document.getElementById('fpp-wled-settings')) {
+    document.querySelectorAll('[data-wled-theme]').forEach(select => {
+      const note=document.createElement('p');note.className='text-body-secondary';
+      note.textContent='Appearance follows FPP. Use FPP settings to change the page theme.';
+      select.closest('p').replaceWith(note);
+    });
+    window.wledTheme={apply:()=>{},set:()=>{},toggle:()=>{}};
+    return;
+  }
+  if (window.parent !== window && new URLSearchParams(location.search).has('embedded')) {
+    document.documentElement.dataset.fppEmbedded='true';
+    function inherit() {
+      const root=parent.document.documentElement, style=parent.getComputedStyle(root);
+      document.documentElement.dataset.bsTheme=root.dataset.bsTheme||'light';
+      document.documentElement.style.colorScheme=root.dataset.bsTheme||'light';
+      for(const name of ['body-bg','body-color','secondary-bg','tertiary-bg','secondary-color','border-color','primary','primary-bg-subtle','primary-text-emphasis','success-bg-subtle','success-text-emphasis','success-border-subtle','warning-bg-subtle','warning-text-emphasis','warning-border-subtle','link-color'])
+        document.documentElement.style.setProperty('--bs-'+name,style.getPropertyValue('--bs-'+name));
+    }
+    inherit();new MutationObserver(inherit).observe(parent.document.documentElement,{attributes:true,attributeFilter:['data-bs-theme']});
+    window.wledTheme={apply:inherit,set:()=>{},toggle:()=>{}};
+    return;
+  }
   const media = matchMedia('(prefers-color-scheme: dark)');
   const key = 'fpp-wled-appearance';
   let choice = 'dark', inherited = document.documentElement.dataset.bsTheme;

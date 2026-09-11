@@ -28,6 +28,15 @@ function wledFetch(path, options) {
 function wledOnFPP() {
   return location.pathname.startsWith('/fpp-wled/') || !!document.getElementById('fpp-wled-settings');
 }
+function wledNavigate(url) {
+  if(window.parent!==window && wledOnFPP()) window.top.location.href=url;
+  else location.href=url;
+}
+document.addEventListener('click',event=>{
+  if(window.parent===window||!wledOnFPP())return;
+  const link=event.target.closest('a');
+  if(link&&link.href.includes('plugin.php?plugin=FPP_WLED_10.x')){event.preventDefault();wledNavigate(link.href);}
+});
 function wledStyleControls(root) {
   if (!document.getElementById('fpp-wled-settings')) return;
   root.querySelectorAll('button').forEach(button=>button.classList.add('btn','btn-outline-primary'));
@@ -37,6 +46,7 @@ function wledStyleControls(root) {
 // Standalone WLED pages need a way back to the player's own navigation.
 // Wrapped setup pages already have FPP's header and must not add a duplicate.
 function wledAddFPPNavigation() {
+  if(window.parent!==window)return;
   if (document.getElementById('fpp-wled-settings') || document.getElementById('fpp-navigation')) return;
   const menu = document.querySelector('#top .btnwrap') || document.querySelector('nav[aria-label="Setup sections"]');
   if (!menu) return;
@@ -59,6 +69,7 @@ function wledAddFPPNavigation() {
 }
 wledAddFPPNavigation();
 function wledAppNavigation() {
+  if(window.parent!==window)return;
   if (document.getElementById('wled-navigation')) return;
   const main = document.querySelector('#top .btnwrap');
   const setup = document.getElementById('lightingSummary');

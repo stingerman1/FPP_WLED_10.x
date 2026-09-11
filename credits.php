@@ -1,3 +1,4 @@
+<?php require __DIR__ . '/navigation.php'; ?>
 <h2>Open-source credits and licenses</h2>
 <p>Thank you to the authors and communities whose work makes WLED for FPP possible.</p>
 <p><a href="plugin.php?plugin=FPP_WLED_10.x&amp;page=plugin.php">Back to WLED for FPP</a> &middot;

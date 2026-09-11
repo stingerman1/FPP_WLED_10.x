@@ -1,10 +1,11 @@
-<h2><img src="/api/plugin/FPP_WLED_10.x/icon" alt="" width="40" height="40" style="vertical-align:middle;margin-right:.5rem">WLED for FPP &middot; Linux alpha</h2>
+<?php require __DIR__ . '/navigation.php'; ?>
+<h2>WLED for FPP &middot; Linux alpha</h2>
 <?php if (PHP_INT_SIZE !== 8): ?>
 <p role="alert"><strong>This FPP web environment is 32-bit.</strong> This plugin requires a fully 64-bit FPP installation. A 64-bit Pi or kernel alone is not sufficient. The runtime cannot be installed on this environment; changing ports or reinstalling the plugin will not resolve it.</p>
 <p>Check <a href="/api/file/logs/fpp_plugin_manager.log" target="_blank" rel="noopener">the plugin installation log</a> for the build failure. Back up FPP configuration before planning an OS migration.</p>
 <?php return; endif; ?>
 <p>Choose colors and patterns to play between your shows. FPP shows take priority, and your background lighting returns afterward.</p>
-<p><a href="/fpp-wled/" target="_blank" rel="noopener">Open WLED lights</a> · <a href="plugin.php?plugin=FPP_WLED_10.x&amp;page=settings.php" target="_blank" rel="noopener">Settings and help</a></p>
+<p><a href="plugin.php?plugin=FPP_WLED_10.x&amp;page=lights.php">Open WLED lights</a> · <a href="plugin.php?plugin=FPP_WLED_10.x&amp;page=settings.php">Settings and help</a></p>
 <p><a href="plugin.php?plugin=FPP_WLED_10.x&amp;page=credits.php">Open-source credits and licenses</a></p>
 <p>This is an early test version. Full testing on Raspberry Pi 4 and 5 is still needed.</p>
 <p id="wled-web-status" role="status">Checking WLED web access...</p>
@@ -30,7 +31,7 @@
             const state = await response.json();
             status.textContent = 'WLED web access is ready on this FPP address and port.';
             if (!location.hash && !new URLSearchParams(location.search).has('manage')) {
-                location.replace(state.setup_complete ? '/fpp-wled/' : 'plugin.php?plugin=FPP_WLED_10.x&page=settings.php');
+                location.replace(state.setup_complete ? 'plugin.php?plugin=FPP_WLED_10.x&page=lights.php' : 'plugin.php?plugin=FPP_WLED_10.x&page=settings.php');
             }
         })
         .catch(error => { status.textContent = error.name === 'AbortError' ? 'WLED web access timed out. Check the fpp-wled service and installation log.' : error.message; })
