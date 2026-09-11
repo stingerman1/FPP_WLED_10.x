@@ -5,7 +5,7 @@
  const header = document.createElement('div'); header.className = 'wled-summary-header';
  const summary = $('lightingSummary'), title = summary.previousElementSibling;
  title.before(header); header.append(title, summary);
- let effects = [], presets = {}, palettes=[], customPalettes={}, nextCatalog = 0, fetching = false, latest;
+ let effects = [], presets = {}, palettes=[], customPalettes={}, paletteStops={}, nextCatalog = 0, fetching = false, latest;
  const list=summary.querySelector('dl');
  for(const [title,id] of [['Palette','summaryPalette'],['Live WLED colors','summaryLiveColors']]){const item=document.createElement('div'),term=document.createElement('dt'),value=document.createElement('dd');term.textContent=title;value.id=id;value.textContent='Checking...';item.append(term,value);list.append(item);}
  $('summaryColors').previousElementSibling.textContent='Color controls';
@@ -36,7 +36,24 @@
   const segments=s.seg.filter(segment=>segment.on!==false&&segment.stop>segment.start);
   const labels=[...new Set(segments.map(segment=>effects[segment.fx]||'Effect '+segment.fx))];
   $('summaryEffect').textContent=labels.join(', ')||'No active segments';
-  $('summaryPalette').textContent=[...new Set(segments.map(segment=>palettes[segment.pal]||customPalettes[segment.pal]||'Palette '+segment.pal))].join(', ')||'None';
+  $('summaryPalette').replaceChildren();
+  const seenPalettes=new Set();
+  for(const segment of segments){
+   const stops=paletteStops[segment.pal];
+   const colors=(stops||[]).map((stop,i)=>{
+    const rgb=Array.isArray(stop)?stop.slice(1,4):/^c[123]$/.test(stop)?segment.col[Number(stop[1])-1].slice(0,3):null;
+    return rgb?'rgb('+rgb.join(',')+') '+(Array.isArray(stop)?stop[0]/255*100:i/Math.max(1,stops.length-1)*100)+'%':null;
+   });
+   const key=JSON.stringify([segment.pal,colors]);if(seenPalettes.has(key))continue;seenPalettes.add(key);
+   const entry=document.createElement('div');entry.textContent=palettes[segment.pal]||customPalettes[segment.pal]||'Palette '+segment.pal;
+   if(colors.length&&colors.every(Boolean)){
+    const strip=document.createElement('div');strip.className='summary-palette-strip';
+    strip.style.background=colors.length===1?colors[0].split(')')[0]+')':'linear-gradient(to right,'+colors.join(',')+')';
+    strip.title='Palette colors, not a live pixel sample';strip.setAttribute('aria-hidden','true');entry.append(strip);
+   }
+   $('summaryPalette').append(entry);
+  }
+  if(!segments.length)$('summaryPalette').textContent='None';
   const colors=new Map();
   for(const segment of segments)for(const color of segment.col||[]){const rgba=[...color.slice(0,3),color[3]||0];colors.set(rgba.join(','),rgba);}
   $('summaryColors').replaceChildren();
@@ -57,7 +74,16 @@
   fetching=true;nextCatalog=Date.now()+10000;
   Promise.all([wledFetch('/json/effects'),wledFetch('/presets.json'),wledFetch('/json/palettes'),wledFetch('/api/palettes')]).then(async responses=>{
    if(!responses.every(r=>r.ok))return;
-   const data=await Promise.all(responses.map(r=>r.json()));[effects,presets,palettes]=data;customPalettes=Object.fromEntries(Object.entries(data[3].ids).map(([slot,id])=>[id,'Custom palette '+slot]));if(latest)render(latest);
+   const data=await Promise.all(responses.map(r=>r.json()));[effects,presets,palettes]=data;customPalettes=Object.fromEntries(Object.entries(data[3].ids).map(([slot,id])=>[id,'Custom palette '+slot]));
+   if(latest)render(latest);
+   if(!Object.keys(paletteStops).length){
+    const first=await wledFetch('/json/palx?page=0');if(!first.ok)return;
+    const page=await first.json();
+    const rest=await Promise.all(Array.from({length:page.m},(_,i)=>wledFetch('/json/palx?page='+(i+1)).then(r=>{if(!r.ok)throw Error('Palette preview unavailable');return r.json();})));
+    paletteStops=Object.assign({},page.p,...rest.map(p=>p.p));
+   }
+   // Custom previews can change without changing their palette IDs.
+   paletteStops={...paletteStops,...data[3].previews};if(latest)render(latest);
   }).catch(()=>{}).finally(()=>fetching=false);
  };
  window.wledSummaryUnavailable = () => {

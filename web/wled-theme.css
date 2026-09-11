@@ -79,6 +79,9 @@ input::placeholder, textarea::placeholder { color:var(--control-disabled); opaci
 #fxlist .lstI.selected { top:var(--sti); }
 
 /* Return to FPP belongs to WLED's dark top navigation, in both appearances. */
+#linux-active-palette { margin:8px auto 14px; max-width:320px; padding:8px 12px; text-align:left; }
+#linux-active-palette small { display:block; font-size:12px; line-height:1.4; opacity:.85; }
+#linux-active-palette .active-palette-strip { height:16px; border:1px solid currentColor; border-radius:8px; margin:6px 0; }
 #fpp-navigation { float:left; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; padding:var(--tbp); margin:0; color:#f3f4f6; text-decoration:none; box-sizing:border-box; font-size:12px; }
 #fpp-navigation img { object-fit:contain; }
 #fpp-navigation:hover { background:#383b49; color:#fff; }

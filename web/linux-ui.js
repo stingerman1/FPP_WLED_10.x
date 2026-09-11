@@ -2,6 +2,40 @@
 (() => {
   // ESP firmware reporting/upload paths do not apply to this Linux runtime.
   checkVersionUpgrade = () => {};
+  // The wheel edits effect color slots; palettes have a separate visible preview.
+  const paletteOverview = document.createElement('div');
+  paletteOverview.id = 'linux-active-palette';
+  const paletteName = document.createElement('strong'), paletteStrip = document.createElement('div'), paletteHelp = document.createElement('small');
+  paletteStrip.className = 'active-palette-strip';
+  paletteStrip.setAttribute('aria-hidden', 'true');
+  paletteHelp.textContent = 'The wheel edits individual effect colors. The palette supplies colors to effects that use it.';
+  paletteOverview.append(paletteName, paletteStrip, paletteHelp);
+  document.getElementById('picker').before(paletteOverview);
+  const nativeSelectedPalette = updateSelectedPalette;
+  updateSelectedPalette = function (id) {
+    nativeSelectedPalette(id);
+    const item = document.querySelector(`#pallist .lstI[data-id="${id}"] .lstIname`);
+    paletteName.textContent = 'Palette: ' + (item?.textContent || 'Loading…');
+    paletteStrip.style.cssText = genPalPrevCss(id) || 'display:none';
+    paletteStrip.title = 'Palette colors, not a live pixel sample';
+  };
+  let previewRevision, refreshingPreviews = false;
+  const nativeParseInfo = parseInfo;
+  parseInfo = function (info) {
+    nativeParseInfo(info);
+    if (previewRevision === undefined) { previewRevision = info.palrev; return; }
+    if (previewRevision === info.palrev || refreshingPreviews || !palettesData) return;
+    refreshingPreviews = true;
+    wledFetch('/api/palettes').then(async response => {
+      if (!response.ok) throw Error('Could not refresh custom palettes');
+      const data = await response.json();
+      // Replace custom previews, including removed slots; keep built-in data.
+      for (const id of Object.keys(palettesData)) if (Number(id) <= 200 && !lJson.some(palette => palette[0] === Number(id))) delete palettesData[id];
+      Object.assign(palettesData, data.previews);
+      previewRevision = info.palrev;
+      populatePalettes(); redrawPalPrev(); updateSelectedPalette(selectedPal);
+    }).catch(() => {}).finally(() => { refreshingPreviews = false; });
+  };
   // Keep WLED's native power control, but name its next action explicitly.
   const nativeUpdateUI = updateUI;
   updateUI = function (...args) {
