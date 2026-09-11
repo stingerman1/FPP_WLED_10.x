@@ -1,5 +1,7 @@
 # FPP template conformance follow-up
 
+Current follow-up: [2026-09-11 code review](CODE_REVIEW_2026-09-11.md) identifies open API and lifecycle gaps. The historical findings below are not a full current conformance sign-off.
+
 Reviewed against FalconChristmas/fpp-plugin-Template commit `5c0dc73545f5e032902135d8770b1599d489eabe` and its [guidelines](https://github.com/FalconChristmas/fpp-plugin-Template/blob/5c0dc73545f5e032902135d8770b1599d489eabe/PLUGIN_GUIDELINES.md) and metadata schema.
 
 This is a project conformance review, not upstream catalog approval or physical lighting acceptance. The earlier UI assessment was too broad: standalone WLED navigation and fixed plugin colors did not provide the same FPP-native experience as the config wrapper. The 2026-09-11 correction keeps both main pages wrapped, scopes config styling, uses semantic UI colors and preserves the host theme. See NAVIGATION.md; this does not certify unrelated requirements added to upstream guidelines since the pinned audit.
