@@ -28,7 +28,8 @@ class DiscoverySyncTests(unittest.TestCase):
         packet = announcement('192.0.2.2', 'Porch', True)
         self.assertEqual(len(packet), 44)
         self.assertEqual(packet[:6], b'\xff\x01\xc0\x00\x02\x02')
-        self.assertEqual(packet[38:40], b'\x80\x02')
+        self.assertEqual(packet[38:40], b'\xff\x02')
+        self.assertEqual(announcement('192.0.2.2', 'Porch', False)[38], 127)
         discovery.receive(packet, '192.0.2.3')
         discovery.receive(announcement('192.0.2.1', 'Self'), '192.0.2.1')
         for size in range(44):

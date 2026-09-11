@@ -1,5 +1,8 @@
 // Linux capability and ownership notice added alongside upstream WLED's UI.
 (() => {
+  // Match the private FPP node type used by our WLED receiver fork.
+  const nativeBoardType = btype;
+  btype = type => type === 127 ? 'FPP' : nativeBoardType(type);
   // ESP firmware reporting/upload paths do not apply to this Linux runtime.
   checkVersionUpgrade = () => {};
   // Keep upstream tooltips within the viewport, including top-bar controls.
@@ -279,6 +282,9 @@
       const link = document.createElement('a');
       link.className = 'btn'; link.textContent = node.name || node.ip;
       link.href = node.url; link.style.display = 'block'; panel.append(link);
+      const hardware = document.createElement('small');
+      hardware.textContent = node.device_type === 'FPP' ? 'FPP' : btype(node.type & 0x7F);
+      panel.append(hardware);
     }
     const setup = document.createElement('a');
     setup.href = wledSettingsURL('#network'); setup.textContent = 'Discovery and sync settings';

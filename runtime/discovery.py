@@ -10,6 +10,10 @@ import threading
 import time
 import uuid
 
+# Private extension shared with our WLED fork, not an upstream-assigned ID.
+# Bit 7 remains WLED's power flag; stock receivers display an unknown type.
+FPP_NODE_TYPE = 127
+
 
 def interfaces():
     """Return Linux IPv4 addresses and directed broadcasts, without DNS/network I/O."""
@@ -34,7 +38,7 @@ def announcement(address, name, on=False):
     data[2:6] = socket.inet_aton(address)
     name = name.encode('utf-8')[:32]
     data[6:6 + len(name)] = name
-    data[38] = 128 if on else 0  # Undefined hardware type, never impersonate ESP.
+    data[38] = FPP_NODE_TYPE | (128 if on else 0)
     data[39] = data[5]
     struct.pack_into('<I', data, 40, 2609080)
     return bytes(data)

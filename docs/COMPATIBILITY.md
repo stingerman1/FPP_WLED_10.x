@@ -76,9 +76,15 @@ Device identity: `/json/info` and mDNS TXT records report `product: FPP` and
 FPP04) is preserved. This plugin's discovery list labels matching mDNS peers FPP,
 including older peers advertising `product: FPP-WLED`.
 
-Stock WLED's Nodes type column has a hard-coded numeric-to-ESP-name table,
-not a free-text device-type field. Its UDP hardware type remains 0 (unknown),
-with the power flag separate, so we do not impersonate an ESP or claim an
-unassigned protocol ID. Stock receivers show `?`; displaying `FPP` there requires
-support in the receiving firmware. See upstream
-[btype / populateNodes](https://github.com/wled/WLED/blob/main/wled00/data/index.js).
+The matching receiver change is published in
+[our WLED fork](https://github.com/stingerman1/WLED/tree/fpp-node-type-16.0.1).
+The plugin announces private hardware type **127** (255 when the power flag is
+set); our lookup displays **FPP** for that type. The code is a private extension,
+not an upstream-assigned ID. Stock WLED still shows `?` until its receiver
+firmware includes this lookup. Existing ESP IDs and UDP sync packets are unchanged.
+
+The receiver branch is separate from the pinned Linux rendering branch, so the
+original rendering source tree remains intact. Its web build, 18 Node tests
+(16 build tests plus 2 lookup tests) and a generic `esp32dev` firmware build pass.
+No physical receiver has been flashed or tested. Build the environment matching
+the actual controller; the generic ESP32 binary is not universal.
