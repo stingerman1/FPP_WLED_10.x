@@ -46,6 +46,57 @@
   }
   $('addMapping').onclick = () => { mappings.push({pixel:0,count:1,channel:1}); renderRows(); };
   $('addDevice').onclick = () => { devices.push({id:'',address:'',mode:'effect',groups:[]}); renderRows(); };
+  window.wledEnrollDevice = node => {
+    if (!saved) { report('Setup is still loading. Try again in a moment.'); return; }
+    if (devices.some(device => device.address === node.address)) {
+      report('This address is already in your device list.');
+    } else {
+      const base = (node.name || 'wled').replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,48) || 'wled';
+      let id = base, index = 2;
+      while (devices.some(device => device.id === id)) id = base + '-' + index++;
+      devices.push({id,address:node.address,mode:'effect',groups:[]}); renderRows();
+      report('Controller added to your draft. Choose its mode, then Save setup and Apply setup.');
+    }
+    $('deviceRows').scrollIntoView({block:'center'});
+  };
+  let layoutPreview = null;
+  const chosenLayout = () => [...$('fppLayoutItems').querySelectorAll('input:checked')].map(input => Number(input.value));
+  $('readFppLayout').onclick = async () => {
+    layoutPreview = null; $('saveFppLayout').disabled = true;
+    $('layoutFeedback').textContent = 'Reading FPP lights...';
+    try {
+      const response = await wledFetch('/api/layout');
+      if (!response.ok) throw Error('Could not read FPP lights.');
+      const result = await response.json(), models = result.items.some(item => item.kind === 'model');
+      $('fppLayoutItems').replaceChildren();
+      for (const item of result.items) {
+        const label = document.createElement('label'), check = document.createElement('input');
+        check.type = 'checkbox'; check.value = item.id; check.checked = models ? item.kind === 'model' : true;
+        check.onchange = () => { layoutPreview = null; $('saveFppLayout').disabled = true; };
+        label.append(check, document.createTextNode(' ' + item.name + ' (' + item.kind + ')')); $('fppLayoutItems').append(label);
+      }
+      $('previewFppLayout').disabled = !result.items.length;
+      $('layoutFeedback').textContent = result.warnings.join('\n') || 'Choose your lights, then preview the layout.';
+    } catch (error) { $('layoutFeedback').textContent = error.message; }
+  };
+  $('previewFppLayout').onclick = async () => {
+    $('saveFppLayout').disabled = true; layoutPreview = null;
+    try {
+      const items = chosenLayout(), result = await post('/api/layout', {items,preview:true});
+      layoutPreview = {items,revision:result.config.imported_layout.revision};
+      $('layoutFeedback').textContent = result.segments.map(segment => `${segment.n}: ${segment.stop-segment.start} × ${segment.stopY-segment.startY} pixels`).join('\n') + '\n\n' + result.warnings.join('\n');
+      $('saveFppLayout').disabled = false;
+    } catch (error) { $('layoutFeedback').textContent = error.message; }
+  };
+  $('saveFppLayout').onclick = async () => {
+    if (!layoutPreview) return;
+    $('saveFppLayout').disabled = true;
+    try {
+      await post('/api/layout', {...layoutPreview,preview:false});
+      await load(); layoutPreview = null;
+      $('layoutFeedback').textContent = 'Layout saved. Click Apply setup below to use it.';
+    } catch (error) { $('layoutFeedback').textContent = error.message; $('saveFppLayout').disabled = false; }
+  };
   $('reloadConfig').onclick = () => load().then(() => report('Saved setup loaded.')).catch(error => report(error.message));
   $('saveGuided').onclick = async () => {
     $('saveGuided').disabled = true;

@@ -7,7 +7,7 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 .fpp-wled section { margin-block:1.5rem; padding:1.25rem; border:1px solid var(--bs-border-color,ButtonBorder); border-radius:.5rem; }
 .fpp-wled label { display:block; margin-block:.5rem; }
 .fpp-wled button,.fpp-wled input,.fpp-wled select,.fpp-wled textarea { font:inherit; max-width:100%; box-sizing:border-box; }
-.fpp-wled button { padding:.65rem 1rem; margin:.25rem; min-height:2.75rem; cursor:pointer; }
+.fpp-wled button { padding:.65rem 1rem; margin:.25rem; min-height:2.75rem; cursor:pointer; border-radius:var(--bs-border-radius,.375rem); }
 .fpp-wled input:not([type=checkbox]),.fpp-wled select { padding:.5rem; }
 .fpp-wled textarea { width:100%; min-height:12rem; padding:.75rem; }
 .fpp-wled pre { white-space:pre-wrap; overflow-wrap:anywhere; color:inherit; }
@@ -28,7 +28,7 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 :root[data-bs-theme="light"] .fpp-wled button,
 :root[data-bs-theme="light"] .fpp-wled .btn,
 :root[data-bs-theme="light"] .fpp-wled input[type=button],
-:root[data-bs-theme="light"] .fpp-wled input[type=submit] { border:1px solid #aeb4bc!important; }
+:root[data-bs-theme="light"] .fpp-wled input[type=submit] { border:1px solid var(--control-border); }
 
 .fpp-wled .setup-row { border:1px solid var(--bs-border-color,ButtonBorder); border-radius:.3rem; padding:.75rem; margin-bottom:.75rem; display:flex; flex-wrap:wrap; gap:.75rem; align-items:end; }
 .fpp-wled .setup-row label { flex:1 1 10rem; min-width:0; }
@@ -39,11 +39,15 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
  --control-bg:#edf0f4; --control-fg:#202632; --control-hover:#d5dce6;
  --control-selected:#c9dcf2; --control-selected-fg:#142b45;
  --control-disabled:#536075; --control-border:#9ca7b5;
+ --control-on-bg:#def2e5; --control-on-fg:#17512d; --control-on-border:#4b9666;
+ --control-paused-bg:#fff0c2; --control-paused-fg:#614700; --control-paused-border:#a18432;
 }
 :root[data-bs-theme="dark"] {
  --control-bg:#343b49; --control-fg:#f5f7fa; --control-hover:#475366;
  --control-selected:#385c82; --control-selected-fg:#ffffff;
  --control-disabled:#c0c7d2; --control-border:#8390a3;
+ --control-on-bg:#203e30; --control-on-fg:#d5f5df; --control-on-border:#68aa80;
+ --control-paused-bg:#493c20; --control-paused-fg:#ffe8a0; --control-paused-border:#ac935b;
 }
 
 .fpp-wled button, .fpp-wled .btn {
@@ -58,6 +62,10 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 }
 .fpp-wled button:disabled { opacity:1; color:var(--control-disabled)!important; cursor:not-allowed; }
 .fpp-wled button svg { fill:currentColor; }
+.fpp-wled button[data-state="on"] { color:var(--control-on-fg)!important; background:var(--control-on-bg)!important; border-color:var(--control-on-border); }
+.fpp-wled button[data-state="paused"] { color:var(--control-paused-fg)!important; background:var(--control-paused-bg)!important; border-color:var(--control-paused-border); }
+.fpp-wled button[data-state]:hover:not(:disabled) { box-shadow:inset 0 0 0 1px currentColor; }
+.fpp-wled button[data-state]:disabled { border-style:dashed; }
 .fpp-wled button:focus-visible { outline:2px solid #4b8bd3; outline-offset:2px; }
 .fpp-wled .access-indicator { font-weight:600; }
 .fpp-wled .access-indicator::before {

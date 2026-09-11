@@ -80,6 +80,19 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(self.control.post('/api/runtime/restart', {})['restarting'])
         self.assertIsNotNone(self.control.restart_requested_at)
 
+    def test_native_aliases_and_live_colors(self):
+        self.assertEqual(self.control.get('/json/eff'), self.control.get('/json/effects'))
+        self.assertEqual(self.control.get('/json/pal'), self.control.get('/json/palettes'))
+        live = self.control.get('/json/live')
+        self.assertLessEqual(len(live['leds']), 256)
+        self.assertGreaterEqual(live['n'], 1)
+        self.assertTrue(all(len(color) == 6 and color == '000000' for color in live['leds']))
+        diagnostics = self.control.get('/api/diagnostics')
+        self.assertEqual(diagnostics['frames_rendered'], 0)
+        self.enable()
+        self.control.tick(25)
+        self.assertEqual(self.control.get('/api/diagnostics')['frames_rendered'], 1)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

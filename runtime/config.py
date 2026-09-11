@@ -65,6 +65,25 @@ def validate(config):
     height = integer(p.get('height', 1), 1, 255, 'height')
     if width * height != count or (height > 1 and width > 255):
         raise ValueError('matrix dimensions must match count, with each 2D dimension <=255')
+    imported = config.get('imported_layout')
+    if imported is not None:
+        if not isinstance(imported, dict) or not isinstance(imported.get('revision'), str) or len(imported['revision']) != 64:
+            raise ValueError('invalid imported layout revision')
+        segments = imported.get('segments')
+        if not isinstance(segments, list) or not 1 <= len(segments) <= 32:
+            raise ValueError('imported layout needs 1 to 32 segments')
+        for index, segment in enumerate(segments):
+            if not isinstance(segment, dict) or set(segment) != {'id','n','start','stop','startY','stopY','sel'} or segment['id'] != index:
+                raise ValueError('invalid imported segment fields')
+            if not isinstance(segment['n'], str) or len(segment['n'].encode()) > 128 or any(c in segment['n'] for c in '<>&'):
+                raise ValueError('invalid imported segment name')
+            if segment['sel'] is not True:
+                raise ValueError('imported segments must be selected')
+            for first, last, limit in [('start','stop',width),('startY','stopY',height)]:
+                integer(segment[first],0,limit-1,first)
+                integer(segment[last],1,limit,last)
+                if segment[first] >= segment[last]:
+                    raise ValueError('imported segment range is empty')
     integer(config.get('fps', 40), 1, 60, 'fps')
     integer(config.get('port', 8787), 1024, 65535, 'port')
     integer(config.get('quiet_ms', 2000), 2000, 60000, 'quiet period')

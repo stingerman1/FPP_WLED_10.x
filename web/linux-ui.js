@@ -2,6 +2,16 @@
 (() => {
   // ESP firmware reporting/upload paths do not apply to this Linux runtime.
   checkVersionUpgrade = () => {};
+  // Keep WLED's native power control, but name its next action explicitly.
+  const nativeUpdateUI = updateUI;
+  updateUI = function (...args) {
+    const result = nativeUpdateUI.apply(this, args);
+    const button = document.getElementById('buttonPower');
+    const label = isOn ? 'Turn off' : 'Turn on';
+    button.querySelector('.tab-label').textContent = label;
+    button.title = label; button.setAttribute('aria-label', label);
+    return result;
+  };
   // Use one persistent appearance preference across WLED and its settings.
   tglTheme = () => window.wledTheme.toggle();
   const oldTheme = document.querySelector('[onclick="tglTheme()"]');
@@ -34,6 +44,32 @@
   const originalMakeWS = makeWS;
   makeWS = function () { originalMakeWS(); hookErrors(); };
   hookErrors();
+  let savingPreset = false;
+  window.wledSavePreset = async payload => {
+    if (savingPreset) return;
+    savingPreset = true;
+    let feedback = document.getElementById('linux-preset-feedback');
+    if (!feedback) {
+      feedback = document.createElement('p'); feedback.id = 'linux-preset-feedback';
+      feedback.setAttribute('role', 'status'); document.getElementById('putil').prepend(feedback);
+    }
+    feedback.textContent = 'Saving...';
+    const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), 15000);
+    let acknowledged = false;
+    try {
+      const response = await wledFetch('/json/state', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload), signal:abort.signal});
+      const reply = await response.json();
+      if (!response.ok || reply.success !== true) throw Error(reply.error || 'The change was not accepted. Enable lighting controls and try again.');
+      acknowledged = true;
+      const catalog = await wledFetch('/presets.json', {cache:'no-store', signal:abort.signal});
+      if (!catalog.ok) throw Error('Could not refresh the preset list.');
+      pJson = await catalog.json(); populatePresets(); resetPUtil();
+      showToast(payload.pdel ? 'Preset deleted.' : 'Preset saved.');
+    } catch (error) {
+      feedback.textContent = (acknowledged ? 'The change was saved, but the list could not refresh. Reload WLED. ' : 'Your draft is still here. ')
+        + (error.name === 'AbortError' ? 'The request timed out; check saved presets before retrying.' : error.message);
+    } finally { clearTimeout(timeout); savingPreset = false; }
+  };
   // Linux status includes changing uptime/output counters. Upstream rebuilds
   // segments on every state/info message and resets the new-segment form.
   // Keep its actual DOM (including focus and drafts) through background updates.

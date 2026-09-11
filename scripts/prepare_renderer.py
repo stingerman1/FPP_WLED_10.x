@@ -144,6 +144,15 @@ def main():
     if js.count(interval) != 1:
         raise SystemExit('Review upstream selected-effect timer before preparing UI')
     js = js.replace(interval, 'window.linuxEffectPositionTimer ||= setInterval(setSelectedEffectPosition,750);')
+    # Keep the editor/draft until the authenticated HTTP save is acknowledged.
+    save_start = '\tshowToast("Saving " + pN +" (" + pI + ")");'
+    if js.count(save_start) != 1:
+        raise SystemExit('Review upstream preset save before preparing UI')
+    js = js.replace(save_start, '\twindow.wledSavePreset(obj); return;\n' + save_start)
+    delete_start = '\t\trequestJson(obj);\n\t\tdelete pJson[i];'
+    if js.count(delete_start) != 1:
+        raise SystemExit('Review upstream preset deletion before preparing UI')
+    js = js.replace(delete_start, '\t\twindow.wledSavePreset(obj); return;\n' + delete_start)
     # Palette edits can retain the same slot count. Include the content revision
     # in the upstream browser cache key so reloading shows the updated gradient.
     js = js.replace('d.pcount == lastinfo.palcount', 'd.pcount == lastinfo.palcount && d.palrev == lastinfo.palrev')

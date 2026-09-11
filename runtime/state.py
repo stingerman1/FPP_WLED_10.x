@@ -15,11 +15,16 @@ def default_segment(width, height):
 
 
 class State:
-    def __init__(self, directory, engine):
+    def __init__(self, directory, engine, persist_import=True):
         self.directory, self.engine = directory, engine
         self.value = {'on': True, 'bri': 128, 'transition': 7, 'ps': -1, 'pl': -1, 'mainseg': 0,
                       'seg': [default_segment(engine.width, engine.height)]}
         saved = read_json(directory / 'state.json', self.value)
+        imported = engine.config.get('imported_layout')
+        apply_layout = imported and read_json(directory / 'layout-applied.json', '') != imported['revision']
+        if apply_layout:
+            saved = {**saved, 'seg':[{**default_segment(engine.width, engine.height), **segment} for segment in imported['segments']],
+                     'mainseg':0, 'ps':-1, 'pl':-1}
         self.value = self.merge(saved)
         self.value['nl']['on'] = False  # Never restart a timed action after a process restart.
         self.nightlight = None
@@ -33,7 +38,7 @@ class State:
         self.order = []
         self.return_preset = 0
         self.random = random.Random()
-        saved_playlist = read_json(directory / 'playlist.json', None)
+        saved_playlist = None if apply_layout else read_json(directory / 'playlist.json', None)
         if saved_playlist:
             self.validate_playlist(saved_playlist['playlist'])
             self.playlist = saved_playlist['playlist']
@@ -45,6 +50,10 @@ class State:
                 raise ValueError('invalid saved playlist order')
             self.return_preset = integer(saved_playlist.get('return_preset', 0), 0, 250, 'return preset')
             self.restart_entry()
+        if apply_layout and persist_import:
+            save_json(directory / 'state.json', self.value)
+            save_json(directory / 'playlist.json', None)
+            save_json(directory / 'layout-applied.json', imported['revision'])
 
     def persist_playlist(self):
         save_json(self.directory / 'playlist.json', None if self.playlist is None else {

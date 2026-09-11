@@ -17,7 +17,7 @@ async (page) => {
  await page.locator('#applyLighting').click();
  await page.locator('#startNightlight').click();
  await page.waitForFunction(()=>document.getElementById('nightStatus').textContent.includes('Running'));
- await page.locator('#stopNightlight').click();
+ await page.locator('#startNightlight').click();
  await page.waitForFunction(()=>document.getElementById('nightStatus').textContent.includes('No nightlight'));
  // Schedule create, preview, failed save retry, save, edit, remove.
  await page.locator('#addSchedule').click();
@@ -49,7 +49,7 @@ async (page) => {
  await page.locator('#saveGuided').click();
  await page.waitForFunction(()=>!document.getElementById('saveGuided').disabled);
  // Network saves keep unfinished JSON drafts and have one confirmation.
- await page.locator('#configuration > details > summary').click();
+ await page.locator('#configuration > details > summary').last().click();
  await page.locator('#config').fill('{unfinished draft');
  await page.locator('#networkName').fill('QA player');
  await page.locator('#saveNetwork').click();

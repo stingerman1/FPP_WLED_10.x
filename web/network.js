@@ -45,6 +45,10 @@
         const row = document.createElement('p'), link = document.createElement('a');
         link.textContent = node.name || node.address; link.href = node.url;
         row.append(link, document.createTextNode(` — ${node.address}${node.enrolled ? ' (enrolled: ' + node.mode + ')' : ''}`)); list.append(row);
+        if (!node.enrolled) {
+          const add = document.createElement('button'); add.textContent = 'Add this controller';
+          add.onclick = () => window.wledEnrollDevice(node); row.append(add);
+        }
       }
       feedback.textContent = `Checked ${new Date().toLocaleTimeString()}: ${nodes.length} device${nodes.length === 1 ? '' : 's'} found${unchanged ? ' — no changes' : ''}.`
         + (status.discovery_active ? '' : ' Device search is off; the list may be out of date.');

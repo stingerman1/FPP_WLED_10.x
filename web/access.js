@@ -8,6 +8,8 @@
     byId('loginFields').hidden = allowed !== false;
     byId('accessIntro').hidden = allowed !== false;
     byId('logout').hidden = allowed !== true;
+    byId('logout').dataset.state = allowed === true ? 'on' : 'off';
+    byId('connectRuntime').dataset.state = 'off';
     byId('disableAccessHelp').hidden = allowed !== true;
     byId('accessHeading').textContent = allowed === false ? 'Start here: enable lighting controls' : 'Lighting controls';
   }

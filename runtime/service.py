@@ -20,20 +20,23 @@ from .palettes import Palettes
 from .state import State
 from .storage import read_json, save_json
 from .timers import Timers
-from . import schedules
+from . import schedules, layout
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class Controller:
-    def __init__(self, config, directory, engine, ownership):
+    def __init__(self, config, directory, engine, ownership, persist_import=True):
         self.config, self.directory, self.engine, self.ownership = config, directory, engine, ownership
         self.lock = threading.RLock()
         self.palettes = Palettes(directory, engine)
-        self.state = State(directory, engine)
+        self.state = State(directory, engine, persist_import=persist_import)
         self.devices = Devices(config, ownership, self.lock, directory)
         self.dirty = True
         self.render_ms = 0
+        self.frames_rendered = 0
+        self.render_wall_ms = 0.0
+        self.render_peak_ms = 0.0
         self.was_allowed = False
         self.rendered_nightlight = None
         self.started = time.monotonic()
@@ -75,7 +78,17 @@ class Controller:
                 'devices': self.devices.public()}
 
     def get(self, path):
+        path = {'/json/eff':'/json/effects', '/json/pal':'/json/palettes'}.get(path, path)
         with self.lock:
+            if path == '/api/diagnostics':
+                return {'sample_time':time.monotonic(),'frames_rendered':self.frames_rendered,
+                        'render_total_ms':self.render_wall_ms,'render_peak_ms':self.render_peak_ms,
+                        'configured_fps':self.config.get('fps',40),'pixels':self.config['pixels'],
+                        'observer_healthy':self.ownership.status()['observer_healthy'],
+                        'acknowledged_frame':str(self.link.acknowledged) if self.link else None,
+                        'scope':'Runtime render timing and FPP acknowledgement; does not verify physical lights.'}
+            if path == '/api/layout':
+                return layout.sources()
             if path == '/api/network':
                 return self.network.public()
             if path == '/api/schedules':
@@ -89,6 +102,17 @@ class Controller:
                         'count': count, 'stride': stride, 'channels': channels,
                         'pixels': [[i, *self.latest_frame[i * channels:(i + 1) * channels]]
                                    for i in range(0, count, stride)] if allowed else []}
+            if path == '/json/live':
+                count = self.config['pixels']['count']
+                channels = self.config['pixels']['channels']
+                stride = max(1, (count + 255) // 256)
+                allowed = self.ownership.status()['allowed']
+                colors = []
+                for index in range(0, count, stride):
+                    pixel = self.latest_frame[index*channels:(index+1)*channels] if allowed else bytes(channels)
+                    white = pixel[3] if channels == 4 else 0
+                    colors.append(''.join(f'{min(255,value+white):02X}' for value in pixel[:3]))
+                return {'leds':colors,'n':stride}
             if path.startswith('/json/palx'):
                 from urllib.parse import urlsplit, parse_qs
                 url = urlsplit(path)
@@ -159,7 +183,26 @@ class Controller:
         revoked = None
         capture_epoch = None
         with self.lock:
-            if path == '/api/command':
+            if path == '/api/layout':
+                source = layout.sources()
+                ids = payload.get('items', [])
+                if not isinstance(ids, list) or any(type(i) is not int for i in ids) or len(ids) != len(set(ids)):
+                    raise ValueError('Choose distinct FPP items from the list.')
+                selected = [item for item in source['items'] if item['id'] in ids]
+                if len(selected) != len(ids):
+                    raise ValueError('FPP layout changed; refresh the item list.')
+                report = layout.translate(read_json(self.directory / 'config.json', self.config), selected)
+                if payload.get('preview', True):
+                    return report
+                if self.ownership.status()['show_owned']:
+                    raise PermissionError('Wait until shows end and FPP status is healthy before importing a layout.')
+                if payload.get('revision') != report['config']['imported_layout']['revision']:
+                    raise ValueError('FPP layout changed since preview. Preview it again.')
+                save_json(self.directory / 'layout-backup.json', {'config':self.config,'state':self.state.public(),
+                    'playlist':read_json(self.directory / 'playlist.json', None)})
+                save_json(self.directory / 'config.json', report['config'])
+                return {'saved':True,'restart_required':True}
+            elif path == '/api/command':
                 operation = payload.get('operation')
                 if operation == 'status':
                     return self.status()
@@ -302,7 +345,12 @@ class Controller:
             self.render_ms += step_ms
             if notify and 'udp' in self.integrations:
                 self.integrations['udp'].send()
+            started = time.perf_counter()
             self.latest_frame = self.engine.render(self.render_ms)
+            elapsed = (time.perf_counter()-started)*1000
+            self.frames_rendered += 1
+            self.render_wall_ms += elapsed
+            self.render_peak_ms = max(self.render_peak_ms, elapsed)
             self.was_allowed = True
             return self.latest_frame, True
 
@@ -314,10 +362,16 @@ def main():
     parser.add_argument('--library', type=Path, default=ROOT / 'build/libwled_linux.so')
     parser.add_argument('--validate', action='store_true')
     args = parser.parse_args()
+    # Acquire the runtime lock before startup can apply a staged layout.
+    if not args.validate:
+        import fcntl
+        args.run_dir.mkdir(parents=True, exist_ok=True)
+        lock = (args.run_dir / 'runtime.lock').open('w')
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     config = validate(read_json(args.state_dir / 'config.json', None))
     engine = Engine(args.library, config)
     ownership = Ownership(args.state_dir / 'ownership.json', config.get('quiet_ms', 2000), config.get('heartbeat_ms', 500))
-    controller = Controller(config, args.state_dir, engine, ownership)
+    controller = Controller(config, args.state_dir, engine, ownership, persist_import=not args.validate)
     if args.validate:
         engine.apply(controller.state.value)
         print(json.dumps({'valid': True, 'effects': len(engine.effects), 'supported': len(engine.effects) - len(engine.unsupported)}))
@@ -325,10 +379,6 @@ def main():
         return
     from .web import start_servers
     # A flock prevents a second runtime from unlinking the live IPC endpoint.
-    import fcntl
-    args.run_dir.mkdir(parents=True, exist_ok=True)
-    lock = (args.run_dir / 'runtime.lock').open('w')
-    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     link = Link(args.run_dir)
     controller.link = link
     controller.supervised = os.environ.get('FPP_WLED_SUPERVISED') == '1'

@@ -51,3 +51,18 @@ Native checkpoint recovery uses the pinned upstream JSON state/info fields and `
 Custom palette files accept 2–18 complete stops: flat index/R/G/B groups or index/hex pairs. Positions must be ordered, begin at 0 and terminate at 255. Eight-digit hex colors discard white, matching upstream RGB palettes. Unlike native permissive/truncating parsing, malformed or oversized input is rejected. Gaps retain gray placeholders through the highest saved slot, preserving IDs; absent slots cannot be selected or imported in presets. The registry does not use native filesystem gap-scanning limits. Palette previews use the same upstream gradient conversion as rendering. Native devices retain their own palette files; this API does not distribute custom palettes to them.
 
 User-facing gaps and the September 2026 audit are tracked in [UI QA](UI_QA_2026-09-10.md).
+
+FPP layout import now reads saved channel models and pixel strings, previews
+named segments and stages them for Apply setup. Rectangular horizontal/vertical
+matrices are supported within the canvas limits; custom/3D layouts, mixed
+RGB/RGBW selections and grouped hardware strings require manual configuration
+or a suitable channel model. Overlapping channel selections are rejected.
+Import replaces the active segment layout and stops its playlist on restart;
+presets remain saved but may need geometry edits. `layout-backup.json` preserves
+the previous active configuration, state and playlist; a restore UI is not yet
+provided. Arbitrary cross-port virtual segment composition remains open.
+
+`/json/eff` and `/json/pal` alias their full catalog routes. `/json/live` provides
+up to 256 sampled RGB preview values, black while ambient is suspended.
+`/liveview` and common native settings links redirect to Linux setup sections.
+This does not supply full native `/json/cfg`, `/win`, or WebSocket parity.
