@@ -2,22 +2,41 @@
 (() => {
   // ESP firmware reporting/upload paths do not apply to this Linux runtime.
   checkVersionUpgrade = () => {};
-  // The wheel edits effect color slots; palettes have a separate visible preview.
-  const paletteOverview = document.createElement('div');
-  paletteOverview.id = 'linux-active-palette';
-  const paletteName = document.createElement('strong'), paletteStrip = document.createElement('div'), paletteHelp = document.createElement('small');
-  paletteStrip.className = 'active-palette-strip';
-  paletteStrip.setAttribute('aria-hidden', 'true');
-  paletteHelp.textContent = 'The wheel edits individual effect colors. The palette supplies colors to effects that use it.';
-  paletteOverview.append(paletteName, paletteStrip, paletteHelp);
-  document.getElementById('picker').before(paletteOverview);
-  const nativeSelectedPalette = updateSelectedPalette;
-  updateSelectedPalette = function (id) {
-    nativeSelectedPalette(id);
-    const item = document.querySelector(`#pallist .lstI[data-id="${id}"] .lstIname`);
-    paletteName.textContent = 'Palette: ' + (item?.textContent || 'Loading…');
-    paletteStrip.style.cssText = genPalPrevCss(id) || 'display:none';
-    paletteStrip.title = 'Palette colors, not a live pixel sample';
+  // A palette selection seeds the editable effect slots. Keep the full palette
+  // until the user edits a slot, then use WLED's native three-color gradient.
+  function profileColors(id) {
+    const stops = palettesData?.[id];
+    if (!stops?.length || !stops.every(Array.isArray)) return null;
+    const sample = position => {
+      let left = stops[0], right = stops[stops.length - 1];
+      for (const stop of stops) {
+        if (stop[0] <= position) left = stop;
+        if (stop[0] >= position) { right = stop; break; }
+      }
+      const amount = right[0] === left[0] ? 0 : Math.max(0, Math.min(1, (position-left[0])/(right[0]-left[0])));
+      return [1,2,3].map(channel => Math.round(left[channel]+amount*(right[channel]-left[channel]))).concat(0);
+    };
+    // Palette 4 runs third -> background -> primary, preserving this order
+    // when the user starts editing the three representative colors.
+    return [sample(255), sample(128), sample(0)];
+  }
+  function lightingRequest(action, transform) {
+    const send = requestJson;
+    requestJson = function (body, ...args) { return send.call(this, transform(body), ...args); };
+    try { return action(); } finally { requestJson = send; }
+  }
+  const nativeSetPalette = setPalette;
+  setPalette = function (...args) {
+    return lightingRequest(() => nativeSetPalette.apply(this, args), body => {
+      const colors = profileColors(body?.seg?.pal);
+      return colors ? {...body, seg:{...body.seg, col:colors}} : body;
+    });
+  };
+  const nativeSetColor = setColor;
+  setColor = function (...args) {
+    return lightingRequest(() => nativeSetColor.apply(this, args), body =>
+      body?.seg?.col && (selectedPal === 0 || selectedPal === 1 || selectedPal > 5)
+        ? {...body, seg:{...body.seg, pal:4}} : body);
   };
   let previewRevision, refreshingPreviews = false;
   const nativeParseInfo = parseInfo;

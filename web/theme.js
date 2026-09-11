@@ -1,8 +1,8 @@
 (() => {
   const media = matchMedia('(prefers-color-scheme: dark)');
   const key = 'fpp-wled-appearance';
-  let choice = 'fpp', inherited = document.documentElement.dataset.bsTheme;
-  try { choice = localStorage.getItem(key) || 'fpp'; } catch {}
+  let choice = 'dark', inherited = document.documentElement.dataset.bsTheme;
+  try { choice = localStorage.getItem(key) || 'dark'; } catch {}
   function apply() {
     const theme = ['light','dark'].includes(choice) ? choice : ['light','dark'].includes(inherited) ? inherited : media.matches ? 'dark' : 'light';
     document.documentElement.dataset.bsTheme = theme;
@@ -13,6 +13,7 @@
       const label = theme === 'dark' ? 'Switch to normal mode' : 'Switch to dark mode';
       button.title = label; button.setAttribute('aria-label', label);
       button.textContent = theme === 'dark' ? '\u2600' : '\u263e';
+      button.setAttribute('aria-pressed', String(theme === 'dark'));
     }
   }
   function set(value) {
@@ -24,7 +25,7 @@
   function bind() { document.querySelectorAll('[data-wled-theme]').forEach(select => { select.onchange = () => set(select.value); }); apply(); }
   bind(); document.addEventListener('DOMContentLoaded', bind);
   media.addEventListener('change', apply);
-  window.addEventListener('storage', event => { if(event.key === key) { choice = event.newValue || 'fpp'; apply(); } });
+  window.addEventListener('storage', event => { if(event.key === key || event.key === null) { choice = event.newValue || 'dark'; apply(); } });
   if (location.pathname.startsWith('/fpp-wled/') || document.getElementById('fpp-wled-settings')) {
     fetch('/api/settings/themeOverride').then(r => r.ok ? r.json() : {}).then(setting => { inherited = setting.value || ''; apply(); }).catch(() => {});
   }
