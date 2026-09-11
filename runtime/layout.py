@@ -35,7 +35,91 @@ def sources():
         record['id'] = index
     if not records:
         warnings.append('No saved channel models or pixel strings were found in FPP. Set up outputs/models in FPP first.')
-    return {'items':records, 'warnings':warnings}
+    return {'items':records, 'warnings':warnings,
+            'revision':hashlib.sha256(json.dumps(records, sort_keys=True).encode()).hexdigest()}
+
+
+def compose(config, records, groups):
+    """Build ordered virtual segments from slices of FPP models/strings.
+
+    Source indexes are logical, row-major model pixels. Physical channel ordering
+    comes from the same tested importer as ordinary model import.
+    """
+    if not isinstance(groups, list) or not 1 <= len(groups) <= 32:
+        raise ValueError('Create 1 to 32 virtual segments.')
+    sources_by_id = {record['id']:record for record in records}
+    cache, parts, used, channels = {}, [], set(), None
+    for group in groups:
+        if not isinstance(group, dict) or set(group) != {'name','pieces','columns'}:
+            raise ValueError('Each virtual segment needs a name, pieces and columns.')
+        name, pieces = group['name'], group['pieces']
+        if not isinstance(name, str) or not 1 <= len(name.encode()) <= 128 or any(c in name for c in '<>&'):
+            raise ValueError('Use a segment name of 1 to 128 UTF-8 bytes without HTML characters.')
+        if not isinstance(pieces, list) or not 1 <= len(pieces) <= 128:
+            raise ValueError(name + ': add 1 to 128 pixel ranges.')
+        addresses = []
+        for piece in pieces:
+            if not isinstance(piece, dict) or set(piece) != {'source','start','count','reverse'}:
+                raise ValueError('Each piece needs source, start, count and reverse.')
+            source_id = integer(piece['source'],0,100000,'source ID')
+            if source_id not in sources_by_id:
+                raise ValueError('A source is missing. Read FPP lights again.')
+            if source_id not in cache:
+                clean = deepcopy(config); clean.pop('imported_layout', None)
+                cache[source_id] = translate(clean,[sources_by_id[source_id]])['config']
+            source = cache[source_id]
+            if channels is not None and channels != source['pixels']['channels']:
+                raise ValueError('Choose only RGB or only RGBW sources in one layout.')
+            channels = source['pixels']['channels']
+            start = integer(piece['start'],0,source['pixels']['count']-1,'first source pixel')
+            count = integer(piece['count'],1,source['pixels']['count']-start,'piece pixel count')
+            if type(piece['reverse']) is not bool:
+                raise ValueError('Reverse must be on or off.')
+            indices = list(range(start,start+count))
+            if piece['reverse']: indices.reverse()
+            first_channel = source['mappings'][0]['channel']
+            for index in indices:
+                channel = first_channel + source['ledmap'][index]*channels
+                occupied = set(range(channel,channel+channels))
+                if used & occupied:
+                    raise ValueError('A physical pixel is selected more than once. Remove overlapping ranges, including overlapping models and strings.')
+                used.update(occupied); addresses.append(channel)
+                if len(used) > 16000*channels:
+                    raise ValueError('Choose at most 16000 physical pixels.')
+        columns = integer(group['columns'],0,len(addresses),'matrix columns')
+        width = columns or len(addresses)
+        if len(addresses) % width:
+            raise ValueError(name + ': pixel count must divide evenly into the matrix columns.')
+        parts.append((name,width,len(addresses)//width,addresses))
+    strips = all(height == 1 for _,_,height,_ in parts)
+    width = sum(w for _,w,_,_ in parts) if strips else max(w for _,w,_,_ in parts)
+    height = 1 if strips else sum(h for _,_,h,_ in parts)
+    count = width*height
+    if count > 16000 or height > 255 or (height > 1 and width > 255):
+        raise ValueError('Choose a smaller layout: at most 16000 pixels, with matrix axes at most 255.')
+    physical = sorted(channel for *_,addresses in parts for channel in addresses)
+    offsets = {channel:index for index,channel in enumerate(physical)}
+    ranges = []
+    for index,channel in enumerate(physical):
+        if ranges and ranges[-1]['channel']+ranges[-1]['count']*channels == channel:
+            ranges[-1]['count'] += 1
+        else: ranges.append({'pixel':index,'count':1,'channel':channel})
+    mapping, segments, x, y = [-1]*count, [], 0, 0
+    for name,w,h,addresses in parts:
+        for index,channel in enumerate(addresses):
+            mapping[(y+index//w)*width+x+index%w] = offsets[channel]
+        segments.append({'id':len(segments),'n':name,'start':x,'stop':x+w,'startY':y,'stopY':y+h,'sel':True})
+        if strips: x += w
+        else: y += h
+    result = deepcopy(config)
+    result.update(pixels={'count':count,'channels':channels,'width':width,'height':height},mappings=ranges,ledmap=mapping)
+    revision = hashlib.sha256(json.dumps([result['pixels'],ranges,mapping,segments],sort_keys=True).encode()).hexdigest()
+    result['imported_layout'] = {'revision':revision,'segments':segments}
+    result['virtual_layout'] = {'groups':deepcopy(groups),'sources':deepcopy(records)}
+    validate(result)
+    return {'config':result,'segments':segments,'warnings':[
+        'This replaces the WLED layout. Only the selected pixels receive ambient output; other FPP outputs stay unchanged.',
+        'Apply setup restarts WLED and stops its playlist. Saved presets remain, but their pixel ranges may need editing.']}
 
 
 def translate(config, records):
@@ -109,6 +193,7 @@ def translate(config, records):
         else: y += part['height']
     result = deepcopy(config)
     result.update(pixels={'count':count,'channels':parts[0]['channels'],'width':width,'height':height},mappings=ranges,ledmap=mapping)
+    result.pop('virtual_layout', None)
     revision = hashlib.sha256(json.dumps([result['pixels'],ranges,mapping,segments],sort_keys=True).encode()).hexdigest()
     result['imported_layout'] = {'revision':revision,'segments':segments}
     validate(result)

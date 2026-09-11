@@ -240,6 +240,7 @@
       button.disabled = true;
       button.title = 'Unavailable in the Linux alpha; see Setup and compatibility';
       button.style.opacity = '.4';
+      const explanation=document.createElement('a');explanation.textContent='Why unavailable?';explanation.href=wledSettingsURL('#compatibility');explanation.style.cssText='display:block;font-size:11px;margin-top:4px;';button.parentElement.append(explanation);
     }
   }
   const style = document.createElement('style');

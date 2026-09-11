@@ -14,6 +14,10 @@ An experimental FPP plugin that renders upstream WLED effects in a separate Linu
 
 The compatibility layer does **not** implement every WLED API or setting. Read the [compatibility matrix](docs/COMPATIBILITY.md) before importing presets or integrating a controller.
 
+Alpha 2 adds a cross-port virtual segment editor, guided MQTT/Home Assistant,
+visual palette stops, setup backup/restore and fragmented WebSocket commands.
+See [features, limits and remaining acceptance work](docs/ALPHA_2.md).
+
 ## Install and configure
 
 See [installation, upgrades, rollback and removal](docs/INSTALL.md). Repository-based installation is provided, with [alpha source releases](https://github.com/stingerman1/FPP_WLED_10.x/releases). Pi binary releases and plugin-catalog acceptance remain pending.
@@ -25,7 +29,11 @@ cd FPP_WLED_10.x
 sudo bash scripts/install.sh
 ```
 
-Restart FPP through its UI after installation. Visit `http://FPP-IP/fpp-wled/settings`, log in with the locally stored token, configure channel ranges, and then enable ambient. Initial ambient output is disabled. Configuration is under `/home/fpp/media/config/plugin.FPP_WLED_10.x`, outside the plugin directory.
+Restart FPP through its UI after installation. Open the plugin's Settings page,
+click Enable lighting controls, import or configure your FPP lights, and enable
+background lighting. The FPP page supplies browser access without copying a token.
+Configuration is under `/home/fpp/media/plugindata/FPP_WLED_10.x`, outside the plugin
+directory. Initial background lighting is disabled.
 
 ## Shows and native devices
 

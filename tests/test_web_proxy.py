@@ -67,7 +67,7 @@ class WebProxyTests(unittest.TestCase):
                 self.assertEqual(status, 200)
                 self.assertEqual(body, b'Native FPP WLED interface')
                 self.assertEqual(request('GET', '/fpp-wled')[0], 302)
-                for route in ('/', '/index.js', '/index.css', '/base.js', '/linux-ui.js', '/settings', '/schedules.js'):
+                for route in ('/', '/index.js', '/index.css', '/base.js', '/linux-ui.js', '/settings', '/schedules.js', '/virtual-layout.js', '/guided-tools.js', '/backup.js'):
                     self.assertEqual(request('GET', '/fpp-wled' + route)[0], 200, route)
                 status, _, body = request('GET', '/fpp-wled/json/palx?page=2')
                 self.assertEqual(json.loads(body)['route'], '/json/palx?page=2')
@@ -94,7 +94,7 @@ class WebProxyTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'node required')
     def test_browser_urls_preserve_origin_and_direct_access(self):
         source = (ROOT / 'web/base.js').read_text()
-        script = "const assert = require('node:assert/strict'); global.document = {getElementById: () => null, addEventListener: () => {}};\n" + source + """
+        script = "const assert = require('node:assert/strict'); global.document = {getElementById: () => null, querySelector: () => null, addEventListener: () => {}};\n" + source + """
 for (const origin of ['http://fpp:8080', 'https://fpp:8443']) {
   global.window = {location: new URL(origin + '/fpp-wled/settings'), fetch: (path) => new URL(path, origin).href};
   assert.equal(wledFetch('/json/si'), origin + '/fpp-wled/json/si');

@@ -20,7 +20,7 @@ from .palettes import Palettes
 from .state import State
 from .storage import read_json, save_json
 from .timers import Timers
-from . import schedules, layout
+from . import schedules, layout, backup
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,6 +47,7 @@ class Controller:
         self.network = Network(self)
         self.link = None
         self.restart_requested_at = None
+        self.configuration_dirty = False
         self.supervised = False
 
     def info(self):
@@ -54,7 +55,7 @@ class Controller:
         p = self.config['pixels']
         sync = self.sync_state()
         discovery = self.integrations.get('discovery')
-        return {'ver': '16.0.1-linux-alpha.1', 'vid': 2609080, 'name': self.config.get('name', 'WLED for FPP'),
+        return {'ver': '16.0.1-linux-alpha.2', 'vid': 2609110, 'name': self.config.get('name', 'WLED for FPP'),
                 'arch': 'linux', 'brand': 'WLED', 'product': 'FPP Linux alpha',
                 'live': owned, 'liveseg': -1, 'lm': 'FPP show', 'lip': '',
                 'leds': {'count': p['count'], 'rgbw': p['channels'] == 4, 'wv': p['channels'] == 4,
@@ -69,7 +70,7 @@ class Controller:
                 'fpp': self.status()}
 
     def status(self):
-        return {**self.ownership.status(), 'release': 'alpha.1',
+        return {**self.ownership.status(), 'release': 'alpha.2',
                 'unsupported_effect_ids': sorted(self.engine.unsupported),
                 'unsupported': ['ESP firmware and provisioning', 'ESP-NOW', 'GPIO', 'audio input',
                                 'usermods', 'Philips Hue', 'file-based fonts',
@@ -80,6 +81,17 @@ class Controller:
     def get(self, path):
         path = {'/json/eff':'/json/effects', '/json/pal':'/json/palettes'}.get(path, path)
         with self.lock:
+            if path == '/api/backup':
+                return backup.export(self)
+            if path == '/api/backup/previous':
+                previous=read_json(self.directory/'before-restore.json',None)
+                if previous is None: raise KeyError('No previous setup backup exists')
+                return previous
+            if path == '/api/mqtt':
+                integration = self.integrations.get('mqtt')
+                return {'config':read_json(self.directory / 'config.json', self.config).get('mqtt', {}),
+                        'credentials_saved':bool(read_json(self.directory / 'mqtt-secret.json', {})),
+                        'connected':bool(integration and integration.client.is_connected())}
             if path == '/api/diagnostics':
                 return {'sample_time':time.monotonic(),'frames_rendered':self.frames_rendered,
                         'render_total_ms':self.render_wall_ms,'render_peak_ms':self.render_peak_ms,
@@ -151,7 +163,8 @@ class Controller:
                 return self.status()
             if path == '/api/config/status':
                 saved = read_json(self.directory / 'config.json', self.config)
-                return {'saved': saved, 'restart_required': saved != self.config,
+                return {'saved': saved, 'restart_required': saved != self.config or self.configuration_dirty or (self.directory/'restore-pending.json').exists(),
+                        'restore_pending':(self.directory/'restore-pending.json').exists(),
                         'restart_available': self.supervised, 'started': self.started}
             if path == '/api/config':
                 return deepcopy(self.config)
@@ -179,11 +192,41 @@ class Controller:
             raise ValueError('request must be an object')
         if path == '/api/network':
             return self.network.configure(payload)
+        if path == '/api/restore':
+            report=backup.preview(payload.get('backup'), self.engine.lib._name)
+            if payload.get('preview', True):return report
+            with self.lock:
+                return backup.stage(self,payload['backup'],payload.get('revision'))
+        if path == '/api/restore/cancel':
+            if payload != {}:raise ValueError('Cancel restore accepts an empty object.')
+            with self.lock:
+                (self.directory/'restore-pending.json').unlink(missing_ok=True)
+                return {'cancelled':True}
         drain = False
         revoked = None
         capture_epoch = None
         with self.lock:
-            if path == '/api/layout':
+            if path == '/api/mqtt':
+                candidate = deepcopy(read_json(self.directory / 'config.json', self.config))
+                mqtt = payload.get('config')
+                if not isinstance(mqtt, dict) or set(mqtt)-{'enabled','host','port','topic','id','tls'}:
+                    raise ValueError('Unsupported MQTT settings.')
+                for key in ('enabled','tls'):
+                    if type(mqtt.get(key, False)) is not bool: raise ValueError(key+' must be on or off.')
+                candidate['mqtt'] = mqtt
+                validate(candidate)
+                action = payload.get('credentials', 'keep')
+                if action not in ('keep','replace','clear'): raise ValueError('Unknown credentials action.')
+                if action != 'keep':
+                    secret = {} if action == 'clear' else {'username':payload.get('username'),'password':payload.get('password')}
+                    if secret and (not all(isinstance(v,str) and len(v)<=1024 for v in secret.values()) or not secret['username']):
+                        raise ValueError('Enter a username and password of at most 1024 characters.')
+                    save_json(self.directory / 'mqtt-secret.json', secret)
+                    (self.directory / 'mqtt-secret.json').chmod(0o600)
+                    self.configuration_dirty = True
+                save_json(self.directory / 'config.json', candidate)
+                return {'saved':True,'restart_required':True}
+            elif path == '/api/layout':
                 source = layout.sources()
                 ids = payload.get('items', [])
                 if not isinstance(ids, list) or any(type(i) is not int for i in ids) or len(ids) != len(set(ids)):
@@ -191,7 +234,13 @@ class Controller:
                 selected = [item for item in source['items'] if item['id'] in ids]
                 if len(selected) != len(ids):
                     raise ValueError('FPP layout changed; refresh the item list.')
-                report = layout.translate(read_json(self.directory / 'config.json', self.config), selected)
+                saved_config = read_json(self.directory / 'config.json', self.config)
+                if 'groups' in payload:
+                    if payload.get('source_revision') != source['revision']:
+                        raise ValueError('FPP sources changed. Read FPP lights again before previewing or saving.')
+                    report = layout.compose(saved_config, source['items'], payload['groups'])
+                else:
+                    report = layout.translate(saved_config, selected)
                 if payload.get('preview', True):
                     return report
                 if self.ownership.status()['show_owned']:
@@ -368,6 +417,7 @@ def main():
         args.run_dir.mkdir(parents=True, exist_ok=True)
         lock = (args.run_dir / 'runtime.lock').open('w')
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        backup.apply_pending(args.state_dir)
     config = validate(read_json(args.state_dir / 'config.json', None))
     engine = Engine(args.library, config)
     ownership = Ownership(args.state_dir / 'ownership.json', config.get('quiet_ms', 2000), config.get('heartbeat_ms', 500))

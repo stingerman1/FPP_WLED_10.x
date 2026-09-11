@@ -67,8 +67,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.headers.get('Transfer-Encoding'):
             raise ValueError('chunked requests are not supported')
         length = int(self.headers.get('Content-Length', '0'))
-        if not 0 < length <= MAX_BODY:
-            raise ValueError('body must be 1..262144 bytes')
+        limit = 8*1024*1024 if urlsplit(self.path).path == '/api/restore' else MAX_BODY
+        if not 0 < length <= limit:
+            raise ValueError('body must be 1..'+str(limit)+' bytes')
         body = self.rfile.read(length)
         if len(body) != length:
             raise ValueError('truncated body')
@@ -112,6 +113,8 @@ class Handler(BaseHTTPRequestHandler):
             self.path = self.path[len('/fpp-wled'):]
         path = urlsplit(self.path).path
         try:
+            if path in ('/api/backup','/api/backup/previous') and not self.authenticated():
+                return self.reply(401, {'error':'Enable lighting controls to download a setup backup.'})
             destinations = {'/liveview':'ambient-lighting','/settings/led':'configuration',
                             '/settings/sync':'network','/settings/time':'schedules',
                             '/settings/ui':'runtime-access','/settings/sec':'runtime-access'}
@@ -135,7 +138,7 @@ class Handler(BaseHTTPRequestHandler):
                 if asset == 'index.htm':
                     data = data.replace(b'</body>', b'<link rel="stylesheet" href="wled-theme.css"><script src="theme.js"></script><script src="base.js"></script><script src="linux-ui.js"></script></body>')
                 return self.reply(200, data, mimetypes.guess_type(asset)[0] or 'application/octet-stream')
-            if path in ('/settings', '/login', '/config-editor.js', '/linux-ui.js', '/schedules.js', '/base.js', '/summary.js', '/access.js', '/network.js', '/device-controls.js', '/settings.css', '/theme.js', '/wled-theme.css'):
+            if path in ('/settings', '/login', '/config-editor.js', '/linux-ui.js', '/schedules.js', '/base.js', '/summary.js', '/backup.js', '/guided-tools.js', '/virtual-layout.js', '/access.js', '/network.js', '/device-controls.js', '/settings.css', '/theme.js', '/wled-theme.css'):
                 from .service import ROOT
                 filename = path[1:] if path.endswith(('.js', '.css')) else 'settings.html'
                 return self.reply(200, (ROOT / 'web' / filename).read_bytes(),
@@ -170,9 +173,9 @@ class Handler(BaseHTTPRequestHandler):
             header = bytes([0x80 | opcode, size]) if size < 126 else bytes([0x80 | opcode, 126]) + struct.pack('!H', size)
             self.connection.sendall(header + payload)
 
-        # Raw reads with a retained buffer handle fragmented TCP delivery. WebSocket
-        # continuation frames are rejected explicitly (1003), not misparsed as JSON.
+        # Retain TCP and WebSocket fragments, with a bounded complete JSON message.
         pending = bytearray()
+        fragments = None
         last = None
         try:
             while not self.server.stop_event.is_set():
@@ -191,7 +194,8 @@ class Handler(BaseHTTPRequestHandler):
                 while len(pending) >= 2:
                     first, second = pending[:2]
                     opcode, size, offset = first & 15, second & 127, 2
-                    if first & 0x70 or not first & 0x80 or not second & 0x80 or opcode not in (1, 8, 9, 10):
+                    final = bool(first & 0x80)
+                    if first & 0x70 or not second & 0x80 or opcode not in (0, 1, 8, 9, 10) or (opcode >= 8 and not final):
                         send(struct.pack('!H', 1003), 8)
                         return
                     if size == 126:
@@ -199,8 +203,10 @@ class Handler(BaseHTTPRequestHandler):
                             break
                         size, offset = struct.unpack('!H', pending[2:4])[0], 4
                     elif size == 127:
-                        send(struct.pack('!H', 1009), 8)
-                        return
+                        if len(pending) < 10: break
+                        size, offset = struct.unpack('!Q', pending[2:10])[0], 10
+                    if size > 65536 or (opcode < 8 and size + len(fragments or b'') > 65536):
+                        send(struct.pack('!H',1009),8); return
                     if opcode >= 8 and size > 125:
                         return
                     if len(pending) < offset + 4 + size:
@@ -208,6 +214,15 @@ class Handler(BaseHTTPRequestHandler):
                     mask = pending[offset:offset + 4]
                     body = bytes(v ^ mask[i % 4] for i, v in enumerate(pending[offset + 4:offset + 4 + size]))
                     del pending[:offset + 4 + size]
+                    if opcode < 8:
+                        if (opcode == 0 and fragments is None) or (opcode == 1 and fragments is not None):
+                            send(struct.pack('!H',1002),8); return
+                        if opcode == 1 and not final:
+                            fragments = bytearray(body); continue
+                        if opcode == 0:
+                            fragments.extend(body)
+                            if not final: continue
+                            body = bytes(fragments); fragments = None; opcode = 1
                     if opcode == 8:
                         send(b'', 8)
                         return

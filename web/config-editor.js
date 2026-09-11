@@ -35,6 +35,7 @@
   }
   function pending(status) {
     $('configPending').textContent = status.restart_required ? 'Saved. Click 2. Apply setup and restart WLED to use these changes.' : 'Your saved setup is in use. No restart needed.';
+    if(status.restore_pending)$('configPending').textContent='A backup restore is ready. Apply setup will replace this setup with the backup and leave background lighting disabled. You can cancel it in Backup.';
     $('restartRuntime').disabled = restarting || !status.restart_available || !status.restart_required;
     if (!status.restart_available) $('configPending').textContent += ' Restart is available only under the updated FPP service.';
   }

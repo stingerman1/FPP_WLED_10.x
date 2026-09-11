@@ -1,6 +1,6 @@
 # Alpha compatibility matrix
 
-This matrix describes current `main`. The `v0.1.0-alpha.1` release predates the preset/playlist compatibility expansion described below.
+This matrix describes alpha 2 and current `main`. Alpha 1 predates the compatibility and guided-setup expansion below.
 
 Current main also provides a native WLED preset-file importer in Linux Setup: previewed translations, per-entry errors, forward playlist references, catalog conflict detection, and atomic merge. See [import instructions](CONTROL.md#importing-native-wled-presets). Unsupported effects and non-default hardware features remain explicit incompatibilities; import does not synthesize replacements.
 
@@ -9,8 +9,8 @@ Pinned WLED: v16.0.1 (`29b389df1c1aaec6ff53aea742d17063b985906c`). Reference FPP
 | Capability | Current implementation / limitation |
 |---|---|
 | Effects | Actual upstream rendering code, 129 strip / 171 matrix IDs; unsupported slots keep their IDs and are marked unavailable. Tested for bounded execution, not visually certified effect by effect. |
-| Palettes | Built-in palettes and paginated `/json/palx` previews; native-format custom gradients in slots 0–128 (IDs 200 down to 72), converted through upstream FastLED. Linux Setup provides JSON/file import, editing, export, preview and protected deletion. Usermod palettes remain excluded. |
-| Segments | Up to 32, selected-segment updates, colors, brightness, grouping/spacing/offset, reverse/mirror, 2D transforms, mapping options, custom sliders and options. Deleting segments compacts IDs. |
+| Palettes | Built-in palettes and paginated `/json/palx` previews; native-format custom gradients in slots 0–128 (IDs 200 down to 72), converted through upstream FastLED. Linux Setup provides JSON/file import, visual color-stop editing, export, preview and protected deletion. Usermod palettes remain excluded. |
+| Segments | Up to 32, selected-segment updates, colors, brightness, grouping/spacing/offset, reverse/mirror, 2D transforms, mapping options, custom sliders and options. Deleting segments compacts IDs. The virtual layout editor joins selected ranges across FPP sources, with reversal and strip/matrix arrangement; physical overlap is rejected. |
 | RGB/RGBW and 2D | Virtual RGB(W) canvas, dimensions and explicit ledmap; FPP owns physical bus types and ordering. No CCT bus or hardware current limiting. |
 | Transitions | Upstream ordinary transitions/mode blending compiled; custom transition styles are unavailable. |
 | Presets | JSON IDs 1–250, `ib/sb/sc` selective saves, UTF-8 quick-load labels, bounded snapshots and partial custom JSON (`o:true`). Lighting-only `win` command presets and bounded numeric preset cycling are supported; see CONTROL.md. Harmless stock-export defaults translate to Linux. Unsupported non-default fields reject with 422. Boot-preset overrides, reference chains, random expressions and general HTTP commands remain unavailable. |
@@ -19,9 +19,9 @@ Pinned WLED: v16.0.1 (`29b389df1c1aaec6ff53aea742d17063b985906c`). Reference FPP
 | Lighting panel / preview | Linux Setup offers brightness, supported effects, primary/secondary RGBW colors, ordinary transition duration, and nightlight controls. A bounded live pixel canvas displays runtime output, excluding FPP overlays and physical verification. Show ownership disables controls and clears preview. |
 | UI | Upstream main WLED UI and Linux setup/status/palette editor. Firmware update, provisioning, upstream configuration pages and arbitrary file editors unavailable; Peek opens the Linux pixel preview. |
 | HTTP/JSON | State/info/effects/fxdata/palettes/presets and plugin APIs. Authenticated mutations, explicit unsupported-field errors. Legacy `/win`, arbitrary filesystem and full `/json/cfg` parity unavailable. |
-| WebSocket | State/info updates and authenticated supported JSON mutations. Not a complete upstream websocket implementation; fragmented requests unavailable. |
+| WebSocket | State/info updates and authenticated supported JSON mutations. Not a complete upstream websocket implementation; bounded fragmented text requests supported, including interleaved ping frames. |
 | UDP | WLED notifier v12, group mask, explicit or automatically discovered peers, send/receive controls; local geometry preserved on receive. Experimental; no native-hardware interoperability result yet. |
-| MQTT / Home Assistant | Paho MQTT, JSON commands and basic brightness/on/off, MQTT light discovery. No full native HA WLED integration certification. |
+| MQTT / Home Assistant | Paho MQTT, JSON commands and basic brightness/on/off, MQTT light discovery; guided broker and protected credential settings. No full native HA WLED integration certification. |
 | Native devices | Bidirectional mDNS/WLED node discovery; automatic global sync or manual IPv4 enrollment for per-device/group HTTP effects/presets or UDP sync; bounded queues/timeouts and realtime safeguard. UDP cannot select a preset by ID. |
 | Pixel streaming | Via FPP-configured DDP/E1.31/Art-Net outputs, using mapped channels. No independent runtime pixel sender. |
 | Show arbitration | FPP playlist/sequence/live detection plus persistent source locks; tested with synthetic FPP heartbeat/IPC. Stock FPP and physical routing acceptance pending. |
@@ -44,13 +44,17 @@ The implementation follows the pinned upstream [preset serialization](https://gi
 - Short duration/transition arrays repeat their final value, as upstream does. Duration zero holds until `np:true`. Negative repeat means infinite shuffle; finite positive repeat counts full passes. Shuffle moves preset, duration and transition together. Exact random order is not intended to match an ESP's RNG.
 - `end:255` captures the previously selected preset ID, not an arbitrary live-state snapshot. If no prior saved preset exists, the playlist stays on its last entry. Timer progress pauses while off; show suspension restarts the interrupted entry according to the plugin's handoff policy. Transition values remain limited to 65.5 seconds.
 
-Remaining software features such as legacy command parsing, nested playlists and fragmented WebSockets can be implemented through additional adapters. ESP-NOW, physical GPIO and audio input need explicit Linux hardware/network backends; they cannot become equivalent by accepting their configuration fields alone. Physical routing guarantees still require hardware acceptance.
+Remaining software features such as legacy command parsing, nested playlists and broader native configuration APIs can be implemented through additional adapters. ESP-NOW, physical GPIO and audio input need explicit Linux hardware/network backends; they cannot become equivalent by accepting their configuration fields alone. Physical routing guarantees still require hardware acceptance.
 
 Native checkpoint recovery uses the pinned upstream JSON state/info fields and `pd` preset-direct semantics. Native WLED's regular state API exposes `ps` and `pl`, but does not expose the playlist cursor or remaining repetitions. Re-selecting a saved playlist restores its selection with a fresh run; it does not reconstruct its interrupted entry. Snapshot capture is best effort: automatic shows use the last ambient poll, while an explicit Show Start from allowed ambient requests a fresh capture before returning. A failed capture retains the previous checkpoint and reports the failure. See [native recovery details](CONTROL.md#native-device-recovery).
 
 Custom palette files accept 2–18 complete stops: flat index/R/G/B groups or index/hex pairs. Positions must be ordered, begin at 0 and terminate at 255. Eight-digit hex colors discard white, matching upstream RGB palettes. Unlike native permissive/truncating parsing, malformed or oversized input is rejected. Gaps retain gray placeholders through the highest saved slot, preserving IDs; absent slots cannot be selected or imported in presets. The registry does not use native filesystem gap-scanning limits. Palette previews use the same upstream gradient conversion as rendering. Native devices retain their own palette files; this API does not distribute custom palettes to them.
 
 User-facing gaps and the September 2026 audit are tracked in [UI QA](UI_QA_2026-09-10.md).
+
+The [alpha 2 follow-up](ALPHA_2.md) supersedes the older audit's open items for
+virtual segment composition, guided MQTT, visual palette editing, setup restore
+and fragmented WebSocket messages. Hardware acceptance is still pending.
 
 FPP layout import now reads saved channel models and pixel strings, previews
 named segments and stages them for Apply setup. Rectangular horizontal/vertical
@@ -60,7 +64,7 @@ or a suitable channel model. Overlapping channel selections are rejected.
 Import replaces the active segment layout and stops its playlist on restart;
 presets remain saved but may need geometry edits. `layout-backup.json` preserves
 the previous active configuration, state and playlist; a restore UI is not yet
-provided. Arbitrary cross-port virtual segment composition remains open.
+provided. Cross-port virtual segment composition is available through the guided editor, within the limits in ALPHA_2.md.
 
 `/json/eff` and `/json/pal` alias their full catalog routes. `/json/live` provides
 up to 256 sampled RGB preview values, black while ambient is suspended.

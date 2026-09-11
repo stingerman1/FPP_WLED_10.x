@@ -28,6 +28,12 @@ function wledFetch(path, options) {
 function wledOnFPP() {
   return location.pathname.startsWith('/fpp-wled/') || !!document.getElementById('fpp-wled-settings');
 }
+function wledStyleControls(root) {
+  if (!document.getElementById('fpp-wled-settings')) return;
+  root.querySelectorAll('button').forEach(button=>button.classList.add('btn','btn-outline-primary'));
+  root.querySelectorAll('select').forEach(select=>select.classList.add('form-select'));
+  root.querySelectorAll('input').forEach(input=>input.classList.add(input.type==='checkbox'?'form-check-input':'form-control'));
+}
 // Standalone WLED pages need a way back to the player's own navigation.
 // Wrapped setup pages already have FPP's header and must not add a duplicate.
 function wledAddFPPNavigation() {

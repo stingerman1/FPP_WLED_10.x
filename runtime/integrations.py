@@ -74,7 +74,7 @@ class MQTT:
                                                     if i not in self.controller.engine.unsupported],
                      'availability_topic': self.topic + '/status',
                      'device': {'identifiers': [self.uid], 'name': 'WLED for FPP',
-                                'manufacturer': 'WLED / stingerman1', 'model': 'Linux alpha', 'sw_version': '16.0.1-linux-alpha.1'}}
+                                'manufacturer': 'WLED / stingerman1', 'model': 'Linux alpha', 'sw_version': '16.0.1-linux-alpha.2'}}
         client.publish('homeassistant/light/' + self.uid + '/config', json.dumps(discovery), retain=True)
         self.last = None
 
