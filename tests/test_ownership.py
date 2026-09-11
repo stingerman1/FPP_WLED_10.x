@@ -30,6 +30,18 @@ class OwnershipTests(unittest.TestCase):
         self.enable()
         self.assertTrue(self.gate.status()['allowed'])
 
+    def test_setup_completion_survives_disable_and_restart(self):
+        self.assertFalse(self.gate.status()['setup_complete'])
+        self.enable()
+        self.gate.command('ambient-disable')
+        restored = Ownership(self.path)
+        self.assertFalse(restored.enabled)
+        self.assertTrue(restored.status()['setup_complete'])
+
+    def test_existing_enabled_install_is_already_set_up(self):
+        self.path.write_text(json.dumps({'version': 1, 'enabled': True, 'locks': []}))
+        self.assertTrue(Ownership(self.path).status()['setup_complete'])
+
     def test_overlapping_persistent_locks(self):
         self.enable()
         self.gate.command('show-start', 'local:main')

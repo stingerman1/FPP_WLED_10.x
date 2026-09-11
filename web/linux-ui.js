@@ -2,6 +2,17 @@
 (() => {
   // ESP firmware reporting/upload paths do not apply to this Linux runtime.
   checkVersionUpgrade = () => {};
+  // Keep upstream tooltips within the viewport, including top-bar controls.
+  document.addEventListener('pointerover', event => {
+    const tip=document.querySelector('.tooltip.visible');
+    if(!tip)return;
+    const control=event.target.closest('[data-title]')||event.target;
+    const rect=control.getBoundingClientRect(), box=tip.getBoundingClientRect();
+    const below=rect.top-box.height-10<8;
+    tip.toggleAttribute('data-below',below);
+    tip.style.top=Math.max(8,Math.min(innerHeight-box.height-8,below?rect.bottom+10:rect.top-box.height-10))+'px';
+    tip.style.left=Math.max(8,Math.min(innerWidth-box.width-8,rect.left+(rect.width-box.width)/2))+'px';
+  });
   // A palette selection seeds the editable effect slots. Keep the full palette
   // until the user edits a slot, then use WLED's native three-color gradient.
   function profileColors(id) {
@@ -287,7 +298,7 @@
       button.onclick = () => { location.href = wledSettingsURL('#custom-palettes'); };
       continue;
     }
-    if (button.id === 'updBt') { button.textContent = 'Plugin updates & help'; button.onclick = () => { location.href = wledOnFPP() ? '/plugin.php?plugin=FPP_WLED_10.x&page=plugin.php' : wledSettingsURL('#compatibility'); }; continue; }
+    if (button.id === 'updBt') { button.textContent = 'Plugin updates & help'; button.onclick = () => { location.href = wledOnFPP() ? '/plugin.php?plugin=FPP_WLED_10.x&page=plugin.php&manage=1' : wledSettingsURL('#compatibility'); }; continue; }
     if (['resetbtn'].includes(button.id) ||
         /\/(edit|pixelforge|palette|cpal)/.test(button.getAttribute('onclick') || '')) {
       button.disabled = true;

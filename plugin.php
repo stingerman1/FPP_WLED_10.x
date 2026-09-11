@@ -27,8 +27,11 @@
                 throw Error('The WLED web route is missing. Update/reinstall this plugin and check the installation log for errors. Restarting FPP alone does not install the route.');
             }
             if (!response.ok) throw Error('WLED runtime unavailable (HTTP ' + response.status + '). Check the fpp-wled service and installation log.');
-            await response.json();
+            const state = await response.json();
             status.textContent = 'WLED web access is ready on this FPP address and port.';
+            if (!location.hash && !new URLSearchParams(location.search).has('manage')) {
+                location.replace(state.setup_complete ? '/fpp-wled/' : 'plugin.php?plugin=FPP_WLED_10.x&page=settings.php');
+            }
         })
         .catch(error => { status.textContent = error.name === 'AbortError' ? 'WLED web access timed out. Check the fpp-wled service and installation log.' : error.message; })
         .finally(() => clearTimeout(timeout));

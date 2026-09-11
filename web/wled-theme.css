@@ -79,12 +79,18 @@ input::placeholder, textarea::placeholder { color:var(--control-disabled); opaci
 #fxlist .lstI.selected { top:var(--sti); }
 
 /* Return to FPP belongs to WLED's dark top navigation, in both appearances. */
+#top .wled-app-link { float:left; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; padding:var(--tbp); color:#f3f4f6; text-decoration:none; box-sizing:border-box; font-size:12px; }
+#top .wled-app-link:hover, #top .wled-app-link[aria-current] { background:#383b49; }
+#top .wled-app-link:focus-visible { outline:2px solid #8cbaff; outline-offset:-2px; }
+.tooltip { position:fixed!important; max-width:calc(100vw - 16px); box-sizing:border-box; z-index:10000; background:#222!important; color:#fff!important; }
+.tooltip::after { border-color:#222 transparent transparent transparent; }
+.tooltip[data-below]::after { top:auto; bottom:100%; border-color:transparent transparent #222 transparent; }
 #fpp-navigation { float:left; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; padding:var(--tbp); margin:0; color:#f3f4f6; text-decoration:none; box-sizing:border-box; font-size:12px; }
 #fpp-navigation img { object-fit:contain; }
 #fpp-navigation:hover { background:#383b49; color:#fff; }
 #fpp-navigation:focus-visible { outline:2px solid #4b8bd3; outline-offset:-2px; }
 @media(max-width:639px) {
  #top .btnwrap { display:flex; }
- #top .btnwrap > button, #fpp-navigation { flex:1; min-width:0; width:auto; padding:8px 0 4px; }
+ #top .btnwrap > button, #fpp-navigation, #top .wled-app-link { flex:1; min-width:0; width:auto; padding:8px 0 4px; }
  #top .btnwrap .tab-label, #fpp-navigation span { font-size:11px; white-space:nowrap; }
 }

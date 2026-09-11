@@ -19,7 +19,7 @@ function wledURL(path) {
   return (window.location.pathname.startsWith('/fpp-wled/') || document.getElementById('fpp-wled-settings') ? '/fpp-wled' : '') + path;
 }
 function wledSettingsURL(hash = '') {
-  return location.pathname.startsWith('/fpp-wled/') ? '/plugin.php?plugin=FPP_WLED_10.x&page=settings.php' + hash : '/settings' + hash;
+  return wledOnFPP() ? '/plugin.php?plugin=FPP_WLED_10.x&page=settings.php' + hash : '/settings' + hash;
 }
 function wledFetch(path, options) {
   return window.fetch(wledURL(path), options);
@@ -58,6 +58,36 @@ function wledAddFPPNavigation() {
   }).catch(() => {});
 }
 wledAddFPPNavigation();
+function wledAppNavigation() {
+  if (document.getElementById('wled-navigation')) return;
+  const main = document.querySelector('#top .btnwrap');
+  const setup = document.getElementById('lightingSummary');
+  if (!main && !setup) return;
+  const bulb = '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" d="M9 18h6m-6 3h6M8 14a6 6 0 1 1 8 0c-1 1-1 2-1 2H9s0-1-1-2Z"/></svg>';
+  const gear = '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4M5 5l3 3m8 8 3 3M5 19l3-3M16 8l3-3"/></g></svg>';
+  const lights = document.createElement('a');lights.id='wled-navigation';lights.className='wled-app-link';
+  lights.href=wledURL('/')+'?view=lights';lights.innerHTML=bulb+'<span>WLED</span>';
+  lights.setAttribute('aria-label','WLED lighting controls');
+  if(main){
+    const config=[...main.querySelectorAll('button')].find(button=>button.querySelector('.tab-label')?.textContent.trim()==='Config');
+    lights.setAttribute('aria-current','page');main.insertBefore(lights,config||null);
+    if(config){config.id='wled-config-navigation';config.onclick=()=>{location.href=wledSettingsURL();};}
+    if(new URLSearchParams(location.search).get('view')!=='lights')
+      wledFetch('/api/status').then(r=>r.ok?r.json():{}).then(status=>{if(status.setup_complete===false)location.replace(wledSettingsURL());}).catch(()=>{});
+  }else{
+    const nav=document.createElement('nav');nav.className='wled-app-nav';nav.setAttribute('aria-label','WLED pages');
+    const config=document.createElement('a');config.id='wled-config-navigation';config.className='wled-app-link';
+    config.href=wledSettingsURL();config.innerHTML=gear+'<span>Config</span>';config.setAttribute('aria-current','page');
+    nav.append(lights,config);document.querySelector('h1').before(nav);
+    const old=[...document.querySelectorAll('a')].find(a=>a.textContent.trim()==='Open WLED');
+    if(old){const separator=old.nextSibling;if(separator?.nodeType===3)separator.remove();old.remove();}
+    if(wledOnFPP()){
+      const manage=document.createElement('a');manage.href='/plugin.php?plugin=FPP_WLED_10.x&page=plugin.php&manage=1';manage.textContent='Plugin details & maintenance';
+      nav.after(manage);
+    }
+  }
+}
+wledAppNavigation();
 // Explicit user action authorizes the browser; never persist the raw token in JS storage.
 async function wledEnableControls() {
   if (!wledOnFPP()) throw Error('Open WLED through FPP to enable controls automatically, or enter your API token in Settings.');

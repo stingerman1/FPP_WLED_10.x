@@ -101,4 +101,8 @@ body.fpp-wled { font:1rem system-ui; margin:2rem auto; padding:0 1rem; max-width
 .fpp-wled .summary-color { display:inline-flex; align-items:center; gap:.3rem; margin-right:.65rem; }
 .fpp-wled .summary-swatch { display:inline-block; width:.85rem; height:.85rem; border-radius:50%; border:1px solid var(--control-border); }
 .fpp-wled .summary-palette-strip { height:14px; max-width:240px; margin:4px 0; border:1px solid var(--control-border); border-radius:7px; }
+.fpp-wled .wled-app-nav { display:flex; gap:4px; padding:4px; margin-bottom:16px; background:#191a24; border-radius:8px; }
+.fpp-wled .wled-app-link { display:inline-flex; flex-direction:column; align-items:center; gap:3px; min-width:64px; padding:8px; color:#f3f4f6; text-decoration:none; border-radius:6px; font-size:12px; }
+.fpp-wled .wled-app-link:hover, .fpp-wled .wled-app-link[aria-current] { background:#383b49; color:#fff; }
+.fpp-wled .wled-app-link:focus-visible { outline:2px solid #8cbaff; }
 @media(max-width:36rem) { .fpp-wled #lightingSummary dl { grid-template-columns:1fr; } .fpp-wled .wled-summary-header { gap:.5rem; } }

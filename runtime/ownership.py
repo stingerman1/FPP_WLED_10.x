@@ -9,6 +9,7 @@ class Ownership:
         self.path, self.clock = path, clock
         self.quiet_ns, self.timeout_ns = quiet_ms * 1_000_000, timeout_ms * 1_000_000
         self.enabled = False
+        self.setup_complete = False
         self.locks = set()
         self.fault = None
         self.transport_fault = None
@@ -23,6 +24,7 @@ class Ownership:
             for source in saved['locks']:
                 self.validate_source(source)
             self.enabled, self.locks = saved['enabled'], set(saved['locks'])
+            self.setup_complete = saved.get('setup_complete', self.enabled) is True
         except (OSError, ValueError, TypeError, AttributeError) as exc:
             self.fault = 'ownership storage: ' + str(exc)
 
@@ -35,7 +37,7 @@ class Ownership:
 
     def persist(self):
         try:
-            save_json(self.path, {'version': 1, 'enabled': self.enabled, 'locks': sorted(self.locks)})
+            save_json(self.path, {'version': 1, 'enabled': self.enabled, 'locks': sorted(self.locks), 'setup_complete': self.setup_complete})
         except OSError as exc:
             self.fault = 'ownership storage: ' + str(exc)
             raise
@@ -55,6 +57,8 @@ class Ownership:
             if operation == 'ambient-enable' and self.status()['show_owned']:
                 raise PermissionError('show owns managed targets')
             self.enabled = operation == 'ambient-enable'
+            if self.enabled:
+                self.setup_complete = True
         else:
             raise ValueError('unknown ownership operation')
         self.epoch += 1
@@ -87,7 +91,7 @@ class Ownership:
             self.clear_since = None
         quiet = healthy and self.clear_since is not None and now - self.clear_since >= self.quiet_ns
         allowed = self.enabled and not sources and not uncertain and quiet
-        return {'version': 1, 'enabled': self.enabled, 'allowed': allowed,
+        return {'version': 1, 'enabled': self.enabled, 'setup_complete': self.setup_complete, 'allowed': allowed,
                 'show_owned': bool(sources) or uncertain, 'sources': sources,
                 'observer_healthy': healthy, 'quiet': quiet, 'fault': fault,
                 'epoch': self.epoch}
