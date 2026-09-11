@@ -72,3 +72,8 @@ input[type=text], input[type=number], select, textarea {
  background:var(--control-bg); color:var(--control-fg);
 }
 input::placeholder, textarea::placeholder { color:var(--control-disabled); opacity:1; }
+/* Only the active effect stays pinned; Solid is an ordinary choice otherwise. */
+#fxlist .lstI.sticky:not(.selected) {
+ position:relative; top:auto; bottom:auto; z-index:auto; box-shadow:none;
+}
+#fxlist .lstI.selected { top:var(--sti); }
