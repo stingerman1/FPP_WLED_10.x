@@ -143,7 +143,7 @@ def validate(config):
             value = mqtt.get(key, default)
             if not isinstance(value, str) or not 1 <= len(value) <= 128 or any(c in value for c in '#+\x00'):
                 raise ValueError('invalid MQTT ' + key)
-    for key in ('discovery', 'discoverable'):
+    for key in ('discovery', 'udp_discovery', 'discoverable'):
         if key in config and type(config[key]) is not bool:
             raise ValueError(key + ' must be boolean')
     if not isinstance(config.get('name', 'WLED for FPP'), str) or not 1 <= len(config.get('name', 'WLED for FPP')) <= 32:
@@ -160,7 +160,7 @@ def validate(config):
                 raise ValueError('udp ' + key + ' must be boolean')
         if udp.get('auto_peers', False) and not config.get('discovery', False):
             raise ValueError('automatic sync peers require discovery')
-        if udp.get('port', 21324) == 65506 and config.get('discovery', False):
+        if udp.get('port', 21324) == 65506 and config.get('discovery', False) and config.get('udp_discovery', False):
             raise ValueError('sync port conflicts with WLED discovery port 65506')
         if not isinstance(udp.get('peers', []), list) or len(udp.get('peers', [])) > 64:
             raise ValueError('UDP sync supports at most 64 explicit peer addresses')

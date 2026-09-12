@@ -4,7 +4,7 @@ import {readFile, mkdir} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
 
 const scenarios = ['theme_modes', 'fpp_wrapper', 'lighting_sync', 'settings_workflows',
-  'node_type', 'segment_fields', 'layout_api', 'release_rollback'];
+  'node_type', 'segment_fields', 'layout_api', 'release_rollback', 'udp_discovery'];
 const children = [];
 const start = (command, args) => {
   const child = spawn(command, args, {stdio: ['ignore', 'inherit', 'inherit']});

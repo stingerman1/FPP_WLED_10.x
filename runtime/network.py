@@ -6,7 +6,7 @@ from .storage import save_json, read_json
 from .discovery import Discovery
 from .udp import Sync
 
-FIELDS = {'discovery', 'discoverable', 'discovery_http_port', 'name', 'udp'}
+FIELDS = {'discovery', 'udp_discovery', 'discoverable', 'discovery_http_port', 'name', 'udp'}
 
 
 class Network:
@@ -20,7 +20,8 @@ class Network:
         udp = c.integrations.get('udp')
         discovery = c.integrations.get('discovery')
         return {'config': {k: deepcopy(v) for k, v in c.config.items() if k in FIELDS},
-            'discovery_active': discovery is not None, 'sync_active': udp is not None,
+            'discovery_active': discovery is not None,
+            'udp_discovery_active': discovery is not None and discovery.socket is not None, 'sync_active': udp is not None,
             'peers': sorted(udp.peers) if udp else [],
             'sent': udp.sent if udp else 0, 'received': udp.received if udp else 0,
             'error': self.error or (udp.last_error if udp else None) or (discovery.last_error if discovery else None)}

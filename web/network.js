@@ -23,13 +23,13 @@
       if (!loaded) {
         id('Name').value = config.name || 'WLED for FPP';
         id('HttpPort').value = config.discovery_http_port || 80;
-        for (const [name, value] of Object.entries({Discovery: !!config.discovery, Advertise: config.discoverable !== false,
+        for (const [name, value] of Object.entries({Discovery: !!config.discovery, UdpDiscovery: !!config.udp_discovery, Advertise: config.discoverable !== false,
           Sync: !!udp.enabled, Auto: udp.auto_peers !== false, Send: udp.send !== false, Receive: udp.receive !== false})) id(name).checked = value;
         id('Port').value = udp.port || 21324; id('Peers').value = (udp.peers || []).join(', ');
         id('Groups').querySelectorAll('input').forEach(input => input.checked = !!((udp.groups || 1) & Number(input.value)));
         loaded = true;
       }
-      id('Status').textContent = `Discovery: ${status.discovery_active ? 'running' : 'off'} | Sync: ${status.sync_active ? 'running' : 'off'}\nPeers: ${status.peers.join(', ') || 'none yet'}\nSent: ${status.sent} | Received: ${status.received}` + (status.error ? '\nError: ' + status.error : '');
+      id('Status').textContent = `Discovery: ${status.discovery_active ? 'running' : 'off'} | UDP discovery: ${status.udp_discovery_active ? 'running' : 'off'} | Sync: ${status.sync_active ? 'running' : 'off'}\nPeers: ${status.peers.join(', ') || 'none yet'}\nSent: ${status.sent} | Received: ${status.received}` + (status.error ? '\nError: ' + status.error : '');
       const discoveryResponse = await wledFetch('/api/discovery', {signal: abort.signal});
       if (!discoveryResponse.ok) throw Error(`Discovery results unavailable (HTTP ${discoveryResponse.status})`);
       const nodes = await discoveryResponse.json(), list = document.getElementById('discovered');
@@ -67,7 +67,7 @@
     try {
       const groups = [...id('Groups').querySelectorAll('input:checked')].reduce((mask, input) => mask | Number(input.value), 0);
       const draftBefore = document.getElementById('config').value;
-      await post('/api/network', {name: id('Name').value, discovery: id('Discovery').checked,
+      await post('/api/network', {name: id('Name').value, discovery: id('Discovery').checked, udp_discovery: id('UdpDiscovery').checked,
         discoverable: id('Advertise').checked, discovery_http_port: Number(id('HttpPort').value),
         udp: {enabled: id('Sync').checked, auto_peers: id('Auto').checked,
           send: id('Send').checked, receive: id('Receive').checked, port: Number(id('Port').value), groups,
@@ -82,7 +82,7 @@
         if (!response.ok) throw Error();
         const config = await response.json();
         if (draft && !Array.isArray(draft) && typeof draft === 'object' && document.getElementById('config').value === draftBefore) {
-          for (const key of ['name','discovery','discoverable','discovery_http_port','udp']) draft[key] = config[key];
+          for (const key of ['name','discovery','udp_discovery','discoverable','discovery_http_port','udp']) draft[key] = config[key];
           document.getElementById('config').value = JSON.stringify(draft, null, 2);
         }
       } catch { /* A saved network change does not depend on the JSON editor. */ }

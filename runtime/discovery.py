@@ -56,17 +56,19 @@ class Discovery:
         self.last_error = None
         self.registered = False
         self.stopped = threading.Event()
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            # WLED node discovery is LAN UDP, not the HTTP service proxied by
-            # Apache. Broadcast reception requires this wildcard bind; packets
-            # only update discovery metadata and cannot invoke runtime APIs.
-            self.socket.bind(('0.0.0.0', 65506))
-            self.socket.setblocking(False)
-        except Exception:
-            self.socket.close()
-            raise
+        self.socket = None
+        if controller.config.get('udp_discovery', False):
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                # WLED node discovery is LAN UDP, not the HTTP service proxied by
+                # Apache. Broadcast reception requires this wildcard bind; packets
+                # only update discovery metadata and cannot invoke runtime APIs.
+                self.socket.bind(('0.0.0.0', 65506))
+                self.socket.setblocking(False)
+            except Exception:
+                self.socket.close()
+                raise
         self.zc = Zeroconf(ip_version=IPVersion.V4Only)
         self.browser = ServiceBrowser(self.zc, '_wled._tcp.local.', self)
         uid = f'{uuid.getnode():012x}'
@@ -144,6 +146,8 @@ class Discovery:
             if (self.local != previous or not self.registered) and not self.advertiser.is_alive():
                 self.advertiser = threading.Thread(target=self.advertise, daemon=True)
                 self.advertiser.start()
+        if self.socket is None:
+            return
         for _ in range(32):
             try:
                 data, sender = self.socket.recvfrom(512)
@@ -181,7 +185,8 @@ class Discovery:
 
     def close(self):
         self.stopped.set()
-        self.socket.close()
+        if self.socket is not None:
+            self.socket.close()
         self.browser.cancel()
         self.advertiser.join(3)
         self.zc.close()

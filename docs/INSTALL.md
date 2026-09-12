@@ -73,3 +73,9 @@ The root Makefile includes FPP shared setup and rebuilds the adapter during FPP 
 Uninstall removes service, Apache and temporary runtime artifacts. Saved data is retained by default. On the plugin page, enable **Delete saved data when uninstalling** before uninstalling only if you want permanent removal of tokens, presets and ownership locks. This preference is off by default. The FPP-managed diagnostic log is retained for support.
 
 Use **Outputs & devices** for guided pixel layout, channel mappings and device enrollment. Save, then use **Apply saved setup: restart WLED runtime** when FPP ownership is clear. The pending indicator distinguishes saved changes from active settings. The supervised restart pauses ambient output briefly and preserves saved state; it does not restart FPP.
+
+## Optional UDP device discovery
+
+In Config > Find other WLED devices, select **Find other WLED devices** for normal mDNS discovery. **Allow WLED UDP device discovery** separately enables WLED's node protocol on UDP port 65506. Click **Save discovery & sync** to apply it. Select **Let other devices find this player** if it should also announce itself.
+
+UDP device discovery defaults off, including on existing installations that have not explicitly saved this new option. Turning it off closes the UDP discovery listener. mDNS and lighting synchronization retain their separate settings; discovering a device does not change its lights. The status line distinguishes general discovery, UDP discovery, and sync.

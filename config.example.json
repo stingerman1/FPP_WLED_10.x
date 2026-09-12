@@ -2,6 +2,7 @@
   "version": 1,
   "bind": "127.0.0.1",
   "port": 8787,
+  "udp_discovery": false,
   "fps": 40,
   "quiet_ms": 2000,
   "heartbeat_ms": 500,

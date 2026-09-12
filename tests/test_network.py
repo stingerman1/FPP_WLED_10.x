@@ -1,6 +1,7 @@
 from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
+import json
 import socket
 import tempfile
 import threading
@@ -15,6 +16,36 @@ from runtime.udp import Sync, encode
 
 
 class DiscoverySyncTests(unittest.TestCase):
+    def test_udp_listener_requires_explicit_opt_in_and_can_be_closed(self):
+        from unittest.mock import MagicMock
+        config = {'version': 1, 'pixels': {'count': 100, 'channels': 3},
+                  'mappings': [], 'discovery': True, 'discoverable': False}
+        with tempfile.TemporaryDirectory() as directory, \
+             patch('runtime.discovery.interfaces', return_value=[]), \
+             patch('runtime.discovery.socket.socket') as socket_factory, \
+             patch('zeroconf.Zeroconf', return_value=MagicMock()), \
+             patch('zeroconf.ServiceBrowser'):
+            controller = SimpleNamespace(config=config, directory=Path(directory),
+                                         lock=threading.RLock(), integrations={})
+            network = Network(controller)
+            status = network.configure()
+            self.assertTrue(status['discovery_active'])
+            self.assertFalse(status['udp_discovery_active'])
+            socket_factory.assert_not_called()
+            controller.integrations['discovery'].tick()
+            with self.assertRaises(ValueError): network.configure({'udp_discovery': 'yes'})
+            status = network.configure({'udp_discovery': True})
+            self.assertTrue(status['udp_discovery_active'])
+            socket_factory.return_value.bind.assert_called_once_with(('0.0.0.0', 65506))
+            status = network.configure({'udp_discovery': False})
+            socket_factory.return_value.close.assert_called_once()
+            self.assertFalse(status['udp_discovery_active'])
+            self.assertTrue(status['discovery_active'])
+            self.assertFalse(json.loads((Path(directory) / 'config.json').read_text())['udp_discovery'])
+            network.configure()  # Saved opt-out survives reconfiguration.
+            self.assertEqual(socket_factory.call_count, 1)
+            network.configure({'discovery': False})
+
     def discovery(self):
         discovery = Discovery.__new__(Discovery)
         discovery.local = [('192.0.2.1', '192.0.2.255')]
@@ -125,13 +156,13 @@ class DiscoverySyncTests(unittest.TestCase):
             self.assertTrue((Path(directory) / 'config.json').exists())
             self.assertIsNone(network.configure({'discovery': False})['error'])
             for udp in ({'enabled': True, 'port': 65506}, {'enabled': True, 'groups': 0}):
-                with self.assertRaises(ValueError): validate({**config, 'discovery': True, 'udp': udp})
+                with self.assertRaises(ValueError): validate({**config, 'discovery': True, 'udp_discovery': True, 'udp': udp})
 
     def test_mdns_advertisement_matches_fpp_origin_and_cleanup(self):
         from unittest.mock import MagicMock
         zc = MagicMock()
         sock = MagicMock()
-        controller = SimpleNamespace(config={'discoverable': True, 'discovery_http_port': 8080})
+        controller = SimpleNamespace(config={'discoverable': True, 'udp_discovery': True, 'discovery_http_port': 8080})
         with patch('runtime.discovery.interfaces', return_value=[('192.0.2.1', '192.0.2.255')]), \
              patch('runtime.discovery.socket.socket', return_value=sock), \
              patch('zeroconf.Zeroconf', return_value=zc), patch('zeroconf.ServiceBrowser') as browser:

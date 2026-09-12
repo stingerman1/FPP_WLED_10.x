@@ -80,6 +80,8 @@
 <p><strong>To make lights change together:</strong> also check Share lighting changes (sync) and Automatically sync with found devices. Send lets this player lead; Receive lets it follow. Turn on the matching send/receive settings on the other controllers too. Use the same sync group on all of them; group 1 is a good starting point.</p>
 <label>Name shown to other devices <input id="networkName" maxlength="32" value="WLED for FPP"></label>
 <label><input id="networkDiscovery" type="checkbox"> Find other WLED devices</label>
+<label><input id="networkUdpDiscovery" type="checkbox"> Allow WLED UDP device discovery</label>
+<p>Off unless you enable it and save. This lets WLED controllers find each other using UDP port 65506. Turn on Find other WLED devices above too. To appear in their lists, also select Let other devices find this player. Turning this off closes that discovery listener; normal mDNS discovery and lighting sync keep their own settings.</p>
 <label><input id="networkAdvertise" type="checkbox" checked> Let other devices find this player</label>
 <details><summary>Advanced: FPP web port (usually 80)</summary><label>FPP web port <input id="networkHttpPort" type="number" min="1" max="65535" value="80"></label><p>Leave this at 80 unless you use a different port to open FPP.</p></details>
 <label><input id="networkSync" type="checkbox"> Share lighting changes (sync)</label>

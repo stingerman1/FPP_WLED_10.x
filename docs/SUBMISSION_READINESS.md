@@ -40,7 +40,7 @@ suppressed or relabeled as passed. No submission issue or maintainer comment has
 been sent by this repair pass.
 
 The flagged socket is `runtime/discovery.py`'s **UDP port 65506**, created with
-`SOCK_DGRAM` and used for WLED node announcements. It must receive broadcasts
+`SOCK_DGRAM` and used for WLED node announcements. As of 2026-09-12 it is separately opt-in (`udp_discovery`, default false), so no UDP discovery listener opens until the user permits it. When enabled, it must receive broadcasts
 from other controllers on LAN interfaces. It is not an HTTP listener and cannot
 serve the runtime HTTP/API routes. Apache proxies the separate Unix `web.sock`;
 the optional direct HTTP listener defaults to loopback and requires authorization
