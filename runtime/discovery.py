@@ -59,6 +59,9 @@ class Discovery:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            # WLED node discovery is LAN UDP, not the HTTP service proxied by
+            # Apache. Broadcast reception requires this wildcard bind; packets
+            # only update discovery metadata and cannot invoke runtime APIs.
             self.socket.bind(('0.0.0.0', 65506))
             self.socket.setblocking(False)
         except Exception:

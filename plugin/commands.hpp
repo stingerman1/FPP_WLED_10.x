@@ -1,5 +1,6 @@
 #pragma once
 #include <future>
+#include <cstdio>
 #include "commands/Commands.h"
 
 // Commands can originate on FPP's output thread. Only enqueue work there;
@@ -46,7 +47,8 @@ public:
       struct SocketGuard {int fd;~SocketGuard(){close(fd);}} socketGuard{fd};
       timeval timeout{10,0};setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout));
       setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeout,sizeof(timeout));
-      sockaddr_un address{};address.sun_family=AF_UNIX;strcpy(address.sun_path,"/run/fpp-wled/control.sock");
+      sockaddr_un address{};address.sun_family=AF_UNIX;
+      std::snprintf(address.sun_path,sizeof(address.sun_path),"%s","/run/fpp-wled/control.sock");
       if(connect(fd,reinterpret_cast<sockaddr*>(&address),sizeof(address))) return Reply{true,"Runtime is unavailable; show handoff not acknowledged"};
       std::string request="POST /api/command HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: "+std::to_string(json.size())+"\r\n\r\n"+json;
       size_t offset=0;

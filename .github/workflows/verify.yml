@@ -1,5 +1,10 @@
 name: Linux alpha checks
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 9 * * 1'
 permissions:
   contents: read
 jobs:
@@ -45,8 +50,24 @@ jobs:
           git -C .upstream/fpp checkout $(python -c 'import json; print(json.load(open("upstream.lock.json"))["fpp"]["reference_commit"])')
           make SRCDIR=.upstream/fpp/src LINK_FPP=0 build/libFPP_WLED_10.x.so
           test -z "$(nm -D build/libFPP_WLED_10.x.so | awk '$2==\"u\"')"
+      - name: Compile against latest released and nightly FPP headers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release=$(gh api repos/FalconChristmas/fpp/releases/latest --jq .tag_name)
+          git -C .upstream/fpp fetch --depth 1 origin "refs/tags/$release:refs/tags/$release" refs/heads/master:refs/remotes/origin/compat-nightly
+          git -C .upstream/fpp worktree add --detach ../fpp-release "refs/tags/$release"
+          git -C .upstream/fpp worktree add --detach ../fpp-nightly refs/remotes/origin/compat-nightly
+          for version in release nightly; do
+            source_dir=".upstream/fpp-$version/src"
+            make -B SRCDIR="$source_dir" LINK_FPP=0 build/libFPP_WLED_10.x.so
+            test -z "$(nm -D build/libFPP_WLED_10.x.so | awk '$2==\"u\"')"
+            printf '%s %s\n' "$version" "$(git -C ".upstream/fpp-$version" rev-parse HEAD)" >>build/fpp-header-compatibility.txt
+          done
       - run: python scripts/benchmark.py --output build/benchmark.json
       - uses: actions/upload-artifact@v4
         with:
           name: verification-${{ matrix.os }}
-          path: build/benchmark.json
+          path: |
+            build/benchmark.json
+            build/fpp-header-compatibility.txt

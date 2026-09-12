@@ -29,7 +29,7 @@ if ($wledRelease !== false) {
     if (in_array($wledPage, ['plugin.php', 'settings.php', 'lights.php'], true)) {
         $wledLegacyPath = $wledPage === 'settings.php' ? '/fpp-wled/settings' : '/fpp-wled/?view=lights';
         echo '<p class="text-body-secondary">Previous WLED release. Complete the plugin update to use the new configuration page.</p>';
-        echo '<iframe title="WLED previous release" class="w-100 border rounded" style="height:80dvh;min-height:36rem" src="' . $wledLegacyPath . '"></iframe>';
+        echo '<iframe title="WLED previous release" class="w-100 border rounded" style="height:80dvh;min-height:36rem" src="' . htmlspecialchars($wledLegacyPath, ENT_QUOTES, 'UTF-8') . '"></iframe>';
         return;
     }
 }

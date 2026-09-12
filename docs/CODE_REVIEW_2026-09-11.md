@@ -127,8 +127,9 @@ prevention easier. Preserve behavior with meaningful workflow tests while doing 
 
 The native adapter intentionally keeps its library mapping resident because FPP
 may retain command Result objects. It does not claim unload support. Its
-`shutdown()` also joins the worker synchronously. Revisit result ownership and
-asynchronous shutdown before opting into unload; this is not evidence of a
+`shutdown()` now requests stop and returns readiness without joining the worker.
+The destructor joins after readiness, with a safety fallback for direct destruction.
+Revisit FPP-owned result lifetimes before opting into library unloading; this is not evidence of a
 currently observed use-after-free.
 
 Pi 4/5 workload limits, direct-to-device mixed-routing shows, repeated physical
@@ -151,3 +152,7 @@ No receiving ESP controller was flashed during this work.
 
 The repair pass above addresses these five findings. Complete hardware acceptance
 and broader maintainability work before changing the release stage.
+
+## Subsequent submission-readiness pass
+
+See [SUBMISSION_READINESS.md](SUBMISSION_READINESS.md). The actual FPP linter found a socket-copy warning and a legacy HTML-escaping warning, now fixed. A wildcard UDP-discovery bind remains flagged by a rule intended for HTTP proxy bypass; it is reported without suppression. Native worker shutdown is now asynchronous and tested. Released/nightly header builds are separate from the still-required installed-image acceptance.
